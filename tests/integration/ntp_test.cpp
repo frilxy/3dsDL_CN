@@ -31,11 +31,11 @@ TEST("ntp: rejects unsynchronised and mismatched replies")
 {
     ntp::Result result = ntp::query("127.0.0.1", port("NTP_UNSYNCED"), 1000);
     CHECK(!result.ok);
-    CHECK(result.error.find("not synchronised") != std::string::npos);
+    CHECK(result.error.find("尚未同步") != std::string::npos);
 
     result = ntp::query("127.0.0.1", port("NTP_MISMATCHED"), 1000);
     CHECK(!result.ok);
-    CHECK(result.error.find("did not match") != std::string::npos);
+    CHECK(result.error.find("不匹配") != std::string::npos);
 }
 
 TEST("ntp: gives up on silent servers and tries the next one")

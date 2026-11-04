@@ -418,7 +418,7 @@ TEST("remote server: files go up, come back, move and go away")
         std::lock_guard<std::mutex> hold(lock);
         // The refused upload, the replacing one and the download.
         CHECK_EQ(finished.size(), static_cast<size_t>(3));
-        CHECK(!finished[0].ok && finished[0].message == "a b.bin already exists.");
+        CHECK(!finished[0].ok && finished[0].message == "a b.bin 已存在。");
         CHECK(finished[1].ok);
         CHECK(!finished[2].upload && finished[2].ok);
         CHECK_EQ(finished[2].done, static_cast<uint64_t>(3));
@@ -978,7 +978,7 @@ TEST("remote server: what a sender asks for comes with its links")
     response = readAll(client);
     ::close(client);
     CHECK(response.rfind("HTTP/1.1 400", 0) == 0);
-    CHECK(response.find("/3ds/ or /cias/") != std::string::npos);
+    CHECK(response.find("/3ds/、/cias/") != std::string::npos);
 
     // A page that sent options and no links, then an FBI send, both waiting
     // when the receiver looks: one wait serves both, and the FBI links come
@@ -1063,7 +1063,7 @@ TEST("remote server: a send says if 3dsDL's page made it, holds 20 links, and a 
     std::string response = readAll(client);
     ::close(client);
     CHECK(response.rfind("HTTP/1.1 400", 0) == 0);
-    CHECK(response.find("at most 20") != std::string::npos);
+    CHECK(response.find("最多发送 20") != std::string::npos);
 
     // The page is told why, as JSON.
     client = post("Host: 127.0.0.1\r\nX-Requested-With: 3dsDL\r\n",

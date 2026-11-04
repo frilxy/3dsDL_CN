@@ -313,7 +313,7 @@ TEST("engine: stops redirect loops and non-HTTP redirects")
         net::download(request("/redirect/15", folder), recorder);
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK_EQ(result.curlCode, static_cast<int>(CURLE_TOO_MANY_REDIRECTS));
-    CHECK(contains(result.message, "redirected too many"));
+    CHECK(contains(result.message, "重定向次数过多"));
 
     result = net::download(request("/redirect-ftp", folder), recorder);
     CHECK(result.outcome == net::Outcome::Failed);
@@ -329,12 +329,12 @@ TEST("engine: HTTP errors are explained and nothing is saved")
         net::download(request("/status/404", folder), recorder);
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK_EQ(result.httpStatus, 404L);
-    CHECK(contains(result.message, "not found"));
+    CHECK(contains(result.message, "找不到服务器"));
     CHECK(!result.resumable);
 
     result = net::download(request("/status/503", folder), recorder);
     CHECK_EQ(result.httpStatus, 503L);
-    CHECK(contains(result.message, "server had an error"));
+    CHECK(contains(result.message, "服务器发生错误"));
     CHECK(listAll(folder.path()).empty());
 }
 
@@ -347,7 +347,7 @@ TEST("engine: a dropped connection keeps a resumable partial file")
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK(result.resumable);
     CHECK_EQ(result.bytes, static_cast<uint64_t>(50000));
-    CHECK(contains(result.message, "connection dropped"));
+    CHECK(contains(result.message, "连接已中断"));
     CHECK_EQ(net::partialSize(folder.path(), env("FIXTURE_HTTP") + path),
              static_cast<uint64_t>(50000));
 
@@ -560,7 +560,7 @@ TEST("engine: rejects bad input before connecting")
     settings = request("/file/10", folder);
     settings.url = "ftp://example.com/file";
     result = net::download(settings, recorder);
-    CHECK(contains(result.message, "http:// and https://"));
+    CHECK(contains(result.message, "http:// 和 https://"));
     CHECK(recorder.phases.empty());
 }
 
@@ -599,14 +599,14 @@ TEST("engine: HTTPS rejects untrusted certificates and wrong hosts")
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK_EQ(result.curlCode, static_cast<int>(CURLE_PEER_FAILED_VERIFICATION));
     CHECK(result.certificateProblem);
-    CHECK(contains(result.message, "3dsDL trusts"));
+    CHECK(contains(result.message, "3dsDL 信任"));
 
     settings.url = env("FIXTURE_HTTPS_IP") + "/file/5000";
     settings.caFile = env("FIXTURE_CERT");
     result = net::download(settings, recorder);
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK_EQ(result.curlCode, static_cast<int>(CURLE_PEER_FAILED_VERIFICATION));
-    CHECK(contains(result.message, "different site"));
+    CHECK(contains(result.message, "网站与链接所指网站不同"));
     CHECK(listAll(folder.path()).empty());
 }
 
@@ -617,29 +617,29 @@ TEST("engine: failure messages")
     CHECK(contains(net::describeFailure(CURLE_HTTP_RETURNED_ERROR, 403),
                    "HTTP 403"));
     CHECK(contains(net::describeFailure(CURLE_HTTP_RETURNED_ERROR, 429),
-                   "limiting"));
+                   "限制请求"));
     CHECK(contains(net::describeFailure(CURLE_HTTP_RETURNED_ERROR, 418),
                    "HTTP 418"));
     CHECK(contains(net::describeFailure(CURLE_SSL_CACERT_BADFILE, 0),
-                   "certificate store"));
+                   "证书存储"));
     CHECK(!net::describeFailure(CURLE_BAD_FUNCTION_ARGUMENT, 0).empty());
 
     // The reasons mbedTLS gives on the console.
     const int cert = CURLE_PEER_FAILED_VERIFICATION;
     CHECK(contains(net::describeFailure(cert, 0,
                                         "Cert verify failed: BADCERT_FUTURE"),
-                   "not valid yet"));
+                   "尚未生效"));
     CHECK(contains(net::describeFailure(cert, 0,
                                         "Cert verify failed: BADCERT_EXPIRED"),
-                   "expired"));
+                   "已过期"));
     CHECK(contains(net::describeFailure(cert, 0,
                                         "Cert verify failed: "
                                         "BADCERT_NOT_TRUSTED"),
-                   "3dsDL trusts"));
+                   "3dsDL 信任"));
     CHECK(contains(net::describeFailure(cert, 0,
                                         "Cert verify failed: "
                                         "BADCERT_CN_MISMATCH"),
-                   "different site"));
+                   "网站与链接所指网站不同"));
     CHECK(contains(net::describeFailure(cert, 0, "something else"),
                    "检查时钟"));
 }
@@ -666,7 +666,7 @@ TEST("engine: an address the request refuses is never asked")
     };
     const net::Result result = net::download(value, recorder);
     CHECK(result.outcome == net::Outcome::Failed);
-    CHECK(contains(result.message, "address on this network"));
+    CHECK(contains(result.message, "本地网络"));
     CHECK(!result.resumable);
 
     value.refuse = [](const std::string &, const std::string &) { return false; };
