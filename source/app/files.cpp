@@ -1067,7 +1067,7 @@ void App::browseFiles(const std::string &select)
         const auto hint = [&]() {
             return !marked.empty() ? "已标记 " + std::to_string(marked.size()) + " 项"
                  : !clipboard_.empty()
-                     ? "已" + (clipboardCut_ ? "剪切 " : "复制 ") +
+                     ? std::string("已") + (clipboardCut_ ? "剪切 " : "复制 ") +
                            std::to_string(clipboard_.size()) + " 项"
                      : "";
         };

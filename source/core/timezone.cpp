@@ -112,16 +112,14 @@ std::string describeDrift(int64_t consoleUnixSeconds,
     char buffer[64];
     if (magnitude < 3600) {
         std::snprintf(buffer, sizeof(buffer), "%s %lld 分钟", direction,
-                      static_cast<long long>(magnitude / 60), direction);
+                      static_cast<long long>(magnitude / 60));
     } else if (magnitude < 2 * 86400) {
         std::snprintf(buffer, sizeof(buffer), "%s %lld 小时 %lld 分钟", direction,
                       static_cast<long long>(magnitude / 3600),
-                      static_cast<long long>((magnitude / 60) % 60),
-                      direction);
+                      static_cast<long long>((magnitude / 60) % 60));
     } else {
         std::snprintf(buffer, sizeof(buffer), "%s约 %lld 天", direction,
-                      static_cast<long long>((magnitude + 43200) / 86400),
-                      direction);
+                      static_cast<long long>((magnitude + 43200) / 86400));
     }
     return buffer;
 }
