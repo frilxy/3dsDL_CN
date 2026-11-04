@@ -57,7 +57,8 @@ jobs:
 
   release:
     name: Draft release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # A -cn tag publishes the Chinese test build from zh.yml, not this one.
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-cn')
     needs: [host-tests, build]
     runs-on: ubuntu-24.04
     permissions:
