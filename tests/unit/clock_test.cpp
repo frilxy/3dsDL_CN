@@ -85,13 +85,13 @@ TEST("tz: offsets, zones and guesses")
 TEST("tz: drift descriptions")
 {
     CHECK_EQ(tz::describeDrift(1000, 1030),
-             std::string("误差在一分钟以内"));
+             std::string("correct to within a minute"));
     CHECK_EQ(tz::describeDrift(1000, 1000 + 600),
-             std::string("落后 10 分钟"));
+             std::string("10 minutes behind"));
     CHECK_EQ(tz::describeDrift(1000 + 5 * 3600 + 120, 1000),
-             std::string("超前 5 小时 2 分钟"));
+             std::string("5 hours 2 minutes ahead"));
     CHECK_EQ(tz::describeDrift(0, 365 * 86400LL),
-             std::string("落后约 365 天"));
+             std::string("about 365 days behind"));
 }
 
 TEST("tz: calendar times to seconds")

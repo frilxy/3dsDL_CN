@@ -32,7 +32,7 @@ constexpr int MaxConsecutiveStalls = 5;
 constexpr size_t CameraStackSize = 32 * 1024;
 constexpr u64 NoticeDurationMs = 2500;
 
-constexpr const char *LookingText = "正在查找二维码……";
+constexpr const char *LookingText = "Looking for a QR code...";
 
 const Tex3DS_SubTexture PreviewSubTexture = {
     TextureWidth, TextureHeight, 0.0f, 1.0f, 1.0f, 0.0f};
@@ -46,7 +46,7 @@ C3D_Tex previewTextures[2];
 std::string failureText(const char *operation, Result result)
 {
     char buffer[96];
-    std::snprintf(buffer, sizeof(buffer), "%s 失败（0x%08lX）。", operation,
+    std::snprintf(buffer, sizeof(buffer), "%s failed (0x%08lX).", operation,
                   static_cast<unsigned long>(result));
     return buffer;
 }
@@ -100,7 +100,7 @@ bool Camera::open(std::string &error)
 
     Result result = camInit();
     if (R_FAILED(result)) {
-        error = failureText("正在启动摄像头服务", result);
+        error = failureText("Starting the camera service", result);
         return false;
     }
     initialized_ = true;
@@ -139,14 +139,14 @@ bool Camera::open(std::string &error)
                                                    PORT_CAM1);
     }
     if (R_FAILED(result)) {
-        error = failureText("正在设置摄像头", result);
+        error = failureText("Setting up the camera", result);
         return false;
     }
 
     for (u16 *&buffer : buffers_) {
         buffer = static_cast<u16 *>(linearAlloc(FrameBytes));
         if (buffer == nullptr) {
-            error = "内存不足，无法使用摄像头。";
+            error = "Not enough memory for the camera.";
             return false;
         }
         std::memset(buffer, 0, FrameBytes);
@@ -162,7 +162,7 @@ bool Camera::open(std::string &error)
         result = CAMU_StartCapture(PORT_CAM1);
     }
     if (R_FAILED(result)) {
-        error = failureText("正在启动摄像头", result);
+        error = failureText("Starting the camera", result);
         return false;
     }
 
@@ -174,7 +174,7 @@ bool Camera::open(std::string &error)
                            std::max(0x18, static_cast<int>(priority) - 1), -2,
                            false);
     if (thread_ == nullptr) {
-        error = "无法启动摄像头线程。";
+        error = "Could not start the camera thread.";
         return false;
     }
     return true;
@@ -348,7 +348,7 @@ std::string scan(bool *typeInstead)
     std::string error;
     if (!camera.open(error)) {
         camera.close();
-        ui::message("摄像头不可用", error, ui::Tone::Error);
+        ui::message("Camera unavailable", error, ui::Tone::Error);
         return "";
     }
 
@@ -359,13 +359,15 @@ std::string scan(bool *typeInstead)
             quirc_destroy(decoder);
         }
         camera.close();
-        ui::message("扫描器不可用", "内存不足，无法解码二维码。", ui::Tone::Error);
+        ui::message("Scanner unavailable", "Not enough memory to decode QR "
+                    "codes.", ui::Tone::Error);
         return "";
     }
     if (!createTextures()) {
         quirc_destroy(decoder);
         camera.close();
-        ui::message("扫描器不可用", "内存不足，无法显示摄像头预览。", ui::Tone::Error);
+        ui::message("Scanner unavailable", "Not enough memory for the "
+                    "camera preview.", ui::Tone::Error);
         return "";
     }
 
@@ -391,7 +393,8 @@ std::string scan(bool *typeInstead)
             break;
         }
         if (camera.failed()) {
-            error = "摄像头已停止传送图像。请关闭扫描器后重试。";
+            error = "The camera stopped sending pictures. Close the scanner "
+                    "and try again.";
             break;
         }
 
@@ -414,10 +417,10 @@ std::string scan(bool *typeInstead)
                 payload = text::trim(payload);
                 if (url::isHttpUrl(payload)) {
                     found = payload;
-                    status = "已找到二维码";
+                    status = "QR code found";
                     statusColor = ui::color::Success;
                 } else {
-                    status = "该二维码不包含网页链接。";
+                    status = "That QR code does not hold a web link.";
                     statusColor = ui::color::Warning;
                     noticeUntil = osGetTime() + NoticeDurationMs;
                 }
@@ -444,7 +447,7 @@ std::string scan(bool *typeInstead)
     camera.close();
 
     if (!error.empty()) {
-        ui::message("摄像头错误", error, ui::Tone::Error);
+        ui::message("Camera error", error, ui::Tone::Error);
     }
     return found;
 }

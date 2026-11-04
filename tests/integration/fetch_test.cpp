@@ -59,7 +59,7 @@ TEST("fetch: reports HTTP errors, size limits and untrusted certificates")
     request.maxBytes = 4096;
     result = net::fetch(request);
     CHECK(!result.ok);
-    CHECK(result.message.find("超出预期大小") != std::string::npos);
+    CHECK(result.message.find("larger") != std::string::npos);
 
     request.maxBytes = 5000;
     result = net::fetch(request);

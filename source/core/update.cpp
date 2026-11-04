@@ -183,18 +183,18 @@ bool parseRelease(const std::string &text, Release &out, std::string &error)
     out = Release();
     json::Value root;
     if (!json::parse(text, root, error)) {
-        error = "无法读取版本发布信息。" + error;
+        error = "The release information could not be read. " + error;
         return false;
     }
     if (root.type != json::Type::Object) {
-        error = "返回的数据不是版本发布信息。";
+        error = "The release information was not a release.";
         return false;
     }
     out.tag = root["tag_name"].text();
     if (versionParts(out.tag).empty()) {
-        error = out.tag.empty() ? "此版本发布信息中没有版本号。"
-                                : "版本号“" + out.tag +
-                                      "”不是有效的版本号。";
+        error = out.tag.empty() ? "The release has no version."
+                                : "The release version \"" + out.tag +
+                                      "\" is not a version number.";
         return false;
     }
     out.version = out.tag;

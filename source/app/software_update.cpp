@@ -39,7 +39,7 @@ void drawBadgeIcon(float x, float y, ui::Icon icon, u32 fill)
 // The badge and headline over facts about the installed and newest versions.
 void drawUpdateTop(const updater::Status &status)
 {
-    ui::drawTopChrome("软件更新", ui::Icon::Download,
+    ui::drawTopChrome("Software Update", ui::Icon::Download,
                       ui::color::IconGreen);
     ui::drawPanel();
     const float left = ui::TopPanel.x + 18;
@@ -48,41 +48,41 @@ void drawUpdateTop(const updater::Status &status)
 
     ui::Icon icon = ui::Icon::Warning;
     u32 fill = ui::color::IconOrange;
-    std::string headline = "检查更新失败。";
-    std::vector<ui::Fact> facts = {{"已安装", APP_VERSION}};
+    std::string headline = "Update check failed.";
+    std::vector<ui::Fact> facts = {{"Installed", APP_VERSION}};
     switch (status.state) {
     case updater::State::Available: {
         icon = ui::Icon::AppMark;
         fill = ui::color::Accent;
-        headline = "有可用更新。";
+        headline = "An update is available.";
         const update::Asset *asset =
             update::findAsset(release, updater::assetName());
-        facts.push_back({"新版本",
+        facts.push_back({"New",
                          release.version +
                              (asset != nullptr && asset->size > 0
                                   ? ", " + units::bytes(asset->size)
                                   : ""),
                          ui::color::Good});
         if (!release.published.empty()) {
-            facts.push_back({"发布时间", release.published});
+            facts.push_back({"Released", release.published});
         }
         break;
     }
     case updater::State::UpToDate:
         icon = ui::Icon::Check;
         fill = ui::color::Good;
-        headline = "3dsDL 已是最新版本。";
-        facts.push_back({"最新版本", release.version});
+        headline = "3dsDL is up to date.";
+        facts.push_back({"Newest", release.version});
         if (!release.published.empty()) {
-            facts.push_back({"发布时间", release.published});
+            facts.push_back({"Released", release.published});
         }
         break;
     default:
-        facts.push_back({"错误", status.message.empty() ? "尚未检查。"
+        facts.push_back({"Error", status.message.empty() ? "Not checked yet."
                                                          : status.message});
         // A wrong clock makes every certificate look invalid.
         if (status.certificateProblem) {
-            facts.push_back({"时钟", "请检查“设置 → 主机时钟”",
+            facts.push_back({"Clock", "Check Settings, Console Clock",
                              ui::color::Badge});
         }
         break;
@@ -119,9 +119,9 @@ void App::pollUpdate()
     if (updateAvailable_ && !updateNoticeShown_) {
         updateNoticeShown_ = true;
         ui::Notice notice;
-        notice.title = "有可用更新";
-        notice.text = "3dsDL " + status.release.version +
-                      "，可在“设置”中获取。";
+        notice.title = "Update Available";
+        notice.text = "Get 3dsDL " + status.release.version +
+                      " from Settings.";
         ui::notify(notice);
     }
 }
@@ -131,7 +131,7 @@ void App::softwareUpdateScreen()
     updater::Status status = updater::status();
     const auto check = [&]() {
         tasks::busy(
-            "软件更新", "正在检查更新……",
+            "Software Update", "Checking for updates...",
             [&](tasks::Busy &busy) { status = updater::checkNow(&busy.cancel); },
             true);
         updateGeneration_ = updater::generation();
@@ -150,7 +150,7 @@ void App::softwareUpdateScreen()
         const bool haveRelease = available ||
                                  status.state == updater::State::UpToDate;
         ui::ScreenSpec spec;
-        spec.back = "返回";
+        spec.back = "Back";
         const auto add = [&](ui::Rect rect, const std::string &label,
                              ui::Icon icon, u32 iconColor, bool enabled) {
             ui::Control control;
@@ -164,22 +164,22 @@ void App::softwareUpdateScreen()
         };
         // Centred between the top and the tabs.
         if (available) {
-            add({30, 40, 260, 44}, "更新至 " + status.release.version,
+            add({30, 40, 260, 44}, "Update to " + status.release.version,
                 ui::Icon::Download, ui::color::IconGreen, true);
             spec.controls.back().scale = ui::type::Button;
         } else {
-            add({30, 40, 260, 44}, "检查更新", ui::Icon::Globe,
+            add({30, 40, 260, 44}, "Check for Updates", ui::Icon::Globe,
                 ui::color::IconTeal, true);
             spec.controls.back().scale = ui::type::Button;
         }
         add({30, 94, 260, 32},
-            haveRelease ? "新版变化：" + status.release.version
-                        : "新版变化",
+            haveRelease ? "What's New in " + status.release.version
+                        : "What's New",
             ui::Icon::Text, ui::color::IconGrey,
             haveRelease && !status.release.notes.empty());
         add({30, 136, 260, 32},
-            std::string("启动时检查：") +
-                (settings_.checkForUpdates ? "开启" : "关闭"),
+            std::string("Check at Startup: ") +
+                (settings_.checkForUpdates ? "On" : "Off"),
             ui::Icon::Clock, ui::color::IconBlue, true);
         spec.drawTop = [&]() { drawUpdateTop(status); };
 
@@ -230,7 +230,7 @@ void App::showReleaseNotes(const update::Release &release)
     }
     const float viewport = ui::ScreenHeight - Top - 4;
     const float content = lines.size() * pitch;
-    const std::string title = "新版变化：" + release.version;
+    const std::string title = "What's New in " + release.version;
 
     ui::Scroller scroller;
     bool backPressed = false;
@@ -297,7 +297,7 @@ void App::showReleaseNotes(const update::Release &release)
         }
 
         ui::beginBottom();
-        ui::drawTab(ui::Tab::Left, "返回", "B",
+        ui::drawTab(ui::Tab::Left, "Back", "B",
                     backPressed && (input.held & KEY_TOUCH));
         ui::endFrame();
     }
@@ -308,15 +308,16 @@ void App::installUpdate(const update::Release &release)
     const std::string name = updater::assetName();
     const update::Asset *asset = update::findAsset(release, name);
     if (asset == nullptr) {
-        ui::message("更新不可用",
-                    "" + release.version + " 版本未提供 " + name +
-                        " 文件，无法更新。",
+        ui::message("Update Not Available",
+                    "The " + release.version + " release has no " + name +
+                        " file to update from.",
                     ui::Tone::Error);
         return;
     }
     if (platform::wifiStatus() == platform::Wifi::Disconnected) {
-        ui::message("未连接",
-                    "更新需要联网。请开启无线通信后重试。",
+        ui::message("Not Connected",
+                    "Updating needs the internet. Turn wireless "
+                    "communication on and try again.",
                     ui::Tone::Warning);
         return;
     }
@@ -324,7 +325,7 @@ void App::installUpdate(const update::Release &release)
     std::string listing;
     std::string error;
     bool listed = false;
-    if (!tasks::busy("软件更新", "正在获取此版本的校验和……",
+    if (!tasks::busy("Software Update", "Getting the release's checksums...",
                      [&](tasks::Busy &busy) {
                          listed = updater::fetchChecksums(release, listing,
                                                           error, &busy.cancel);
@@ -335,8 +336,8 @@ void App::installUpdate(const update::Release &release)
     const std::string expected =
         listed ? update::checksumFor(listing, name) : "";
     if (expected.empty()) {
-        ui::message("未安装更新",
-                    listed ? "此版本的校验和文件未列出 " +
+        ui::message("Update Not Installed",
+                    listed ? "The release's checksum file does not list " +
                                  name + "."
                            : error,
                     ui::Tone::Error);
@@ -350,8 +351,8 @@ void App::installUpdate(const update::Release &release)
                                    : updater::homebrewPath();
     const std::string folder = folderOf(target);
     if (!fs::makeDirectories(folder)) {
-        ui::message("未安装更新",
-                    "无法创建：" + folder + ".", ui::Tone::Error);
+        ui::message("Update Not Installed",
+                    "Could not create " + folder + ".", ui::Tone::Error);
         return;
     }
 
@@ -371,21 +372,22 @@ void App::installUpdate(const update::Release &release)
         return;
     }
     if (result.outcome != net::Outcome::Completed) {
-        ui::message("无法下载更新。", result.message,
+        ui::message("The update could not be downloaded.", result.message,
                     ui::Tone::Error, result.detail);
         return;
     }
 
     std::string actual;
-    tasks::busy("软件更新", "正在检查下载文件……",
+    tasks::busy("Software Update", "Checking the download...",
                 [&]() { actual = sha256::ofFile(result.partPath); });
     if (actual != expected) {
         fs::removeFile(result.partPath);
-        ui::message("未安装更新",
-                    "下载文件与发布版本的校验和不符，未作任何更改。请重试。",
+        ui::message("Update Not Installed",
+                    "The download did not match the release's checksum, so "
+                    "nothing was changed. Try again.",
                     ui::Tone::Error,
-                    "预期为 " + expected + "，实际为 " +
-                        (actual.empty() ? "无法读取的文件" : actual) + ".");
+                    "Expected " + expected + ", got " +
+                        (actual.empty() ? "an unreadable file" : actual) + ".");
         return;
     }
 
@@ -394,7 +396,7 @@ void App::installUpdate(const update::Release &release)
             finalize::commit(result.partPath, folder, name, true, platform::now());
         if (!placed.ok) {
             fs::removeFile(placed.path);
-            ui::message("未安装更新", placed.message, ui::Tone::Error);
+            ui::message("Update Not Installed", placed.message, ui::Tone::Error);
             return;
         }
         cia::Info info;
@@ -403,8 +405,9 @@ void App::installUpdate(const update::Release &release)
         if (!cia::readInfo(placed.path, info, error) ||
             (running != 0 && info.titleId != running)) {
             fs::removeFile(placed.path);
-            ui::message("未安装更新",
-                        "下载的 CIA 不是 3dsDL，因此未安装。",
+            ui::message("Update Not Installed",
+                        "The downloaded CIA is not 3dsDL, so it was not "
+                        "installed.",
                         ui::Tone::Error, error);
             return;
         }
@@ -414,7 +417,7 @@ void App::installUpdate(const update::Release &release)
         // has just been replaced.
         if (!installer::available()) {
             fs::removeFile(placed.path);
-            ui::message("未安装更新", installer::unavailableReason(),
+            ui::message("Update Not Installed", installer::unavailableReason(),
                         ui::Tone::Error);
             return;
         }
@@ -422,12 +425,12 @@ void App::installUpdate(const update::Release &release)
         const int64_t free = platform::sdFreeBytes();
         if (needed > 0 && free >= 0 && needed > free) {
             fs::removeFile(placed.path);
-            ui::message("未安装更新",
-                        "此次更新需要 " +
+            ui::message("Update Not Installed",
+                        "The update needs " +
                             units::bytes(static_cast<uint64_t>(needed)) +
-                            " 的 SD 卡空间，而目前仅有 " +
+                            " on the SD card and " +
                             units::bytes(static_cast<uint64_t>(free)) +
-                            " 可用。",
+                            " is free.",
                         ui::Tone::Error);
             return;
         }
@@ -437,7 +440,7 @@ void App::installUpdate(const update::Release &release)
         fs::removeFile(placed.path);
         if (installed.outcome != installer::Outcome::Installed) {
             if (installed.outcome == installer::Outcome::Failed) {
-                ui::message("未安装更新", installed.message,
+                ui::message("Update Not Installed", installed.message,
                             ui::Tone::Error);
             }
             return;
@@ -445,10 +448,10 @@ void App::installUpdate(const update::Release &release)
         updateAvailable_ = false;
 
         ui::Dialog dialog;
-        dialog.header = "软件更新";
-        dialog.title = "3dsDL 已更新至 " + release.version + ".";
+        dialog.header = "Software Update";
+        dialog.title = "3dsDL has been updated to " + release.version + ".";
         dialog.tone = ui::Tone::Success;
-        dialog.buttons = {"重新启动"};
+        dialog.buttons = {"Restart"};
         ui::choose(dialog);
         // Closing with the chainloader set starts the new version.
         aptSetChainloaderToSelf();
@@ -468,19 +471,19 @@ void App::installUpdate(const update::Release &release)
             fs::removeFile(placed.path);
         }
         romfsInit();
-        ui::message("未安装更新",
+        ui::message("Update Not Installed",
                     placed.message.empty()
-                        ? "无法使用新版本替换 " +
+                        ? "The new version could not be put in place of " +
                               target + "."
                         : placed.message,
                     ui::Tone::Error);
         return;
     }
     ui::Dialog dialog;
-    dialog.header = "软件更新";
-    dialog.title = "3dsDL 已更新至 " + release.version + ".";
+    dialog.header = "Software Update";
+    dialog.title = "3dsDL has been updated to " + release.version + ".";
     dialog.tone = ui::Tone::Success;
-    dialog.buttons = {"关闭 3dsDL"};
+    dialog.buttons = {"Close 3dsDL"};
     ui::choose(dialog);
     quit_ = true;
 }

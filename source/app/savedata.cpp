@@ -133,14 +133,14 @@ bool copyOut(Context &context, const std::string &path,
         return true;
     }
     if (R_FAILED(opened)) {
-        return fail(context, "无法读取 " + path + "（" + describe(opened) + "）。");
+        return fail(context, "Could not read " + path + " (" + describe(opened) + ").");
     }
     u64 size = 0;
     FSFILE_GetSize(file, &size);
     FILE *out = std::fopen(destination.c_str(), "wb");
     if (out == nullptr) {
         FSFILE_Close(file);
-        return fail(context, "无法写入 " + destination + "。");
+        return fail(context, "Could not write " + destination + ".");
     }
     u64 offset = 0;
     u32 chunk = ChunkSize;
@@ -160,11 +160,11 @@ bool copyOut(Context &context, const std::string &path,
             continue;
         }
         if (R_FAILED(code) || read == 0) {
-            ok = fail(context, "无法读取 " + path + "（" + describe(code) + "）。");
+            ok = fail(context, "Could not read " + path + " (" + describe(code) + ").");
             break;
         }
         if (std::fwrite(context.buffer.get(), 1, read, out) != read) {
-            ok = fail(context, "SD 卡无法写入 " + destination + "。");
+            ok = fail(context, "The SD card could not take " + destination + ".");
             break;
         }
         offset += read;
@@ -172,7 +172,7 @@ bool copyOut(Context &context, const std::string &path,
     }
     FSFILE_Close(file);
     if (std::fclose(out) != 0) {
-        ok = fail(context, "SD 卡无法写入 " + destination + "。");
+        ok = fail(context, "The SD card could not take " + destination + ".");
     }
     if (ok) {
         ++context.result.files;
@@ -191,13 +191,13 @@ bool copyTreeOut(Context &context, const std::string &path,
     const ::Result code =
         FSUSER_OpenDirectory(&directory, context.archive, folder.get());
     if (R_FAILED(code)) {
-        return fail(context, "无法打开 " + path + "（" + describe(code) + "）。");
+        return fail(context, "Could not open " + path + " (" + describe(code) + ").");
     }
     std::vector<FS_DirectoryEntry> entries(16);
     bool ok = true;
     while (ok) {
         if (context.progress.cancel) {
-            ok = fail(context, "已停止。");
+            ok = fail(context, "Stopped.");
             break;
         }
         u32 count = 0;
@@ -216,7 +216,7 @@ bool copyTreeOut(Context &context, const std::string &path,
                 const std::string inner = destination + name + "/";
                 ok = (mkdir(inner.c_str(), 0777) == 0 || fs::directoryExists(inner))
                          ? copyTreeOut(context, path + name + "/", inner)
-                         : fail(context, "无法创建 " + inner + "。");
+                         : fail(context, "Could not create " + inner + ".");
             } else {
                 ok = copyOut(context, path + name, destination + name);
             }
@@ -242,7 +242,7 @@ bool collect(const std::string &root, const std::string &relative,
     const std::vector<fs::Entry> entries =
         fs::listEntries(root + relative, &readable, true, false);
     if (!readable) {
-        error = "无法读取 " + root + relative + "。";
+        error = "Could not read " + root + relative + ".";
         return false;
     }
     for (const fs::Entry &entry : entries) {
@@ -254,7 +254,7 @@ bool collect(const std::string &root, const std::string &relative,
         item.folder = entry.folder;
         item.size = entry.size > 0 ? static_cast<uint64_t>(entry.size) : 0;
         if (ArchivePath(item.path).length() > MaxPathUnits) {
-            error = item.path + " 的路径对于存档数据来说过长。";
+            error = item.path + " has a path too long for save data.";
             return false;
         }
         items.push_back(item);
@@ -308,13 +308,13 @@ bool copyIn(Context &context, const std::string &source, const Item &item)
     const ::Result opened =
         FSUSER_OpenFile(&file, context.archive, path.get(), FS_OPEN_WRITE, 0);
     if (R_FAILED(opened)) {
-        return fail(context, "无法写入 " + item.path + "（" +
-                                 describe(opened) + "）。");
+        return fail(context, "Could not write " + item.path + " (" +
+                                 describe(opened) + ").");
     }
     FILE *in = std::fopen(source.c_str(), "rb");
     if (in == nullptr) {
         FSFILE_Close(file);
-        return fail(context, "无法读取 " + source + "。");
+        return fail(context, "Could not read " + source + ".");
     }
     bool ok = true;
     u64 offset = 0;
@@ -328,8 +328,8 @@ bool copyIn(Context &context, const std::string &source, const Item &item)
                                            context.buffer.get(),
                                            static_cast<u32>(read), 0);
         if (R_FAILED(code) || written != read) {
-            ok = fail(context, "无法写入 " + item.path + "（" +
-                                   describe(code) + "）。");
+            ok = fail(context, "Could not write " + item.path + " (" +
+                                   describe(code) + ").");
             break;
         }
         offset += read;
@@ -393,10 +393,11 @@ bool exists(const Target &target)
 std::string unsupportedReason(const titles::Title &title)
 {
     if (cia::kind(title.id) == cia::Kind::DsiWare) {
-        return "DSiWare 存档位于 3dsDL 尚不支持访问的位置。可以使用 Checkpoint 备份。";
+        return "DSiWare saves live in a different place that 3dsDL does not "
+               "open yet. Checkpoint can back them up.";
     }
     if (saves::isExcluded(title.id)) {
-        return "此软件没有自己的存档。";
+        return "This title has no save data of its own.";
     }
     return "";
 }
@@ -418,21 +419,21 @@ Result backup(const Target &target, const std::string &name, Progress &progress)
     Context context {target, 0, progress, nullptr, Result()};
     context.buffer.reset(new (std::nothrow) uint8_t[ChunkSize]);
     if (!context.buffer) {
-        context.result.message = "内存不足。";
+        context.result.message = "Not enough memory.";
         return context.result;
     }
     Archive archive;
     const ::Result code = archive.open(target);
     if (R_FAILED(code)) {
-        context.result.message = "无法打开数据（" +
-                                 describe(code) + "）。";
+        context.result.message = "The data could not be opened (" +
+                                 describe(code) + ").";
         return context.result;
     }
     context.archive = archive.get();
 
     const std::string destination = target.folder + name;
     if (!fs::makeDirectories(target.folder)) {
-        context.result.message = "无法创建 " + target.folder + "。";
+        context.result.message = "Could not create " + target.folder + ".";
         return context.result;
     }
     if (fileops::exists(destination)) {
@@ -444,7 +445,7 @@ Result backup(const Target &target, const std::string &name, Progress &progress)
         fileops::remove(destination, quiet, done, 0);
     }
     if (!fs::makeDirectories(destination + "/")) {
-        context.result.message = "无法创建 " + destination + "。";
+        context.result.message = "Could not create " + destination + ".";
         return context.result;
     }
     if (!copyTreeOut(context, "/", destination + "/")) {
@@ -475,19 +476,19 @@ Result restore(const Target &target, const std::string &name, Progress &progress
     const bool anyFile = std::any_of(items.begin(), items.end(),
                                      [](const Item &item) { return !item.folder; });
     if (!anyFile) {
-        context.result.message = "此备份中没有文件。";
+        context.result.message = "This backup has no files in it.";
         return context.result;
     }
     context.buffer.reset(new (std::nothrow) uint8_t[ChunkSize]);
     if (!context.buffer) {
-        context.result.message = "内存不足。";
+        context.result.message = "Not enough memory.";
         return context.result;
     }
     Archive archive;
     ::Result code = archive.open(target);
     if (R_FAILED(code)) {
-        context.result.message = "无法打开数据（" +
-                                 describe(code) + "）。";
+        context.result.message = "The data could not be opened (" +
+                                 describe(code) + ").";
         return context.result;
     }
     context.archive = archive.get();
@@ -497,8 +498,8 @@ Result restore(const Target &target, const std::string &name, Progress &progress
     if (target.kind == Kind::Save) {
         code = FSUSER_DeleteDirectoryRecursively(context.archive, root.get());
         if (R_FAILED(code)) {
-            context.result.message = "无法清除旧存档（" +
-                                     describe(code) + "）。";
+            context.result.message = "The old save could not be cleared (" +
+                                     describe(code) + ").";
             return context.result;
         }
     } else {
@@ -532,7 +533,7 @@ Result restore(const Target &target, const std::string &name, Progress &progress
 
     for (const Item &item : items) {
         if (context.progress.cancel) {
-            fail(context, "已停止。");
+            fail(context, "Stopped.");
             break;
         }
         if (item.folder) {
@@ -556,8 +557,8 @@ Result restore(const Target &target, const std::string &name, Progress &progress
                                      ARCHIVE_ACTION_COMMIT_SAVE_DATA, nullptr, 0,
                                      nullptr, 0);
         if (R_FAILED(code)) {
-            context.result.message = "无法提交存档（" +
-                                     describe(code) + "）。";
+            context.result.message = "The save could not be committed (" +
+                                     describe(code) + ").";
             return context.result;
         }
         // Games that check their save against a secure value would call a
@@ -570,8 +571,10 @@ Result restore(const Target &target, const std::string &name, Progress &progress
         code = FSUSER_ControlSecureSave(SECURESAVE_ACTION_DELETE, &secureValue,
                                         sizeof(secureValue), &existed, 1);
         if (R_FAILED(code)) {
-            context.result.message = "存档已恢复，但无法清除其安全值（" +
-                                     describe(code) + "）。游戏可能会将其判定为损坏。";
+            context.result.message = "The save was restored, but its secure "
+                                     "value could not be cleared (" +
+                                     describe(code) + "). The game may call "
+                                     "it corrupted.";
             return context.result;
         }
     }
@@ -598,7 +601,7 @@ bool mount(const Target &target, const std::string &device, std::string &error)
                             {PATH_BINARY, sizeof(path), path}, device.c_str());
     }
     if (R_FAILED(code)) {
-        error = "无法打开数据（" + describe(code) + "）。";
+        error = "The data could not be opened (" + describe(code) + ").";
         return false;
     }
     return true;

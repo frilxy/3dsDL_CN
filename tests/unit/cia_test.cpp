@@ -165,7 +165,7 @@ TEST("cia: reads a CIA as it streams in")
     const uint8_t *bytes = reinterpret_cast<const uint8_t *>(data.data());
     CHECK(outOfOrder.feed(0, bytes, 100, error));
     CHECK(!outOfOrder.feed(200, bytes + 200, 100, error));
-    CHECK(error.find("顺序") != std::string::npos);
+    CHECK(error.find("order") != std::string::npos);
 
     cia::Stream notCia;
     const std::string junk(0x3000, 'x');
@@ -205,7 +205,7 @@ TEST("cia: rejects files that are not complete CIAs")
     CHECK(writeText(temp.path() + "text.cia", "hello, this is not a CIA"));
     CHECK(!cia::isCiaFile(temp.path() + "text.cia"));
     CHECK(!cia::readInfo(temp.path() + "text.cia", info, error));
-    CHECK_EQ(error, std::string("这不是 CIA 文件。"));
+    CHECK_EQ(error, std::string("This is not a CIA file."));
 
     const std::string whole = makeCia();
     CHECK(writeText(temp.path() + "cut.cia", whole.substr(0, 0x3000)));
@@ -266,7 +266,7 @@ TEST("cia: reads a CIA compressed as a .zcia")
 
     std::atomic<bool> stop {true};
     CHECK(!cia::readInfo(other, info, error, false, &stop));
-    CHECK_EQ(error, std::string("已停止。"));
+    CHECK_EQ(error, std::string("Stopped."));
 }
 
 TEST("cia: a .zcia must hold a whole CIA")
@@ -280,13 +280,13 @@ TEST("cia: a .zcia must hold a whole CIA")
     CHECK(writeText(temp.path() + "game.zcci", makeZ3ds(makeCia(), rom)));
     CHECK(!cia::isCiaFile(temp.path() + "game.zcci"));
     CHECK(!cia::readInfo(temp.path() + "game.zcci", info, error));
-    CHECK_EQ(error, std::string("此压缩文件中不包含 CIA。"));
+    CHECK_EQ(error, std::string("This compressed file does not hold a CIA."));
 
     const std::string whole = makeZ3ds(makeCia());
     CHECK(writeText(temp.path() + "cut.zcia", whole.substr(0, whole.size() / 2)));
     CHECK(cia::isCiaFile(temp.path() + "cut.zcia"));
     CHECK(!cia::readInfo(temp.path() + "cut.zcia", info, error));
-    CHECK(error.find("不完整") != std::string::npos);
+    CHECK(error.find("incomplete") != std::string::npos);
 
     // A CIA that was cut short before it was compressed.
     CHECK(writeText(temp.path() + "short.zcia",

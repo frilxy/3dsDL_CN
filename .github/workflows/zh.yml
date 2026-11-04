@@ -1,0 +1,46 @@
+name: Chinese build
+
+# The source in this repository is upstream's own; zh/zh.tsv is applied here,
+# so following a new upstream release is a merge and one script run.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Catalog applies cleanly
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply zh/zh.tsv
+        run: python3 scripts/zh/apply.py --check
+
+  build:
+    name: 3DSX and CIA (zh)
+    runs-on: ubuntu-24.04
+    needs: [catalog]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply zh/zh.tsv
+        run: python3 scripts/zh/apply.py
+
+      - name: Rebuild the page editor
+        run: ./scripts/make-editor.sh
+
+      - name: Build with the pinned toolchain
+        run: ./scripts/build.sh
+        env:
+          THREEDSDL_BUILD_JOBS: 4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 3dsDL-zh-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error

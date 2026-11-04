@@ -108,41 +108,43 @@ bool setConsoleClock(int64_t localUnixMilliseconds, std::string &error)
         char code[16];
         std::snprintf(code, sizeof(code), "0x%08lX",
                       static_cast<unsigned long>(result));
-        error = std::string(step) + " 被拒绝（" + code +
-                "）。请尝试 CIA 版 3dsDL，或通过 Rosalina 设置时钟：按 L + 下方向键 + Select，打开“杂项选项”（Miscellaneous options），然后选择“通过 NTP 更新时间和日期”（Update time and date via NTP）。";
+        error = std::string(step) + " was refused (" + code +
+                "). Try the CIA build of 3dsDL, or set the clock from "
+                "Rosalina: press L + Down + Select, open Miscellaneous "
+                "options and choose \"Update time and date via NTP\".";
     };
 
     Result result = ptmSysmInit();
     if (R_FAILED(result)) {
-        explain("访问时钟服务", result);
+        explain("Access to the clock service", result);
         return false;
     }
     result = ptmSetsInit();
     if (R_FAILED(result)) {
         ptmSysmExit();
-        explain("访问时钟服务", result);
+        explain("Access to the clock service", result);
         return false;
     }
     result = cfguInit();
     if (R_FAILED(result)) {
         ptmSetsExit();
         ptmSysmExit();
-        explain("访问系统设置", result);
+        explain("Access to the system settings", result);
         return false;
     }
 
     const s64 msY2k = localUnixMilliseconds - tz::UnixToY2kMs;
     result = PTMSYSM_SetUserTime(msY2k);
     if (R_FAILED(result)) {
-        explain("设置时间", result);
+        explain("Setting the time", result);
     } else {
         result = PTMSETS_SetSystemTime(msY2k);
         if (R_FAILED(result)) {
-            explain("设置时间", result);
+            explain("Setting the time", result);
         } else {
             result = CFG_UpdateConfigSavegame();
             if (R_FAILED(result)) {
-                explain("保存系统设置", result);
+                explain("Saving the system settings", result);
             }
         }
     }
@@ -162,9 +164,9 @@ bool keyboard(KeyboardKind kind, const std::string &hint,
     swkbdInit(&state, SWKBD_TYPE_NORMAL, 2,
               kind == KeyboardKind::Name ? 120 : MaxCharacters);
     swkbdSetHintText(&state, hint.c_str());
-    swkbdSetButton(&state, SWKBD_BUTTON_LEFT, "取消", false);
+    swkbdSetButton(&state, SWKBD_BUTTON_LEFT, "Cancel", false);
     swkbdSetButton(&state, SWKBD_BUTTON_RIGHT,
-                   kind == KeyboardKind::Url ? "下载" : "确定", true);
+                   kind == KeyboardKind::Url ? "Download" : "OK", true);
     if (kind == KeyboardKind::Text) {
         swkbdSetValidation(&state, SWKBD_ANYTHING, 0, 0);
         swkbdSetFeatures(&state, SWKBD_DARKEN_TOP_SCREEN | SWKBD_MULTILINE);

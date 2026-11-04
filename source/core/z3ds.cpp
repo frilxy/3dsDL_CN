@@ -31,9 +31,10 @@ constexpr size_t FirstInputSize = 32 * 1024;
 constexpr size_t InputSize = 256 * 1024;
 constexpr size_t ScratchSize = 128 * 1024;
 
-const char *const Damaged = "压缩文件已损坏。";
+const char *const Damaged = "The compressed file is damaged.";
 const char *const Incomplete =
-    "压缩文件不完整，可能尚未下载完成。";
+    "The compressed file is incomplete. It may not have finished "
+    "downloading.";
 
 uint16_t le16(const uint8_t *data)
 {
@@ -59,7 +60,7 @@ std::string describe(size_t code)
     switch (ZSTD_getErrorCode(code)) {
     case ZSTD_error_memory_allocation:
     case ZSTD_error_frameParameter_windowTooLarge:
-        return "内存不足，无法解压此文件。";
+        return "There is not enough memory to decompress this file.";
     default:
         return Damaged;
     }
@@ -145,7 +146,7 @@ bool Reader::open(const Source &source, uint64_t fileSize, std::string &error)
     uint8_t raw[HeaderSize];
     if (fileSize < HeaderSize || !source_(0, raw, sizeof(raw)) ||
         !parseHeader(raw, sizeof(raw), header_)) {
-        error = "这不是压缩的 3DS 文件。";
+        error = "This is not a compressed 3DS file.";
         return false;
     }
     if (header_.dataOffset > fileSize ||
@@ -162,13 +163,13 @@ bool Reader::open(const Source &source, uint64_t fileSize, std::string &error)
     metadata_.resize(header_.metadataSize);
     if (!metadata_.empty() &&
         !source_(header_.metadataOffset, metadata_.data(), metadata_.size())) {
-        error = "无法读取压缩文件。";
+        error = "The compressed file could not be read.";
         return false;
     }
 
     uint8_t footer[FooterSize];
     if (!source_(end - FooterSize, footer, sizeof(footer))) {
-        error = "无法读取压缩文件。";
+        error = "The compressed file could not be read.";
         return false;
     }
     const uint32_t frames = le32(footer);
@@ -191,7 +192,7 @@ bool Reader::open(const Source &source, uint64_t fileSize, std::string &error)
 
     std::vector<uint8_t> table(static_cast<size_t>(tableSize - FooterSize));
     if (!source_(end - tableSize, table.data(), table.size())) {
-        error = "无法读取压缩文件。";
+        error = "The compressed file could not be read.";
         return false;
     }
     starts_.resize(frames);
@@ -217,7 +218,7 @@ bool Reader::open(const Source &source, uint64_t fileSize, std::string &error)
     context_ = newContext();
     input_.resize(InputSize);
     if (context_ == nullptr) {
-        error = "内存不足，无法解压此文件。";
+        error = "There is not enough memory to decompress this file.";
         return false;
     }
     positioned_ = false;
@@ -293,7 +294,7 @@ bool Reader::decode(uint8_t *out, size_t room, size_t &produced,
             jumped_ ? FirstInputSize : input_.size(), end_ - next_));
         jumped_ = false;
         if (!source_(next_, input_.data(), wanted)) {
-            error = "无法读取压缩文件。";
+            error = "The compressed file could not be read.";
             return false;
         }
         next_ += wanted;
@@ -315,7 +316,7 @@ bool Reader::read(uint64_t offset, void *buffer, size_t size,
     uint8_t *out = static_cast<uint8_t *>(buffer);
     while (size > 0) {
         if (stop_ != nullptr && stop_->load()) {
-            error = "已停止。";
+            error = "Stopped.";
             return false;
         }
         const size_t frame = static_cast<size_t>(
@@ -376,14 +377,14 @@ bool Stream::feed(const uint8_t *data, size_t size,
                 return true;
             }
             if (!parseHeader(head_.data(), head_.size(), header_)) {
-                error = "这不是压缩的 3DS 文件。";
+                error = "This is not a compressed 3DS file.";
                 return false;
             }
             haveHeader_ = true;
             context_ = newContext();
             output_.resize(ZSTD_DStreamOutSize());
             if (context_ == nullptr) {
-                error = "内存不足，无法解压此文件。";
+                error = "There is not enough memory to decompress this file.";
                 return false;
             }
             continue;

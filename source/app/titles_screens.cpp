@@ -36,13 +36,13 @@ const char *placeName(titles::Place place)
 {
     switch (place) {
     case titles::Place::SystemMemory:
-        return "系统存储";
+        return "system memory";
     case titles::Place::GameCard:
-        return "游戏卡带";
+        return "game card";
     case titles::Place::SdCard:
         break;
     }
-    return "SD 卡";
+    return "SD card";
 }
 
 ui::Icon iconFor(uint64_t titleId)
@@ -88,9 +88,9 @@ void drawTitleTop(const std::string &header, ui::Icon headerIcon,
     ui::drawMarquee(second, left + 60, top + 30, ui::type::Small,
                     ui::color::InkSoft, 280);
     float y = top + 60;
-    y = ui::drawTagRow(left, y, 76, "软件 ID", cia::titleIdText(title.id));
-    y = ui::drawTagRow(left, y, 76, "版本", screens::titleVersion(title.id, title.version));
-    ui::drawTagRow(left, y, 76, "大小",
+    y = ui::drawTagRow(left, y, 76, "Title ID", cia::titleIdText(title.id));
+    y = ui::drawTagRow(left, y, 76, "Version", screens::titleVersion(title.id, title.version));
+    ui::drawTagRow(left, y, 76, "Size",
                    units::bytes(title.size) + ", " + placeName(title.place));
 }
 
@@ -102,7 +102,7 @@ bool confirmDanger(const std::string &header, const std::string &title,
     dialog.header = header;
     dialog.title = title;
     dialog.tone = ui::Tone::Warning;
-    dialog.buttons = {button, "取消"};
+    dialog.buttons = {button, "Cancel"};
     dialog.dangerous = 0;
     dialog.initial = 1;
     dialog.cancelButton = 1;
@@ -151,20 +151,20 @@ bool App::reloadLibrary()
            !libraryLoader_.failed(error)) {
         ui::readInput();
         ui::BusyView view;
-        view.header = "软件管理";
-        view.title = "正在读取已安装的软件……";
+        view.header = "Titles";
+        view.title = "Reading the installed software...";
         const uint64_t total = libraryLoader_.total();
         if (total > 0) {
             view.progress = true;
             view.fraction = static_cast<float>(libraryLoader_.done()) / total;
-            view.amount = std::to_string(libraryLoader_.done()) + " / " +
+            view.amount = std::to_string(libraryLoader_.done()) + " of " +
                           std::to_string(total);
         }
         ui::drawBusy(view); // its frame hook takes what arrived
         gspWaitForVBlank();
     }
     if (!library_.complete && libraryLoader_.failed(error)) {
-        ui::message("软件列表不可用", error, ui::Tone::Error);
+        ui::message("Titles Unavailable", error, ui::Tone::Error);
     }
     return library_.complete;
 }
@@ -205,7 +205,7 @@ void App::titlesScreen()
         count();
 
         ui::ScreenSpec spec;
-        spec.back = "返回";
+        spec.back = "Back";
         const auto add = [&](ui::Rect rect, const char *label, ui::Icon icon,
                              u32 iconColor, bool tile) {
             ui::Control control;
@@ -218,19 +218,19 @@ void App::titlesScreen()
             spec.controls.push_back(control);
         };
         // Three narrow bars: words only, so they fit without scrolling.
-        add({16, 6, 92, 26}, "清理", ui::Icon::None, 0, false);
+        add({16, 6, 92, 26}, "Clean Up", ui::Icon::None, 0, false);
         spec.controls.back().scale = ui::type::Small;
-        add({114, 6, 92, 26}, "票据", ui::Icon::None, 0, false);
+        add({114, 6, 92, 26}, "Tickets", ui::Icon::None, 0, false);
         spec.controls.back().scale = ui::type::Small;
-        add({212, 6, 92, 26}, "种子", ui::Icon::None, 0, false);
+        add({212, 6, 92, 26}, "Seeds", ui::Icon::None, 0, false);
         spec.controls.back().scale = ui::type::Small;
-        add({16, 42, 140, 78}, "软件", ui::Icon::GameCard,
+        add({16, 42, 140, 78}, "Software", ui::Icon::GameCard,
             ui::color::IconBlue, true);
-        add({164, 42, 140, 78}, "更新与 DLC", ui::Icon::Download,
+        add({164, 42, 140, 78}, "Updates and DLC", ui::Icon::Download,
             ui::color::IconGreen, true);
-        add({16, 127, 140, 76}, "存档", ui::Icon::Chip,
+        add({16, 127, 140, 76}, "Save Data", ui::Icon::Chip,
             ui::color::IconTeal, true);
-        add({164, 127, 140, 76}, "额外数据", ui::Icon::Folder,
+        add({164, 127, 140, 76}, "Extra Data", ui::Icon::Folder,
             ui::color::IconOrange, true);
         // The title lists and Save Data fill in while the titles are read;
         // the rest needs all of them first.
@@ -250,50 +250,50 @@ void App::titlesScreen()
         };
         spec.update();
         spec.drawTop = [&]() {
-            ui::drawTopChrome("软件管理", ui::Icon::GameCard, ui::color::IconBlue);
+            ui::drawTopChrome("Titles", ui::Icon::GameCard, ui::color::IconBlue);
             ui::drawPanel();
             std::vector<ui::Fact> facts;
             if (failed) {
-                facts.push_back({"无法读取", error, ui::color::Bad});
+                facts.push_back({"Not read", error, ui::color::Bad});
             } else if (!library_.complete) {
-                facts.push_back({"正在读取",
-                                 std::to_string(libraryLoader_.done()) + " / " +
+                facts.push_back({"Reading",
+                                 std::to_string(libraryLoader_.done()) + " of " +
                                      std::to_string(libraryLoader_.total()),
                                  ui::color::Badge});
             }
             switch (focus) {
             case 0:
-                facts.push_back({"未完成",
+                facts.push_back({"Unfinished",
                                  plural(library_.pending.size(), "install")});
-                facts.push_back({"未使用", plural(unused, "ticket")});
+                facts.push_back({"Unused", plural(unused, "ticket")});
                 break;
             case 1:
                 facts.push_back(
-                    {"票据", std::to_string(library_.tickets.size())});
-                facts.push_back({"未使用", std::to_string(unused)});
+                    {"Tickets", std::to_string(library_.tickets.size())});
+                facts.push_back({"Unused", std::to_string(unused)});
                 break;
             case 2:
-                facts.push_back({"查找位置", "sdmc:/seeddb.bin"});
+                facts.push_back({"Looks in", "sdmc:/seeddb.bin"});
                 break;
             case 4:
-                facts.push_back({"已安装", plural(addOns, "item")});
+                facts.push_back({"Installed", plural(addOns, "item")});
                 break;
             case 5:
-                facts.push_back({"备份位置", "sdmc:/3ds/Checkpoint/saves/"});
+                facts.push_back({"Backups in", "sdmc:/3ds/Checkpoint/saves/"});
                 break;
             case 6:
-                facts.push_back({"位于 SD 卡",
+                facts.push_back({"On SD card",
                                  plural(library_.extData.size(), "item")});
                 facts.push_back(
-                    {"备份位置", "sdmc:/3ds/Checkpoint/extdata/"});
+                    {"Backups in", "sdmc:/3ds/Checkpoint/extdata/"});
                 break;
             default:
-                facts.push_back({"已安装", plural(software, "title")});
+                facts.push_back({"Installed", plural(software, "title")});
                 facts.push_back(
-                    {"位于 SD 卡",
+                    {"On SD card",
                      !library_.complete || library_.sdListed
                          ? units::bytes(sdBytes)
-                         : "无法读取",
+                         : "Not readable",
                      !library_.complete || library_.sdListed
                          ? ui::color::Tag
                          : ui::color::Badge});
@@ -340,17 +340,17 @@ struct ShowChoice {
 };
 
 const ShowChoice SoftwareShows[] = {
-    {titles::Show::All, "全部软件", "软件", "未安装软件。"},
-    {titles::Show::SdCard, "SD 卡", "SD 卡上的软件",
-     "SD 卡上没有软件。"},
-    {titles::Show::SystemMemory, "系统内存", "系统内存中的软件",
-     "系统内存中没有软件。"},
+    {titles::Show::All, "All Software", "Software", "No software installed."},
+    {titles::Show::SdCard, "SD Card", "Software on SD Card",
+     "No software on the SD card."},
+    {titles::Show::SystemMemory, "System Memory", "Software in System Memory",
+     "No software in system memory."},
 };
 const ShowChoice AddOnShows[] = {
-    {titles::Show::All, "更新与 DLC", "更新与 DLC",
-     "未安装更新或 DLC。"},
-    {titles::Show::Updates, "更新", "更新", "未安装更新。"},
-    {titles::Show::Dlc, "DLC", "DLC", "未安装 DLC。"},
+    {titles::Show::All, "Updates and DLC", "Updates and DLC",
+     "No updates or DLC installed."},
+    {titles::Show::Updates, "Updates", "Updates", "No updates installed."},
+    {titles::Show::Dlc, "DLC", "DLC", "No DLC installed."},
 };
 
 const ShowChoice &showChoice(bool software, titles::Show show)
@@ -379,7 +379,7 @@ void App::titleList(bool software)
         ui::ListSpec spec;
         spec.title = showChoice(software, show).title;
         spec.emptyText = showChoice(software, show).empty;
-        spec.action = "排序";
+        spec.action = "Sort";
         spec.actionKey = "X";
         spec.actionKeys = KEY_X;
         uint32_t seen = libraryGeneration_ - 1;
@@ -408,7 +408,7 @@ void App::titleList(bool software)
                     software ? ui::color::IconBlue : ui::color::IconGreen;
                 const cia::Kind kind = cia::kind(title->id);
                 if (kind == cia::Kind::Update || kind == cia::Kind::Dlc) {
-                    item.badge = kind == cia::Kind::Update ? "更新" : "DLC";
+                    item.badge = kind == cia::Kind::Update ? "Update" : "DLC";
                     item.badgeColor = kind == cia::Kind::Update
                                           ? ui::color::Tag
                                           : ui::color::Good;
@@ -468,12 +468,12 @@ void App::titleSortScreen(bool software)
     // Picks apply at once and the screen stays, like the files' Sort.
     while (ui::keepRunning() && !quit_) {
         ui::ScreenSpec spec;
-        spec.back = "返回";
+        spec.back = "Back";
         const fs::SortOrder orders[] = {fs::SortOrder::Name, fs::SortOrder::Size};
         for (int index = 0; index < 2; ++index) {
             ui::Control control;
             control.rect = {index == 0 ? 26.0f : 164.0f, 29, 130, 40};
-            control.label = index == 0 ? "名称" : "大小";
+            control.label = index == 0 ? "Name" : "Size";
             control.style = settings_.titleSort == orders[index]
                                 ? ui::Style::Chosen
                                 : ui::Style::Normal;
@@ -481,7 +481,7 @@ void App::titleSortScreen(bool software)
         }
         ui::Control reverse;
         reverse.rect = {26, 81, 268, 40};
-        reverse.label = "反向排序";
+        reverse.label = "Reverse Order";
         reverse.style = settings_.titleSortReverse ? ui::Style::Chosen
                                                    : ui::Style::Normal;
         spec.controls.push_back(reverse);
@@ -494,14 +494,14 @@ void App::titleSortScreen(bool software)
             spec.controls.push_back(control);
         }
         spec.drawTop = [&]() {
-            ui::drawTopChrome("排序", software ? ui::Icon::GameCard
+            ui::drawTopChrome("Sort", software ? ui::Icon::GameCard
                                                : ui::Icon::Download,
                               software ? ui::color::IconBlue : ui::color::IconGreen);
             ui::drawPanel();
             ui::drawFacts(
-                {{"排序", screens::sortDescription(settings_.titleSort,
+                {{"Order", screens::sortDescription(settings_.titleSort,
                                            settings_.titleSortReverse)},
-                 {"正在显示", showChoice(software, show).label}});
+                 {"Showing", showChoice(software, show).label}});
         };
         const ui::ScreenResult result = ui::runScreen(spec, focus);
         if (result.choice == 0 || result.choice == 1) {
@@ -538,7 +538,7 @@ void App::titleOptions(titles::Title title)
         items.push_back({label, danger, enabled});
     };
     if (launchable) {
-        offer(Launch, "启动", false, !self);
+        offer(Launch, "Launch", false, !self);
     }
     const savedata::Target saveTarget =
         savedata::saveOf(title, library::mediaOf(title));
@@ -546,20 +546,20 @@ void App::titleOptions(titles::Title title)
                          savedata::unsupportedReason(title).empty() &&
                          savedata::exists(saveTarget);
     if (canSave) {
-        offer(Saves, "存档");
+        offer(Saves, "Save Data");
     }
     if (extData != nullptr) {
-        offer(Extra, "额外数据");
+        offer(Extra, "Extra Data");
     }
     if (kind == cia::Kind::Application) {
-        offer(Seed, "获取种子");
+        offer(Seed, "Get Seed");
     }
     if (extData != nullptr) {
-        offer(ExtraData, "删除额外数据", true);
+        offer(ExtraData, "Delete Extra Data", true);
     }
     const bool removable = !self && title.place != titles::Place::GameCard;
-    offer(Delete, "删除", true, removable);
-    offer(DeleteWithTicket, "连同票据删除", true, removable);
+    offer(Delete, "Delete", true, removable);
+    offer(DeleteWithTicket, "Delete with Ticket", true, removable);
 
     const int picked = ui::menu(items, [&](int) {
         drawTitleTop(name, iconFor(title.id), title, index);
@@ -572,7 +572,7 @@ void App::titleOptions(titles::Title title)
     switch (choices[picked]) {
     case Launch:
         if (!installer::launch(title.id, error)) {
-            ui::message("无法启动", error, ui::Tone::Error);
+            ui::message("Could Not Launch", error, ui::Tone::Error);
         }
         return;
     case Saves:
@@ -584,7 +584,7 @@ void App::titleOptions(titles::Title title)
     case Seed: {
         std::string message;
         bool added = false;
-        if (!tasks::busy("种子", "正在获取 " + name + " 所需的种子……",
+        if (!tasks::busy("Seeds", "Getting the seed " + name + " needs...",
                          [&](tasks::Busy &busy) {
                              added = installer::installSeed(title.id, message,
                                                             &busy.cancel);
@@ -592,18 +592,18 @@ void App::titleOptions(titles::Title title)
                          true)) {
             return;
         }
-        ui::message(added ? "已添加种子" : "未添加种子", message,
+        ui::message(added ? "Seed Added" : "No Seed Added", message,
                     added ? ui::Tone::Success : ui::Tone::Warning);
         return;
     }
     case ExtraData:
-        if (confirmDanger("删除", "删除“" + name + "”的额外数据？",
-                          "删除")) {
+        if (confirmDanger("Delete", "Delete the extra data of " + name + "?",
+                          "Delete")) {
             // The reader stops first, so nothing is read while it changes;
             // the list it came from fills in again by itself.
             libraryLoader_.stop();
             if (!library::deleteExtData(extData->id, error)) {
-                ui::message("未删除", error, ui::Tone::Error);
+                ui::message("Not Deleted", error, ui::Tone::Error);
             }
             startLibrary();
         }
@@ -615,24 +615,24 @@ void App::titleOptions(titles::Title title)
         // which; a game takes its save with it.
         std::string question;
         if (kind == cia::Kind::Update || kind == cia::Kind::Dlc) {
-            question = std::string("删除此") +
-                       (kind == cia::Kind::Update ? "更新" : "追加内容") +
-                       (withTicket ? "“" + name + "”及其票据？"
-                                   : "“" + name + "”？");
+            question = std::string("Delete the ") +
+                       (kind == cia::Kind::Update ? "update" : "DLC") +
+                       " for " + name + (withTicket ? " and its ticket?" : "?");
         } else {
-            question = "删除“" + name + "”" +
-                       (withTicket ? "、其存档及票据？" : "及其存档？");
+            question = "Delete " + name +
+                       (withTicket ? ", its save data and its ticket?"
+                                   : " and its save data?");
         }
-        if (!confirmDanger("删除", question, "删除")) {
+        if (!confirmDanger("Delete", question, "Delete")) {
             return;
         }
         bool deleted = false;
         libraryLoader_.stop();
-        tasks::busy("删除", "正在删除 " + name + "……", [&]() {
+        tasks::busy("Delete", "Deleting " + name + "...", [&]() {
             deleted = library::deleteTitle(title, withTicket, error);
         });
         if (!deleted) {
-            ui::message("未删除", error, ui::Tone::Error);
+            ui::message("Not Deleted", error, ui::Tone::Error);
         }
         if (deleted && library_.complete) {
             library::forgetTitle(library_, title, withTicket);
@@ -660,7 +660,7 @@ void App::extraDataScreen()
                 return titles::displayName(*owner, index);
             }
             char text[24];
-            std::snprintf(text, sizeof(text), "额外数据 %08llX",
+            std::snprintf(text, sizeof(text), "Extra data %08llX",
                           static_cast<unsigned long long>(extData.id));
             return std::string(text);
         };
@@ -674,22 +674,22 @@ void App::extraDataScreen()
                          });
 
         ui::ListSpec spec;
-        spec.title = "额外数据";
-        spec.emptyText = "没有额外数据。";
+        spec.title = "Extra Data";
+        spec.emptyText = "No extra data.";
         for (const library::ExtData *extData : shown) {
             ui::ListItem item;
             item.label = nameOf(*extData);
             item.icon = ui::Icon::Folder;
             item.iconColor = ui::color::IconOrange;
             if (!library::extDataInUse(library_, extData->id)) {
-                item.badge = "未使用";
+                item.badge = "Unused";
                 item.badgeColor = ui::color::Neutral;
             }
             spec.items.push_back(item);
         }
         // The list and the menu for one item show the same facts.
         const auto drawDetails = [&](const library::ExtData &extData) {
-            ui::drawTopChrome("额外数据", ui::Icon::Folder,
+            ui::drawTopChrome("Extra Data", ui::Icon::Folder,
                               ui::color::IconOrange);
             ui::drawPanel();
             const titles::Title *owner =
@@ -709,13 +709,13 @@ void App::extraDataScreen()
                           static_cast<unsigned long long>(extData.id));
             const float y = ui::drawTagRow(left, top + 60, 96, "ID", id);
             const bool inUse = library::extDataInUse(library_, extData.id);
-            ui::drawTagRow(left, y, 96, "软件",
-                           inUse ? "已安装" : "未安装",
+            ui::drawTagRow(left, y, 96, "Software",
+                           inUse ? "Installed" : "Not installed",
                            inUse ? ui::color::Tag : ui::color::Neutral);
         };
         spec.drawTop = [&](int highlighted) {
             if (highlighted < 0 || highlighted >= static_cast<int>(shown.size())) {
-                ui::drawTopChrome("额外数据", ui::Icon::Folder,
+                ui::drawTopChrome("Extra Data", ui::Icon::Folder,
                                   ui::color::IconOrange);
                 ui::drawPanel();
                 ui::drawEmblem(ui::Icon::Folder, ui::color::IconOrange);
@@ -724,7 +724,7 @@ void App::extraDataScreen()
             drawDetails(*shown[highlighted]);
         };
         if (!shown.empty()) {
-            spec.action = "删除";
+            spec.action = "Delete";
             spec.actionKey = "X";
             spec.actionKeys = KEY_X;
         }
@@ -737,7 +737,7 @@ void App::extraDataScreen()
         const std::string name = nameOf(extData);
         if (result.key == KEY_A) {
             const int choice = ui::menu(
-                {{"备份与恢复", false, true}, {"删除", true, true}},
+                {{"Back Up and Restore", false, true}, {"Delete", true, true}},
                 [&](int) { drawDetails(extData); });
             if (choice == 0) {
                 // Named after the game when it is installed, as Checkpoint
@@ -758,13 +758,13 @@ void App::extraDataScreen()
                 continue;
             }
         }
-        if (!confirmDanger("删除", "Delete the extra data of " + name + "?",
-                           "删除")) {
+        if (!confirmDanger("Delete", "Delete the extra data of " + name + "?",
+                           "Delete")) {
             continue;
         }
         std::string error;
         if (!library::deleteExtData(extData.id, error)) {
-            ui::message("未删除", error, ui::Tone::Error);
+            ui::message("Not Deleted", error, ui::Tone::Error);
         }
         reloadLibrary();
     }
@@ -848,7 +848,7 @@ bool App::confirmUnsavedTickets(const std::vector<uint64_t> &tickets,
         std::string cia; // a CIA that brings it back, or ""
     };
     std::vector<Known> known;
-    tasks::busy("票据", "正在检查票据……", [&]() {
+    tasks::busy("Tickets", "Looking at the tickets...", [&]() {
         const titles::Index index = titles::indexOf(library_.titles);
         const std::vector<std::string> folders = checkpointFolders();
         const std::map<uint64_t, FoundCia> cias = ciasOnCard(settings_.destination);
@@ -879,47 +879,48 @@ bool App::confirmUnsavedTickets(const std::vector<uint64_t> &tickets,
     const std::string reason = code == std::string::npos ? why : why.substr(code);
 
     ui::Dialog dialog;
-    dialog.header = "票据";
+    dialog.header = "Tickets";
     dialog.title =
         known.size() == 1
-            ? "删除“" + nameOf(known[0]) + "”的票据且不备份？"
-            : "删除 " + plural(known.size(), "票据") + "且不备份？" +
-                  (bought > 0 ? "其中 " + std::to_string(bought) +
-                                    " 张是在此 3DS 上购买的。"
+            ? "Delete the ticket for " + nameOf(known[0]) + " without a backup?"
+            : "Delete " + plural(known.size(), "ticket") + " without a backup?" +
+                  (bought > 0 ? " " + std::to_string(bought) + " of them " +
+                                    (bought == 1 ? "was" : "were") +
+                                    " bought on this 3DS."
                               : "");
     dialog.tone = ui::Tone::Warning;
-    dialog.buttons = {"仍要删除", "保留"};
+    dialog.buttons = {"Delete Anyway", "Keep"};
     dialog.dangerous = 0;
     dialog.initial = 1;
     dialog.cancelButton = 1;
     dialog.drawTop = [&]() {
-        ui::drawTopChrome("票据", ui::Icon::Lock, ui::color::IconGrey);
+        ui::drawTopChrome("Tickets", ui::Icon::Lock, ui::color::IconGrey);
         ui::drawPanel();
         std::vector<ui::Fact> facts;
         if (known.size() == 1) {
             const Known &ticket = known[0];
-            facts.push_back({"软件", ticket.name.empty() ? "未知" : ticket.name});
-            facts.push_back({"软件 ID", cia::titleIdText(ticket.id)});
-            facts.push_back({"在此主机购买", ticket.facts.personal ? "是" : "否",
+            facts.push_back({"Software", ticket.name.empty() ? "Unknown" : ticket.name});
+            facts.push_back({"Title ID", cia::titleIdText(ticket.id)});
+            facts.push_back({"Bought here", ticket.facts.personal ? "Yes" : "No",
                              ticket.facts.personal ? ui::color::Bad : ui::color::Tag});
             if (ticket.facts.known) {
-                facts.push_back({"适用版本", screens::titleVersion(ticket.id,
+                facts.push_back({"Issued for", screens::titleVersion(ticket.id,
                                                                      ticket.facts.version)});
             }
-            facts.push_back({"恢复", ticket.cia.empty() ? "未找到对应的 CIA"
-                                                           : "安装 " + ticket.cia});
-            facts.push_back({"备份", "无法备份：" + reason, ui::color::Neutral});
+            facts.push_back({"Restore", ticket.cia.empty() ? "No CIA for it found"
+                                                           : "Install " + ticket.cia});
+            facts.push_back({"Backup", "Not possible: " + reason, ui::color::Neutral});
         } else {
             for (size_t index = 0; index < known.size() && index < 5; ++index) {
                 const Known &ticket = known[index];
-                facts.push_back({ticket.facts.personal ? "在此主机购买"
-                                 : ticket.cia.empty()  ? "无 CIA"
-                                                       : "已找到 CIA",
+                facts.push_back({ticket.facts.personal ? "Bought here"
+                                 : ticket.cia.empty()  ? "No CIA"
+                                                       : "CIA found",
                                  nameOf(ticket),
                                  ticket.facts.personal ? ui::color::Bad : ui::color::Tag});
             }
             if (known.size() > 5) {
-                facts.push_back({"另有", std::to_string(known.size() - 5) + " 个",
+                facts.push_back({"And", std::to_string(known.size() - 5) + " more",
                                  ui::color::Neutral});
             }
         }
@@ -950,15 +951,15 @@ void App::ticketsScreen()
         });
 
         ui::ListSpec spec;
-        spec.title = "票据";
-        spec.emptyText = "没有票据。";
+        spec.title = "Tickets";
+        spec.emptyText = "No tickets.";
         for (const uint64_t ticket : shown) {
             ui::ListItem item;
             item.label = nameFor(ticket);
             item.icon = ui::Icon::Lock;
             item.iconColor = ui::color::IconGrey;
             if (unused.count(ticket) != 0) {
-                item.badge = "未使用";
+                item.badge = "Unused";
                 item.badgeColor = ui::color::Neutral;
             } else {
                 item.detail = cia::kindName(cia::kind(ticket));
@@ -967,7 +968,7 @@ void App::ticketsScreen()
         }
         // The list and the menu for one ticket show the same facts.
         const auto drawDetails = [&](uint64_t ticket) {
-            ui::drawTopChrome("票据", ui::Icon::Lock, ui::color::IconGrey);
+            ui::drawTopChrome("Tickets", ui::Icon::Lock, ui::color::IconGrey);
             ui::drawPanel();
             const auto own = index.find(ticket);
             const auto game = index.find(cia::baseTitle(ticket));
@@ -984,19 +985,19 @@ void App::ticketsScreen()
             ui::drawMarquee(nameFor(ticket), left + 60,
                             top + (48 - ui::lineHeight(0.62f)) / 2, 0.62f,
                             ui::color::InkStrong, 280);
-            const float y = ui::drawTagRow(left, top + 60, 96, "软件 ID",
+            const float y = ui::drawTagRow(left, top + 60, 96, "Title ID",
                                            cia::titleIdText(ticket));
             const bool isUnused = unused.count(ticket) != 0;
             // Without the SD card's list, whether it is installed is unknown.
-            ui::drawTagRow(left, y, 96, "软件",
-                           !library_.sdListed ? "未知"
-                           : isUnused         ? "未安装"
-                                              : "已安装",
+            ui::drawTagRow(left, y, 96, "Software",
+                           !library_.sdListed ? "Unknown"
+                           : isUnused         ? "Not installed"
+                                              : "Installed",
                            isUnused ? ui::color::Neutral : ui::color::Tag);
         };
         spec.drawTop = [&](int highlighted) {
             if (highlighted < 0 || highlighted >= static_cast<int>(shown.size())) {
-                ui::drawTopChrome("票据", ui::Icon::Lock, ui::color::IconGrey);
+                ui::drawTopChrome("Tickets", ui::Icon::Lock, ui::color::IconGrey);
                 ui::drawPanel();
                 ui::drawEmblem(ui::Icon::Lock, ui::color::IconGrey);
                 return;
@@ -1004,7 +1005,7 @@ void App::ticketsScreen()
             drawDetails(shown[highlighted]);
         };
         if (!unusedList.empty()) {
-            spec.action = "删除未使用项";
+            spec.action = "Delete Unused";
             spec.actionKey = "X";
             spec.actionKeys = KEY_X;
         }
@@ -1020,21 +1021,21 @@ void App::ticketsScreen()
         const uint64_t ticket = shown[result.index];
         const std::string name = nameFor(ticket);
         const int choice = ui::menu(
-            {{"导出到 SD 卡", false, true}, {"删除", true, true}},
+            {{"Export to SD Card", false, true}, {"Delete", true, true}},
             [&](int) { drawDetails(ticket); });
         if (choice == 0) {
             std::string path;
             std::string error;
             bool exported = false;
-            tasks::busy("票据", "正在导出票据……", [&]() {
+            tasks::busy("Tickets", "Exporting the ticket...", [&]() {
                 exported = library::exportTicket(
                     ticket, "sdmc:/3ds/3dsDL/tickets/", path, error);
             });
             if (exported) {
-                ui::message("票据已导出", "已保存为 " + path + "。",
+                ui::message("Ticket Exported", "Saved as " + path + ".",
                             ui::Tone::Success);
             } else {
-                ui::message("未导出", error, ui::Tone::Error);
+                ui::message("Not Exported", error, ui::Tone::Error);
             }
             continue;
         }
@@ -1046,11 +1047,11 @@ void App::ticketsScreen()
         const bool needed = library::installedAnywhere(ticket) ||
                             library_.onSdCard.count(ticket) != 0 ||
                             unused.count(ticket) == 0;
-        if (!confirmDanger("删除",
-                           needed ? "删除 " + name +
-                                        " 启动所需的票据？"
-                                  : "删除“" + name + "”的票据？",
-                           "删除")) {
+        if (!confirmDanger("Delete",
+                           needed ? "Delete the ticket " + name +
+                                        " needs to start?"
+                                  : "Delete the ticket for " + name + "?",
+                           "Delete")) {
             continue;
         }
         std::string error;
@@ -1059,10 +1060,10 @@ void App::ticketsScreen()
             // One the console will not export can still go, once the
             // person has seen what it is.
             if (!unsaved) {
-                ui::message("未删除", error, ui::Tone::Error);
+                ui::message("Not Deleted", error, ui::Tone::Error);
             } else if (confirmUnsavedTickets({ticket}, error) &&
                        !library::deleteTicket(ticket, error, nullptr, true)) {
-                ui::message("未删除", error, ui::Tone::Error);
+                ui::message("Not Deleted", error, ui::Tone::Error);
             }
         }
         reloadLibrary();
@@ -1077,21 +1078,22 @@ void App::deleteUnusedTickets()
     std::vector<uint64_t> unused;
     std::string error;
     bool checked = false;
-    tasks::busy("票据", "正在检查未使用的票据……",
+    tasks::busy("Tickets", "Checking which tickets are unused...",
                 [&]() { checked = library::checkUnusedTickets(unused, error); });
     if (!checked) {
-        ui::message("未删除任何内容", error, ui::Tone::Error);
+        ui::message("Nothing Deleted", error, ui::Tone::Error);
         reloadLibrary();
         return;
     }
     if (unused.empty()) {
-        ui::message("没有可删除的内容", "所有票据都属于已安装的软件。");
+        ui::message("Nothing to Delete", "Every ticket belongs to installed "
+                                         "software.");
         reloadLibrary();
         return;
     }
-    if (!confirmDanger("删除",
-                       "删除 " + plural(unused.size(), "个未使用的票据") + "？",
-                       "删除")) {
+    if (!confirmDanger("Delete",
+                       "Delete " + plural(unused.size(), "unused ticket") + "?",
+                       "Delete")) {
         return;
     }
     size_t deleted = 0;
@@ -1099,7 +1101,7 @@ void App::deleteUnusedTickets()
     std::vector<uint64_t> unsaved;
     std::string unsavedWhy;
     tasks::busy(
-        "删除", "正在删除未使用的票据……",
+        "Delete", "Deleting unused tickets...",
         [&](tasks::Busy &busy) {
             busy.total = unused.size();
             for (const uint64_t ticket : unused) {
@@ -1120,7 +1122,7 @@ void App::deleteUnusedTickets()
     // Asked once for all of them, with what each was.
     if (!unsaved.empty() && confirmUnsavedTickets(unsaved, unsavedWhy)) {
         tasks::busy(
-            "删除", "正在删除未备份的票据……",
+            "Delete", "Deleting tickets without a backup...",
             [&](tasks::Busy &busy) {
                 busy.total = unsaved.size();
                 for (const uint64_t ticket : unsaved) {
@@ -1134,13 +1136,13 @@ void App::deleteUnusedTickets()
             false);
     }
     if (deleted == unused.size()) {
-        ui::message("票据已删除", plural(deleted, "个未使用的票据") +
+        ui::message("Tickets Deleted", plural(deleted, "unused ticket") +
                                            " deleted.",
                     ui::Tone::Success);
     } else {
-        ui::message("仍有部分票据",
-                    plural(deleted, "票据") + "，共 " +
-                        std::to_string(unused.size()) + " 个，已删除。",
+        ui::message("Some Tickets Remain",
+                    plural(deleted, "ticket") + " of " +
+                        std::to_string(unused.size()) + " deleted.",
                     ui::Tone::Warning, error);
     }
     reloadLibrary();
@@ -1155,7 +1157,7 @@ void App::cleanUpScreen()
             library::unusedTickets(library_).size();
         const size_t saved = library::deletedTicketCount();
         ui::ScreenSpec spec;
-        spec.back = "返回";
+        spec.back = "Back";
         const auto add = [&](ui::Rect rect, const std::string &label,
                              bool enabled) {
             ui::Control control;
@@ -1168,31 +1170,31 @@ void App::cleanUpScreen()
             spec.controls.push_back(control);
         };
         // Centred between the top and the tabs.
-        add({22, 26, 276, 44}, "移除未完成的安装", pending > 0);
-        add({22, 82, 276, 44}, "删除未使用的票据", unused > 0);
-        add({22, 138, 276, 44}, "恢复已删除的票据", saved > 0);
+        add({22, 26, 276, 44}, "Remove Unfinished Installs", pending > 0);
+        add({22, 82, 276, 44}, "Delete Unused Tickets", unused > 0);
+        add({22, 138, 276, 44}, "Restore Deleted Tickets", saved > 0);
         spec.controls.back().icon = ui::Icon::History;
         spec.controls.back().iconColor = ui::color::IconGreen;
         spec.drawTop = [&]() {
-            ui::drawTopChrome("清理", ui::Icon::Trash, ui::color::IconRed);
+            ui::drawTopChrome("Clean Up", ui::Icon::Trash, ui::color::IconRed);
             ui::drawPanel();
-            ui::drawFacts({{"未完成", plural(pending, "install"),
+            ui::drawFacts({{"Unfinished", plural(pending, "install"),
                             pending > 0 ? ui::color::Badge : ui::color::Tag},
-                           {"未使用", plural(unused, "ticket")},
-                           {"已保存", plural(saved, "deleted ticket")}});
+                           {"Unused", plural(unused, "ticket")},
+                           {"Saved", plural(saved, "deleted ticket")}});
         };
         const ui::ScreenResult result = ui::runScreen(spec, focus);
         if (result.choice == 0) {
-            if (!confirmDanger("清理",
+            if (!confirmDanger("Clean Up",
                                "Remove " + plural(pending, "unfinished install") +
                                    "?",
-                               "移除")) {
+                               "Remove")) {
                 continue;
             }
             size_t removed = 0;
             std::string error;
             tasks::busy(
-                "清理", "正在移除未完成的安装……",
+                "Clean Up", "Removing unfinished installs...",
                 [&](tasks::Busy &busy) {
                     busy.total = library_.pending.size();
                     for (const library::PendingTitle &title : library_.pending) {
@@ -1203,8 +1205,8 @@ void App::cleanUpScreen()
                     }
                 },
                 false);
-            ui::message(removed == pending ? "清理完成" : "仍有剩余",
-                        plural(removed, "未完成的安装") + "，已移除。",
+            ui::message(removed == pending ? "Cleaned Up" : "Some Remain",
+                        plural(removed, "unfinished install") + " removed.",
                         removed == pending ? ui::Tone::Success
                                            : ui::Tone::Warning,
                         error);
@@ -1214,13 +1216,13 @@ void App::cleanUpScreen()
         } else if (result.choice == 2) {
             std::string error;
             size_t restored = 0;
-            tasks::busy("票据", "正在恢复已删除的票据……", [&]() {
+            tasks::busy("Tickets", "Restoring deleted tickets...", [&]() {
                 restored = library::restoreDeletedTickets(error);
             });
-            ui::message(restored == saved ? "票据已恢复"
-                                          : "部分票据未恢复",
-                        "已恢复 " + plural(restored, "票据") + "，共 " +
-                            std::to_string(saved) + " 个。",
+            ui::message(restored == saved ? "Tickets Restored"
+                                          : "Some Tickets Not Restored",
+                        plural(restored, "ticket") + " of " +
+                            std::to_string(saved) + " restored.",
                         restored == saved ? ui::Tone::Success
                                           : ui::Tone::Warning,
                         error);
@@ -1241,9 +1243,9 @@ void App::importSeeds()
         }
     }
     if (path.empty()) {
-        ui::message("未找到 seeddb.bin",
-                    "请将 seeddb.bin 放入 sdmc:/、sdmc:/3ds/ 或 "
-                    "sdmc:/3ds/3dsDL/ 后重试。",
+        ui::message("No seeddb.bin Found",
+                    "Put a seeddb.bin in sdmc:/, sdmc:/3ds/ or "
+                    "sdmc:/3ds/3dsDL/ and try again.",
                     ui::Tone::Info);
         return;
     }
@@ -1251,32 +1253,32 @@ void App::importSeeds()
     std::vector<titles::SeedEntry> entries;
     std::string error;
     if (!fs::readFile(path, data) || !titles::parseSeedDb(data, entries, error)) {
-        ui::message("未导入种子",
-                    error.empty() ? "无法读取 " + path + "。" : error,
+        ui::message("Seeds Not Imported",
+                    error.empty() ? "Could not read " + path + "." : error,
                     ui::Tone::Error, path);
         return;
     }
     const std::vector<titles::SeedEntry> wanted =
         titles::seedsFor(entries, library_.titles);
     if (wanted.empty()) {
-        ui::message("无需种子",
-                    "此主机安装的游戏中没有一个在此文件里：" + path + "（" +
-                        plural(entries.size(), "种子") + "）。");
+        ui::message("No Seeds Needed",
+                    "None of the games installed here are in " + path + " (" +
+                        plural(entries.size(), "seed") + ").");
         return;
     }
     ui::Dialog dialog;
-    dialog.header = "种子";
-    dialog.title = "从 " + path + " 为 " +
-                   plural(wanted.size(), "已安装的游戏") + " 添加种子？";
+    dialog.header = "Seeds";
+    dialog.title = "Add seeds for " + plural(wanted.size(), "installed game") +
+                   " from " + path + "?";
     dialog.tone = ui::Tone::Info;
-    dialog.buttons = {"添加", "取消"};
+    dialog.buttons = {"Add", "Cancel"};
     dialog.cancelButton = 1;
     if (ui::choose(dialog) != 0) {
         return;
     }
     size_t added = 0;
     tasks::busy(
-        "种子", "正在添加种子……",
+        "Seeds", "Adding seeds...",
         [&](tasks::Busy &busy) {
             busy.total = wanted.size();
             for (const titles::SeedEntry &entry : wanted) {
@@ -1287,7 +1289,7 @@ void App::importSeeds()
             }
         },
         false);
-    ui::message(added == wanted.size() ? "种子已添加" : "部分种子未添加",
+    ui::message(added == wanted.size() ? "Seeds Added" : "Some Seeds Not Added",
                 plural(added, "seed") + " added.",
                 added == wanted.size() ? ui::Tone::Success : ui::Tone::Warning,
                 error);
