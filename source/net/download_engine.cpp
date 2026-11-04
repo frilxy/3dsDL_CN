@@ -207,8 +207,8 @@ bool flush(Transfer &transfer, Connection &connection)
         if (transfer.failure.empty()) {
             transfer.noSpace = errno == ENOSPC;
             transfer.failure = errno == ENOSPC
-                ? "SD 卡已满。"
-                : "无法写入 SD 卡（" + errnoText() + "）。";
+                ? "The SD card is full."
+                : "Could not write to the SD card (" + errnoText() + ").";
         }
         return false;
     }
@@ -283,8 +283,9 @@ bool begin(Transfer &transfer, Connection &lead)
     transfer.observer->onPhase(Phase::Downloading);
 
     if (transfer.total > request.maxFileSize) {
-        transfer.failure = "文件大小为 " + units::bytes(transfer.total) +
-                           "，但 SD 卡的 FAT32 格式无法存储 4 GiB 或更大的文件。";
+        transfer.failure = "The file is " + units::bytes(transfer.total) +
+                           ", but the SD card's FAT32 format cannot store "
+                           "files of 4 GiB or more.";
         return false;
     }
     if (request.freeSpace && transfer.total > transfer.fileBytes) {
@@ -292,10 +293,10 @@ bool begin(Transfer &transfer, Connection &lead)
         const uint64_t needed = transfer.total - transfer.fileBytes;
         if (available >= 0 && static_cast<uint64_t>(available) < needed) {
             transfer.noSpace = true;
-            transfer.failure = "SD 卡可用空间不足：需要 " +
-                               units::bytes(needed) + "，可用 " +
+            transfer.failure = "Not enough free space on the SD card: " +
+                               units::bytes(needed) + " needed, " +
                                units::bytes(static_cast<uint64_t>(available)) +
-                               "。";
+                               " free.";
             return false;
         }
     }
@@ -474,7 +475,7 @@ int prerequestCallback(void *user, char *to, char *from, int, int)
     Transfer &transfer = *connection.transfer;
     if (transfer.request->refuse(to != nullptr ? to : "",
                                  from != nullptr ? from : "")) {
-        transfer.failure = "此链接指向本地网络中的地址。";
+        transfer.failure = "The link leads to an address on this network.";
         return CURL_PREREQFUNC_ABORT;
     }
     return CURL_PREREQFUNC_OK;
@@ -736,7 +737,7 @@ void schedule(Transfer &transfer)
             return;
         }
         if (!open(transfer, *piece, false)) {
-            transfer.failure = "无法启动 HTTPS 客户端。";
+            transfer.failure = "Could not start the HTTPS client.";
             transfer.stopped = true;
             transfer.code = CURLE_FAILED_INIT;
             return;
@@ -842,15 +843,15 @@ Result download(const Request &request, Observer &observer)
     Result result;
     const std::string address = text::trim(request.url);
     if (!url::isHttpUrl(address)) {
-        result.message = "只能下载 http:// 和 https:// 链接。";
+        result.message = "Only http:// and https:// links can be downloaded.";
         return result;
     }
 
     Request normalised = request;
     normalised.folder = naming::normaliseFolder(request.folder);
     if (!fs::directoryExists(normalised.folder)) {
-        result.message = "文件夹 " + normalised.folder +
-                         "不存在。";
+        result.message = "The folder " + normalised.folder +
+                         " does not exist.";
         return result;
     }
     const PartialPaths paths = partialPaths(normalised.folder, address);
@@ -888,8 +889,8 @@ Result download(const Request &request, Observer &observer)
         transfer.file = std::fopen(paths.data.c_str(),
                                    transfer.resuming ? "r+b" : "w+b");
         if (transfer.file == nullptr) {
-            result.message = "无法在 " +
-                             normalised.folder + " 中创建下载文件（" + errnoText() + "）。";
+            result.message = "Could not create a file in " +
+                             normalised.folder + " (" + errnoText() + ").";
             return result;
         }
         // Each connection buffers its own writes for its own place in the
@@ -926,7 +927,7 @@ Result download(const Request &request, Observer &observer)
             if (!transfer.resuming) {
                 fs::removeFile(paths.data);
             }
-            result.message = "无法启动 HTTPS 客户端。";
+            result.message = "Could not start the HTTPS client.";
             return result;
         }
         if (first != nullptr) {
@@ -966,7 +967,7 @@ Result download(const Request &request, Observer &observer)
                 fs::removeFile(paths.info);
             }
             result.outcome = Outcome::Cancelled;
-            result.message = "下载已取消。";
+            result.message = "Download cancelled.";
             return result;
         }
 
@@ -1004,7 +1005,7 @@ Result download(const Request &request, Observer &observer)
         if (!transfer.failure.empty()) {
             result.message = transfer.failure;
         } else if (!closed) {
-            result.message = "无法完成向 SD 卡写入。";
+            result.message = "Could not finish writing to the SD card.";
         } else {
             result.message =
                 describeFailure(code, result.httpStatus, result.detail);
@@ -1030,7 +1031,8 @@ Result download(const Request &request, Observer &observer)
     }
 
     result.outcome = Outcome::Failed;
-    result.message = "服务器持续拒绝继续下载的请求。";
+    result.message = "The server kept rejecting the request to continue the "
+                     "download.";
     return result;
 }
 
@@ -1075,76 +1077,90 @@ std::string describeFailure(int curlCode, long httpStatus,
     case CURLE_OK:
         return "";
     case CURLE_UNSUPPORTED_PROTOCOL:
-        return "仅支持 http:// 和 https:// 链接，服务器将链接重定向到了其他协议。";
+        return "Only http:// and https:// links are supported, and the "
+               "server redirected somewhere else.";
     case CURLE_URL_MALFORMAT:
-        return "该链接不是有效的 URL。";
+        return "That link is not a valid URL.";
     case CURLE_COULDNT_RESOLVE_HOST:
-        return "找不到服务器。请检查 Wi-Fi 连接和链接。";
+        return "Could not find the server. Check the Wi-Fi connection and "
+               "the link.";
     case CURLE_COULDNT_CONNECT:
-        return "无法连接到服务器。请检查 Wi-Fi 连接。";
+        return "Could not connect to the server. Check the Wi-Fi connection.";
     case CURLE_OPERATION_TIMEDOUT:
-        return "服务器停止响应，连接已超时。";
+        return "The connection timed out because the server stopped "
+               "responding.";
     case CURLE_PEER_FAILED_VERIFICATION:
         // mbedTLS (on the console) and OpenSSL (in tests) word these
         // differently, so both spellings are recognised.
         if (mentions("BADCERT_FUTURE") || mentions("not yet valid")) {
-            return "根据主机时钟，服务器证书尚未生效，因此主机日期可能落后。请检查时钟后重试。";
+            return "The server's certificate is not valid yet according to "
+                   "the console's clock, so the console's date is probably "
+                   "behind. Check the clock and try again.";
         }
         if (mentions("BADCERT_EXPIRED") || mentions("expired")) {
-            return "根据主机时钟，服务器证书已过期。请检查主机日期；如果日期正确，则该网站的证书确已过期。";
+            return "The server's certificate has expired according to the "
+                   "console's clock. Check that the console's date is "
+                   "right; if it is, the site's certificate really has "
+                   "expired.";
         }
         if (mentions("CN_MISMATCH") || mentions("subject name") ||
             mentions("does not match")) {
-            return "服务器证书对应的网站与链接所指网站不同。";
+            return "The server's certificate is for a different site than "
+                   "the link.";
         }
         if (mentions("NOT_TRUSTED") || mentions("self-signed") ||
             mentions("self signed") || mentions("local issuer")) {
-            return "服务器证书未由 3dsDL 信任的机构签发。";
+            return "The server's certificate is not signed by an authority "
+                   "3dsDL trusts.";
         }
-        return "无法验证服务器证书。如果主机日期或时间不正确，请使用“检查时钟”进行校准后重试。";
+        return "The server's certificate could not be verified. If the "
+               "console's date and time are wrong, fix them with Check "
+               "clock and try again.";
     case CURLE_SSL_CONNECT_ERROR:
-        return "与服务器建立安全连接失败。";
+        return "The secure connection to the server failed.";
     case CURLE_SSL_CACERT_BADFILE:
-        return "3dsDL 无法加载证书存储。";
+        return "3dsDL could not load its certificate store.";
     case CURLE_TOO_MANY_REDIRECTS:
-        return "链接重定向次数过多。";
+        return "The link redirected too many times.";
     case CURLE_FILESIZE_EXCEEDED:
-        return "文件过大，SD 卡的 FAT32 格式无法存储 4 GiB 或更大的文件。";
+        return "The file is too large for the SD card's FAT32 format "
+               "(4 GiB or more).";
     case CURLE_PARTIAL_FILE:
     case CURLE_RECV_ERROR:
     case CURLE_SEND_ERROR:
     case CURLE_GOT_NOTHING:
-        return "下载完成前连接已中断。";
+        return "The connection dropped before the download finished.";
     case CURLE_WRITE_ERROR:
-        return "无法写入 SD 卡。";
+        return "Could not write to the SD card.";
     case CURLE_RANGE_ERROR:
-        return "服务器拒绝继续之前的下载。";
+        return "The server refused to continue the earlier download.";
     case CURLE_HTTP_RETURNED_ERROR:
         switch (httpStatus) {
         case 401:
         case 403:
-            return "服务器拒绝访问（HTTP " +
+            return "The server refused access (HTTP " +
                    std::to_string(httpStatus) +
-                   "）。该链接可能需要登录，或已过期。";
+                   "). The link may need a login or may have expired.";
         case 404:
         case 410:
-            return "服务器上找不到该文件（HTTP " +
-                   std::to_string(httpStatus) + "）。";
+            return "The file was not found on the server (HTTP " +
+                   std::to_string(httpStatus) + ").";
         case 429:
-            return "服务器正在限制请求（HTTP 429）。请稍后重试。";
+            return "The server is limiting requests (HTTP 429). Try again "
+                   "later.";
         default:
             break;
         }
         if (httpStatus >= 500) {
-            return "服务器发生错误（HTTP " +
-                   std::to_string(httpStatus) + "）。请稍后重试。";
+            return "The server had an error (HTTP " +
+                   std::to_string(httpStatus) + "). Try again later.";
         }
-        return "服务器返回 HTTP " + std::to_string(httpStatus) +
+        return "The server answered with HTTP " + std::to_string(httpStatus) +
                ".";
     default:
         break;
     }
-    return std::string("下载失败：") +
+    return std::string("The download failed: ") +
            curl_easy_strerror(static_cast<CURLcode>(curlCode)) + ".";
 }
 

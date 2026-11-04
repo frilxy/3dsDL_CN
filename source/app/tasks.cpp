@@ -81,10 +81,10 @@ Thread startWorkerThread(ThreadFunc entry, void *argument, const char *name)
 bool confirmStop(const std::string &what)
 {
     ui::Dialog dialog;
-    dialog.header = "取消";
+    dialog.header = "cancel";
     dialog.title = "Stop " + what + "?";
     dialog.tone = ui::Tone::Warning;
-    dialog.buttons = {"继续", "停止"};
+    dialog.buttons = {"Keep Going", "Stop"};
     dialog.dangerous = 1;
     dialog.cancelButton = 0;
     return ui::choose(dialog) == 1;
@@ -395,8 +395,8 @@ bool busy(const std::string &header, const std::string &title,
             view.fraction = static_cast<float>(static_cast<double>(done) /
                                                static_cast<double>(total));
             view.amount = job.busy.bytes.load()
-                              ? units::bytes(done) + " / " + units::bytes(total)
-                              : std::to_string(done) + " / " +
+                              ? units::bytes(done) + " of " + units::bytes(total)
+                              : std::to_string(done) + " of " +
                                     std::to_string(total);
             meter.sample(osGetTime(), done);
             const int64_t left = meter.secondsLeft(total - done);
@@ -428,7 +428,7 @@ net::Result download(const net::Request &request,
     awake::Hold hold;
     Thread thread = startWorkerThread(runDownload, &job, "download");
     if (thread == nullptr) {
-        job.result.message = "无法启动下载线程。";
+        job.result.message = "Could not start the download thread.";
         return job.result;
     }
 
@@ -445,11 +445,11 @@ net::Result download(const net::Request &request,
                 view.nameIcon = look.icon;
                 view.nameIconColor = look.color;
             }
-            view.title = job.phase == net::Phase::Connecting ? "正在连接"
+            view.title = job.phase == net::Phase::Connecting ? "Connecting"
                        : job.phase == net::Phase::Restarting
-                           ? "重新开始"
-                       : direct ? "正在安装"
-                                : "正在下载";
+                           ? "Starting Over"
+                       : direct ? "Installing"
+                                : "Downloading";
             if (!step.empty()) {
                 view.title += " " + step;
             }
@@ -466,7 +466,7 @@ net::Result download(const net::Request &request,
                 view.fraction = static_cast<float>(
                     static_cast<double>(job.received) /
                     static_cast<double>(job.total));
-                view.amounts = units::bytes(job.received) + " / " +
+                view.amounts = units::bytes(job.received) + " of " +
                                units::bytes(job.total);
             } else {
                 view.amounts = units::bytes(job.received);
@@ -480,14 +480,14 @@ net::Result download(const net::Request &request,
                     view.left = units::timeLeft(static_cast<uint64_t>(left));
                 }
             } else if (job.phase == net::Phase::Downloading) {
-                view.speed = "正在测量速度……";
+                view.speed = "Measuring speed...";
             }
         }
         view.icon = ui::Icon::Download;
         view.iconColor = ui::color::IconGreen;
-        view.source = "来自 " + host;
-        view.message = direct ? "边下载边安装"
-                              : "保存到 " + request.folder;
+        view.source = "from " + host;
+        view.message = direct ? "Installing as it downloads"
+                              : "Saving to " + request.folder;
         view.cancellable = job.stoppable();
         view.stopping = job.cancel;
         ui::drawProgress(view);
@@ -543,7 +543,7 @@ archives::Result extract(const std::string &path,
     awake::Hold hold;
     Thread thread = startWorkerThread(runExtract, &job, "extract");
     if (thread == nullptr) {
-        job.result.message = "无法启动解压线程。";
+        job.result.message = "Could not start the extraction thread.";
         return job.result;
     }
 
@@ -558,11 +558,11 @@ archives::Result extract(const std::string &path,
             progress = job.progress;
         }
         ui::ProgressView view;
-        view.title = "正在解压";
+        view.title = "Extracting";
         view.icon = ui::Icon::Zip;
         view.iconColor = ui::color::IconGold;
         view.name = name;
-        view.source = progress.current.empty() ? "正在读取压缩包……"
+        view.source = progress.current.empty() ? "Reading the archive..."
                                                : progress.current;
         const uint64_t now = osGetTime();
         speed.sample(now, progress.bytes);
@@ -574,8 +574,8 @@ archives::Result extract(const std::string &path,
                                      static_cast<double>(totalWork))
                 : -1.0f;
             // Files lead: with thousands of small ones, bytes say little.
-            view.amounts = units::grouped(progress.files) + " / " +
-                           screens::plural(totalFiles, "文件");
+            view.amounts = units::grouped(progress.files) + " of " +
+                           screens::plural(totalFiles, "file");
             if (work.hasRate()) {
                 const int64_t left = work.secondsLeft(
                     totalWork > done ? totalWork - done : 0);
@@ -593,9 +593,9 @@ archives::Result extract(const std::string &path,
                       static_cast<double>(progress.archiveBytes) /
                       static_cast<double>(listing.archiveSize))
                 : -1.0f;
-            view.amounts = units::bytes(progress.archiveBytes) + " / " +
+            view.amounts = units::bytes(progress.archiveBytes) + " of " +
                            units::bytes(listing.archiveSize);
-            view.tag = screens::plural(progress.files, "文件");
+            view.tag = screens::plural(progress.files, "file");
             if (work.hasRate()) {
                 const int64_t left = work.secondsLeft(
                     listing.archiveSize > progress.archiveBytes
@@ -641,7 +641,7 @@ installer::Result install(const std::string &path, uint64_t titleId,
     awake::Hold hold;
     Thread thread = startWorkerThread(runInstall, &job, "install");
     if (thread == nullptr) {
-        job.result.message = "无法启动安装线程。";
+        job.result.message = "Could not start the install thread.";
         return job.result;
     }
 
@@ -655,7 +655,7 @@ installer::Result install(const std::string &path, uint64_t titleId,
                 ? static_cast<float>(static_cast<double>(job.done) /
                                      static_cast<double>(job.total))
                 : -1.0f;
-            view.amounts = units::bytes(job.done) + " / " +
+            view.amounts = units::bytes(job.done) + " of " +
                            units::bytes(job.total);
             if (meter.hasRate()) {
                 view.speed = units::rate(meter.bytesPerSecond());
@@ -667,18 +667,18 @@ installer::Result install(const std::string &path, uint64_t titleId,
                 }
             }
         }
-        view.title = "正在安装";
+        view.title = "Installing";
         view.icon = ui::Icon::Package;
         view.iconColor = ui::color::IconBlue;
         view.name = name;
         view.source = path.substr(path.find_last_of('/') + 1);
         view.titleIcon = icon;
-        view.message = "请勿关闭电源或取出 SD 卡。";
+        view.message = "Do not turn off the power or remove the SD card.";
         view.cancellable = false;
         ui::drawProgress(view);
     });
     if (job.closing && job.result.outcome == installer::Outcome::Cancelled) {
-        job.result.message = "3dsDL 关闭时任务中断。";
+        job.result.message = "Interrupted when 3dsDL closed.";
     }
     const installer::Result &result = job.result;
     logOutcome("install", result.outcome == installer::Outcome::Installed,
@@ -706,7 +706,7 @@ fileops::Result fileOperation(
     Thread thread = startWorkerThread(runFileJob, &job, "files");
     if (thread == nullptr) {
         job.result.status = fileops::Status::Failed;
-        job.result.message = "无法启动工作线程。";
+        job.result.message = "Could not start the worker thread.";
         return job.result;
     }
 
@@ -723,10 +723,10 @@ fileops::Result fileOperation(
                 : -1.0f;
             meter.sample(osGetTime(), job.done);
             if (countsFiles) {
-                view.amounts = std::to_string(job.done) + " / " +
-                               std::to_string(expected) + " 个文件";
+                view.amounts = std::to_string(job.done) + " of " +
+                               std::to_string(expected) + " files";
             } else {
-                view.amounts = units::bytes(job.done) + " / " +
+                view.amounts = units::bytes(job.done) + " of " +
                                units::bytes(expected);
                 if (meter.hasRate()) {
                     view.speed = units::rate(meter.bytesPerSecond());

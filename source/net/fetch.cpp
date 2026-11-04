@@ -42,7 +42,7 @@ FetchResult fetch(const FetchRequest &request)
     FetchResult result;
     CURL *curl = curl_easy_init();
     if (curl == nullptr) {
-        result.message = "网络库无法启动请求。";
+        result.message = "The network library could not start a request.";
         return result;
     }
 
@@ -91,11 +91,11 @@ FetchResult fetch(const FetchRequest &request)
     result.detail = errorBuffer;
     if (code == CURLE_ABORTED_BY_CALLBACK) {
         result.cancelled = true;
-        result.message = "已取消。";
+        result.message = "Cancelled.";
         return result;
     }
     if (transfer.tooLarge) {
-        result.message = "服务器返回的数据超出预期大小。";
+        result.message = "The server's answer was larger than expected.";
         return result;
     }
     if (code != CURLE_OK) {
@@ -105,7 +105,7 @@ FetchResult fetch(const FetchRequest &request)
         return result;
     }
     if (result.httpStatus < 200 || result.httpStatus >= 300) {
-        result.message = "服务器返回 HTTP 状态码 " +
+        result.message = "The server answered with HTTP status " +
                          std::to_string(result.httpStatus) + ".";
         return result;
     }
@@ -153,7 +153,7 @@ Destination whereTo(const FetchRequest &request)
     Destination result;
     CURL *curl = curl_easy_init();
     if (curl == nullptr) {
-        result.message = "网络库无法启动请求。";
+        result.message = "The network library could not start a request.";
         return result;
     }
     Probe probe;
@@ -211,12 +211,12 @@ Destination whereTo(const FetchRequest &request)
 
     if (probe.refused) {
         result.refused = true;
-        result.message = "此链接指向本地网络中的地址。";
+        result.message = "The link leads to an address on this network.";
         return result;
     }
     if (code == CURLE_ABORTED_BY_CALLBACK) {
         result.cancelled = true;
-        result.message = "已取消。";
+        result.message = "Cancelled.";
         return result;
     }
     // An empty answer ends without a byte; one with a body ends at it.

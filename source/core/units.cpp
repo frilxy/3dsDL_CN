@@ -125,29 +125,28 @@ void RateMeter::sample(uint64_t milliseconds, uint64_t totalBytes)
 
 std::string timeLeft(uint64_t seconds)
 {
-    // UTF-8 Chinese labels take more bytes than the original abbreviations.
-    char buffer[64];
+    char buffer[40];
     // Under ten seconds it counts down; then in fives, then in minutes.
     const uint64_t fives = (seconds + 4) / 5 * 5;
     if (seconds < 10) {
-        std::snprintf(buffer, sizeof(buffer), "剩余 %u 秒",
+        std::snprintf(buffer, sizeof(buffer), "%u s left",
                       static_cast<unsigned>(std::max<uint64_t>(1, seconds)));
         return buffer;
     }
     if (fives < 60) {
-        std::snprintf(buffer, sizeof(buffer), "剩余 %u 秒",
+        std::snprintf(buffer, sizeof(buffer), "%u s left",
                       static_cast<unsigned>(fives));
         return buffer;
     }
     const uint64_t minutes = std::max<uint64_t>(1, (seconds + 30) / 60);
     if (minutes < 60) {
-        std::snprintf(buffer, sizeof(buffer), "剩余 %u 分钟",
+        std::snprintf(buffer, sizeof(buffer), "%u min left",
                       static_cast<unsigned>(minutes));
     } else if (minutes % 60 == 0) {
-        std::snprintf(buffer, sizeof(buffer), "剩余 %u 小时",
+        std::snprintf(buffer, sizeof(buffer), "%u h left",
                       static_cast<unsigned>(minutes / 60));
     } else {
-        std::snprintf(buffer, sizeof(buffer), "剩余 %u 小时 %u 分钟",
+        std::snprintf(buffer, sizeof(buffer), "%u h %u min left",
                       static_cast<unsigned>(minutes / 60),
                       static_cast<unsigned>(minutes % 60));
     }

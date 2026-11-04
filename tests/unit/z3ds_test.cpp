@@ -142,7 +142,7 @@ TEST("z3ds: refuses damaged and cut-short files")
         z3ds::Reader reader;
         const std::string cut = file.substr(0, file.size() - 10);
         CHECK(!reader.open(memory(cut), cut.size(), error));
-        CHECK(error.find("不完整") != std::string::npos);
+        CHECK(error.find("incomplete") != std::string::npos);
     }
     {
         // The table's magic number, at the very end.
@@ -150,7 +150,7 @@ TEST("z3ds: refuses damaged and cut-short files")
         bad[bad.size() - 1] ^= 0x40;
         z3ds::Reader reader;
         CHECK(!reader.open(memory(bad), bad.size(), error));
-        CHECK(error.find("损坏") != std::string::npos);
+        CHECK(error.find("damaged") != std::string::npos);
     }
     {
         // The first frame's original size no longer adds up.
@@ -179,7 +179,7 @@ TEST("z3ds: refuses damaged and cut-short files")
     {
         z3ds::Reader reader;
         CHECK(!reader.open(memory(data), data.size(), error));
-        CHECK(error.find("不是压缩的") != std::string::npos);
+        CHECK(error.find("not a compressed") != std::string::npos);
     }
 }
 
@@ -219,7 +219,7 @@ TEST("z3ds: a read stops when asked")
     stop = true;
     std::string out(10, '\0');
     CHECK(!reader.read(4000, &out[0], out.size(), error));
-    CHECK_EQ(error, std::string("已停止。"));
+    CHECK_EQ(error, std::string("Stopped."));
 }
 
 TEST("z3ds: decompresses a file handed over in order")

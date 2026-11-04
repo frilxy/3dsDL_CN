@@ -18,8 +18,8 @@ INCLUDES        := $(SOURCES)
 ROMFS           := romfs
 
 APP_VERSION     := $(strip $(shell cat $(TOPDIR)/VERSION))
-APP_TITLE       := 3dsDL 简体中文版
-APP_DESCRIPTION := 在 3DS 上下载文件与管理软件
+APP_TITLE       := 3dsDL
+APP_DESCRIPTION := Download files straight onto your 3DS
 APP_AUTHOR      := ankushKun
 ICON            := resources/icon-3dsdl.png
 

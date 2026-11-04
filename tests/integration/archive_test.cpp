@@ -223,7 +223,7 @@ TEST("archives: a damaged entry never costs the file it would replace")
                                         folder.path(),
                                         archives::Existing::Overwrite);
     CHECK(!result.ok);
-    CHECK(result.message.find("校验和") != std::string::npos);
+    CHECK(result.message.find("checksum") != std::string::npos);
     CHECK_EQ(readText(folder.path() + "data.bin"), std::string("mine"));
     CHECK(!fs::fileExists(folder.path() + "data.bin.3dsdl-tmp"));
 

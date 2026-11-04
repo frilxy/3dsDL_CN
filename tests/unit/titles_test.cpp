@@ -198,7 +198,7 @@ TEST("titles: reads seeddb.bin and keeps seeds for installed software")
     CHECK_EQ(static_cast<int>(wanted[0].seed[0]), 16);
 
     CHECK(!titles::parseSeedDb(data.substr(0, data.size() - 1), entries, error));
-    CHECK(error.find("3个种子") != std::string::npos);
+    CHECK(error.find("3 seeds") != std::string::npos);
     CHECK(!titles::parseSeedDb("short", entries, error));
     std::string empty(16, '\0');
     CHECK(titles::parseSeedDb(empty, entries, error));

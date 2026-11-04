@@ -127,8 +127,8 @@ void place(const uint8_t *pixels, uint32_t channels, uint32_t width,
 
 std::string tooBig(int width, int height)
 {
-    return "图片尺寸为 " + std::to_string(width) + " x " + std::to_string(height) +
-           " 像素，图片过大，无法在 3DS 上打开。";
+    return "At " + std::to_string(width) + " x " + std::to_string(height) +
+           " pixels, this picture is too big to open on a 3DS.";
 }
 
 #ifdef __3DS__
@@ -189,7 +189,7 @@ bool decodeJpeg(const uint8_t *data, size_t size, uint32_t maxWidth,
     }
     if (!ok && error.empty()) {
         const char *reason = tj3GetErrorStr(decoder);
-        error = std::string("无法解码图片") +
+        error = std::string("The picture could not be decoded") +
                 (reason != nullptr ? std::string(" (") + reason + ")" : "") +
                 ".";
     }
@@ -225,7 +225,7 @@ bool loadJpeg(const std::string &path, uint32_t maxWidth, uint32_t maxHeight,
                       bytes.size();
     std::fclose(file);
     if (!read) {
-        error = "无法读取图片。";
+        error = "The picture could not be read.";
         return false;
     }
     const bool ok = decodeJpeg(bytes.data(), bytes.size(), maxWidth,
@@ -242,9 +242,9 @@ bool takeDecoded(stbi_uc *decoded, int width, int height, int channels,
 {
     if (decoded == nullptr) {
         const char *reason = stbi_failure_reason();
-        error = std::string("无法解码图片") +
+        error = std::string("The picture could not be decoded") +
                 (reason != nullptr ? std::string(" (") + reason + ")" : "") +
-                "。图片可能已损坏，或超出剩余内存所能处理的大小。";
+                ". It may be damaged, or too big for the memory left.";
         return false;
     }
     place(decoded, static_cast<uint32_t>(channels),
@@ -320,7 +320,7 @@ bool load(const std::string &path, uint32_t maxWidth, uint32_t maxHeight,
     int components = 0;
     if (!stbi_info(path.c_str(), &width, &height, &components) ||
         width <= 0 || height <= 0) {
-        error = "不支持此图片格式。";
+        error = "This picture's format is not supported.";
         return false;
     }
     if (static_cast<uint64_t>(width) * height > MaxSourcePixels) {
@@ -356,7 +356,7 @@ bool decode(const std::vector<uint8_t> &bytes, uint32_t maxWidth,
     if (!stbi_info_from_memory(bytes.data(), length, &width, &height,
                                &components) ||
         width <= 0 || height <= 0) {
-        error = "不支持此图片格式。";
+        error = "This picture's format is not supported.";
         return false;
     }
     if (static_cast<uint64_t>(width) * height > MaxSourcePixels) {

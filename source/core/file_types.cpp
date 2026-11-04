@@ -87,35 +87,35 @@ const char *label(Kind kind)
 {
     switch (kind) {
     case Kind::Folder:
-        return "文件夹";
+        return "Folder";
     case Kind::Cia:
-        return "CIA 安装包";
+        return "CIA installer";
     case Kind::Ticket:
-        return "票据";
+        return "Ticket";
     case Kind::Homebrew:
-        return "自制软件";
+        return "Homebrew app";
     case Kind::Smdh:
-        return "软件图标（SMDH）";
+        return "Title icon (SMDH)";
     case Kind::CartridgeImage:
-        return "3DS 游戏映像";
+        return "3DS game image";
     case Kind::Nds:
-        return "DS 游戏";
+        return "DS game";
     case Kind::Firm:
-        return "固件（FIRM）";
+        return "Firmware (FIRM)";
     case Kind::Image:
-        return "图片";
+        return "Picture";
     case Kind::Text:
-        return "文本";
+        return "Text";
     case Kind::Archive:
-        return "压缩包";
+        return "Archive";
     case Kind::Audio:
-        return "音频";
+        return "Audio";
     case Kind::Video:
-        return "视频";
+        return "Video";
     case Kind::Other:
         break;
     }
-    return "文件";
+    return "File";
 }
 
 bool hasTitleMeta(Kind kind)
