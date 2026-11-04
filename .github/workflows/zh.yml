@@ -48,9 +48,8 @@ jobs:
 
   release:
     name: Publish a test release
-    # A tag like v0.9.0-cn.1 marks a build for testers. It goes out at once
-    # as a pre-release, which GitHub never calls the latest, so 3dsDL's
-    # update check in anyone's copy does not offer it.
+    # A tag like v0.9.0-cn.2 is published as a normal release, so the
+    # update check inside an installed copy offers it.
     if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-cn')
     needs: [catalog, build]
     runs-on: ubuntu-24.04
@@ -108,6 +107,5 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
-            --title "3dsDL ${version} 简体中文测试版" \
-            --notes-file release-notes.md \
-            --prerelease
+            --title "3dsDL ${version} 简体中文版" \
+            --notes-file release-notes.md
