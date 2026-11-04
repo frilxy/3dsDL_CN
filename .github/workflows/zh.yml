@@ -75,6 +75,32 @@ jobs:
           sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
             > "3dsDL-${version}.sha256"
 
+      - name: Make the QR code FBI scans
+        # The CIA's own download link, so the console installs it straight
+        # from the release without a card reader.
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          python3 -m pip install --quiet --disable-pip-version-check segno
+          python3 - "${version}" <<'PY'
+          import os, sys, segno
+          version = sys.argv[1]
+          tag = os.environ["GITHUB_REF_NAME"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          url = (f"https://github.com/{repo}/releases/download/{tag}/"
+                 f"3dsDL-{version}.cia")
+          segno.make(url, error="m").save(
+              f"dist/3dsDL-{version}-cia-qr.png", scale=10, border=4)
+          with open("release-notes.md", "w", encoding="utf-8") as notes:
+              notes.write(
+                  f"![在 FBI 中扫码安装]"
+                  f"(https://github.com/{repo}/releases/download/{tag}/"
+                  f"3dsDL-{version}-cia-qr.png)\n\n"
+                  "FBI → Remote Install → Scan QR Code 即可安装。\n\n")
+              notes.write(open(".github/zh-release-notes.md",
+                               encoding="utf-8").read())
+          PY
+
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,5 +109,5 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
             --title "3dsDL ${version} 简体中文测试版" \
-            --notes-file .github/zh-release-notes.md \
+            --notes-file release-notes.md \
             --prerelease
