@@ -48,13 +48,22 @@ python3 scripts/zh/extract.py --gap=4 --dirs <上游目录> <已汉化目录> > 
 
 ## 版本号
 
-`zh/VERSION_SUFFIX` 是 `cn.1`，`apply.py` 会把 `VERSION` 写成 `0.9.0-cn.1` 这种形式，
-上游发版后自动跟随，不需要手改。
+`zh/VERSION_SUFFIX` 里是 `cn`，`apply.py` 把 `VERSION` 写成 `0.9.0-cn`：
+**上游版本 + 语种后缀，不带序号**。上游升到 0.9.1 就是 `0.9.1-cn`，不需要手改。
+
+`scripts/version.sh` 认这个不带数字的 `cn` 标签，按预发布的最高序号 14 编码成 CIA 版本。
+一个上游版本只对应一个正式版；同一上游版本要再发预览，用 `-cn-rc.1` 这类带序号的标签，
+并把它标成 prerelease，免得到正式版的检查更新里冒出来。
+
+## 术语
+
+`ticket`、`seed` 保留英文，不译成「票据」「种子」——前者在中文里指金融票据，
+后者会被当成 BT 下载种子。CIA、DLC、3DSX 同理。中文与英文之间留一个空格。
 
 ## 网页与编辑器
 
 `source/core/remote_page.cpp` 里的管理页和 `resources/editor/editor.js` 也在词表里。
-编辑器改完后要重新打包：
+编辑器改完要重新打包：
 
 ```sh
 ./scripts/make-editor.sh    # 需要 Node，生成 romfs/web/editor.js.gz
