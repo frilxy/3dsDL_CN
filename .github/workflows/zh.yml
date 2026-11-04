@@ -5,6 +5,7 @@ name: Chinese build
 on:
   push:
     branches: [main]
+    tags: ["v*-cn*"]
   pull_request:
   workflow_dispatch:
 
@@ -44,3 +45,43 @@ jobs:
           name: 3dsDL-zh-${{ github.sha }}
           path: dist/
           if-no-files-found: error
+
+  release:
+    name: Publish a test release
+    # A tag like v0.9.0-cn.1 marks a build for testers. It goes out at once
+    # as a pre-release, which GitHub never calls the latest, so 3dsDL's
+    # update check in anyone's copy does not offer it.
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-cn')
+    needs: [catalog, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: 3dsDL-zh-${{ github.sha }}
+          path: dist
+
+      - name: Name the files after the version
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          cd dist
+          for file in 3dsDL.cia 3dsDL.3dsx 3dsDL.smdh; do
+            mv "${file}" "3dsDL-${version}.${file##*.}"
+          done
+          sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
+            > "3dsDL-${version}.sha256"
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/3dsDL-* \
+            --title "3dsDL ${version} 简体中文测试版" \
+            --notes-file .github/zh-release-notes.md \
+            --prerelease
