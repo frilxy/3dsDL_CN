@@ -131,7 +131,7 @@ bool openCompressed(Handle file, u64 size, z3ds::Reader &reader,
         return false;
     }
     if (!z3ds::holdsCia(parsed)) {
-        error = "This compressed file does not hold a CIA.";
+        error = "此压缩文件中不包含 CIA。";
         return false;
     }
     const auto source = [file](uint64_t offset, void *buffer, size_t count) {
@@ -202,7 +202,7 @@ bool downloadSeed(uint64_t titleId, uint8_t *seed, std::string &message,
 {
     CURL *curl = curl_easy_init();
     if (curl == nullptr) {
-        message = "Could not start the seed download.";
+        message = "无法开始下载种子。";
         return false;
     }
     const std::string link =
@@ -229,21 +229,21 @@ bool downloadSeed(uint64_t titleId, uint8_t *seed, std::string &message,
     curl_easy_cleanup(curl);
 
     if (code == CURLE_ABORTED_BY_CALLBACK) {
-        message = "The seed lookup was stopped.";
+        message = "已停止查询种子。";
         return false;
     }
     if (code != CURLE_OK) {
-        message = std::string("Could not reach Nintendo's seed server: ") +
-                  curl_easy_strerror(code) + ".";
+        message = std::string("无法连接任天堂种子服务器：") +
+                  curl_easy_strerror(code) + "。";
         return false;
     }
     if (status == 404) {
-        message = "Nintendo's server has no seed for this title.";
+        message = "任天堂服务器上没有此软件的种子。";
         return false;
     }
     if (status != 200 || body.size() != SeedSize) {
-        message = "Nintendo's seed server answered with HTTP " +
-                  std::to_string(status) + ".";
+        message = "任天堂种子服务器返回 HTTP " +
+                  std::to_string(status) + "。";
         return false;
     }
     std::memcpy(seed, body.data(), SeedSize);
@@ -288,10 +288,10 @@ bool available()
 
 std::string unavailableReason()
 {
-    return "3dsDL could not open the install service (" +
+    return "3dsDL 无法打开安装服务（" +
            hexCode(startResult) +
-           "). Run the CIA version of 3dsDL, or the .3dsx from the Homebrew "
-           "Launcher with Luma3DS.";
+           "）。请运行 CIA 版 3dsDL，或在 Luma3DS 环境下通过自制软件启动器"
+           "运行 .3dsx。";
 }
 
 FS_MediaType destination(uint64_t titleId)
@@ -311,12 +311,12 @@ Result installCia(const std::string &path, uint64_t titleId,
     FileHandle file;
     ::Result code = file.open(path);
     if (R_FAILED(code)) {
-        return failure(code, "Could not open the CIA file.");
+        return failure(code, "无法打开 CIA 文件。");
     }
     u64 size = 0;
     code = FSFILE_GetSize(file.get(), &size);
     if (R_FAILED(code)) {
-        return failure(code, "Could not read the CIA file.");
+        return failure(code, "无法读取 CIA 文件。");
     }
     // A .zcia is decompressed on its way to AM.
     z3ds::Reader compressed;
@@ -336,7 +336,7 @@ Result installCia(const std::string &path, uint64_t titleId,
         static_cast<uint8_t *>(std::malloc(ChunkSize)), &std::free);
     if (!buffer) {
         Result result;
-        result.message = "Not enough memory to install.";
+        result.message = "内存不足，无法安装。";
         return result;
     }
 
@@ -345,7 +345,7 @@ Result installCia(const std::string &path, uint64_t titleId,
     prepareTitleDatabase(destination(titleId));
     code = AM_StartCiaInstall(destination(titleId), &target);
     if (R_FAILED(code)) {
-        return failure(code, "The install could not start.");
+        return failure(code, "无法开始安装。");
     }
 
     observer.onProgress(0, size);
@@ -355,8 +355,7 @@ Result installCia(const std::string &path, uint64_t titleId,
             AM_CancelCIAInstall(target);
             Result result;
             result.outcome = Outcome::Cancelled;
-            result.message = "The install was cancelled. Nothing was "
-                             "changed.";
+            result.message = "安装已取消，未作任何更改。";
             return result;
         }
         const u32 wanted = static_cast<u32>(
@@ -379,14 +378,14 @@ Result installCia(const std::string &path, uint64_t titleId,
             }
             if (R_FAILED(code)) {
                 AM_CancelCIAInstall(target);
-                return failure(code, "Reading the CIA file failed.");
+                return failure(code, "读取 CIA 文件失败。");
             }
         }
         u32 written = 0;
         code = FSFILE_Write(target, &written, offset, buffer.get(), read, 0);
         if (R_FAILED(code)) {
             AM_CancelCIAInstall(target);
-            return failure(code, "The install failed.");
+            return failure(code, "安装失败。");
         }
         offset += read;
         observer.onProgress(offset, size);
@@ -395,7 +394,7 @@ Result installCia(const std::string &path, uint64_t titleId,
     code = commit ? AM_FinishCiaInstall(target)
                   : AM_FinishCiaInstallWithoutCommit(target);
     if (R_FAILED(code)) {
-        return failure(code, "The install could not be finished.");
+        return failure(code, "无法完成安装。");
     }
 
     Result result;
@@ -415,15 +414,14 @@ bool StreamInstall::begin()
 {
     const cia::Info &info = stream_.info();
     if (cia::isSystemTitle(info.titleId)) {
-        result_.message = "This is a system title. 3dsDL does not install "
-                          "them.";
+        result_.message = "这是系统软件，3dsDL 不会安装。";
         return false;
     }
     startTime_ = osGetTime();
     prepareTitleDatabase(destination(info.titleId));
     const ::Result code = AM_StartCiaInstall(destination(info.titleId), &target_);
     if (R_FAILED(code)) {
-        result_ = failure(code, "The install could not start.");
+        result_ = failure(code, "无法开始安装。");
         return false;
     }
     started_ = true;
@@ -432,7 +430,7 @@ bool StreamInstall::begin()
     const ::Result wrote = FSFILE_Write(target_, &done, 0, prefix.data(),
                                         static_cast<u32>(prefix.size()), 0);
     if (R_FAILED(wrote)) {
-        result_ = failure(wrote, "The install failed.");
+        result_ = failure(wrote, "安装失败。");
         cancel();
         return false;
     }
@@ -456,7 +454,7 @@ bool StreamInstall::write(uint64_t offset, const void *data, size_t size)
     // The first four bytes tell a .zcia from a CIA.
     constexpr size_t MagicSize = 4;
     if (offset != sniff_.size()) {
-        result_.message = "The download arrived out of order.";
+        result_.message = "下载数据顺序异常。";
         return false;
     }
     const size_t used = std::min(size, MagicSize - sniff_.size());
@@ -479,7 +477,7 @@ bool StreamInstall::pass(uint64_t offset, const uint8_t *data, size_t size)
         return take(offset, data, size);
     }
     if (offset != fed_) {
-        result_.message = "The download arrived out of order.";
+        result_.message = "下载数据顺序异常。";
         cancel();
         return false;
     }
@@ -519,7 +517,7 @@ bool StreamInstall::take(uint64_t offset, const uint8_t *data, size_t size)
     const ::Result code = FSFILE_Write(target_, &done, offset, data,
                                        static_cast<u32>(size), 0);
     if (R_FAILED(code)) {
-        result_ = failure(code, "The install failed.");
+        result_ = failure(code, "安装失败。");
         cancel();
         return false;
     }
@@ -531,22 +529,21 @@ Result StreamInstall::finish()
 {
     if (!started_) {
         if (result_.message.empty()) {
-            result_.message = "The download ended before the CIA's header "
-                              "arrived.";
+            result_.message = "CIA 文件头尚未下载完成，下载便已结束。";
         }
         return result_;
     }
     if (compressed_ && !unpack_.done()) {
         cancel();
         result_ = Result();
-        result_.message = "The download ended before the whole CIA arrived.";
+        result_.message = "整个 CIA 尚未下载完成，下载已结束。";
         return result_;
     }
     const ::Result code = AM_FinishCiaInstall(target_);
     started_ = false;
     target_ = 0;
     if (R_FAILED(code)) {
-        result_ = failure(code, "The install could not be finished.");
+        result_ = failure(code, "无法完成安装。");
         return result_;
     }
     result_ = Result();
@@ -585,7 +582,7 @@ bool commitImport(uint64_t titleId, std::string &error)
     u64 id = titleId;
     const ::Result code = AM_CommitImportTitles(destination(titleId), 1, false, &id);
     if (R_FAILED(code)) {
-        error = "The install could not be finished. " + describe(code);
+        error = "无法完成安装。" + describe(code);
         return false;
     }
     return true;
@@ -599,12 +596,12 @@ void forgetImport(uint64_t titleId)
 bool removeTitle(uint64_t titleId, std::string &error)
 {
     if (cia::isSystemTitle(titleId)) {
-        error = "System titles are never removed.";
+        error = "不会移除系统软件。";
         return false;
     }
     const ::Result code = AM_DeleteTitle(destination(titleId), titleId);
     if (R_FAILED(code)) {
-        error = "Could not remove the installed title. " + describe(code);
+        error = "无法移除已安装的软件。" + describe(code);
         return false;
     }
     return true;
@@ -636,19 +633,19 @@ bool installSeed(uint64_t titleId, std::string &message,
     std::string source;
     if (readSeedFile("sdmc:/3ds/3dsDL/seeds/" + name, seed) ||
         readSeedFile("sdmc:/fbi/seed/" + name, seed)) {
-        source = "from the SD card";
+        source = "来自 SD 卡";
     } else if (downloadSeed(titleId, seed, message, stop)) {
-        source = "from Nintendo";
+        source = "来自任天堂服务器";
     } else {
         return false;
     }
 
     const ::Result code = addSeed(titleId, seed);
     if (R_FAILED(code)) {
-        message = "The seed could not be added. " + describe(code);
+        message = "无法添加种子。" + describe(code);
         return false;
     }
-    message = "Added the game's seed " + source + ".";
+    message = "已添加游戏种子，" + source + "。";
     return true;
 }
 
@@ -656,7 +653,7 @@ bool addSeed(uint64_t titleId, const uint8_t *seed, std::string &error)
 {
     const ::Result code = addSeed(titleId, seed);
     if (R_FAILED(code)) {
-        error = "The seed could not be added. " + describe(code);
+        error = "无法添加种子。" + describe(code);
         return false;
     }
     return true;
@@ -673,7 +670,7 @@ bool launch(uint64_t titleId, std::string &error)
         code = APT_DoApplicationJump(parameters, sizeof(parameters), hmac);
     }
     if (R_FAILED(code)) {
-        error = "Could not start the title. " + describe(code);
+        error = "无法启动软件。" + describe(code);
         return false;
     }
     return true;
@@ -687,41 +684,37 @@ std::string describe(::Result code)
     if (module == RM_AM || module == RM_AM_LOW) {
         switch (description) {
         case 4:
-            text = "The install service was busy with something else. "
-                   "Restart the console and try again.";
+            text = "安装服务正忙于其他操作。请重启主机后重试。";
             break;
         case 37:
-            text = "The CIA's contents are damaged.";
+            text = "CIA 内容已损坏。";
             break;
         case 39:
-            text = "The install service refused this version. The same or "
-                   "a newer version may already be installed.";
+            text = "安装服务拒绝了此版本。可能已安装相同或更新版本。";
             break;
         case 43:
-            text = "The SD card's title database is missing.";
+            text = "SD 卡的软件数据库缺失。";
             break;
         case 44:
-            text = "System titles cannot be removed.";
+            text = "无法移除系统软件。";
             break;
         case 53:
-            text = "There is not enough space left in the DSiWare area of "
-                   "the system memory.";
+            text = "系统存储的 DSiWare 区域剩余空间不足。";
             break;
         case SameVersion:
-            text = "This version is already installed.";
+            text = "已安装此版本。";
             break;
         case 106:
-            text = "The CIA failed a signature or hash check. The file is "
-                   "probably damaged; download it again.";
+            text = "CIA 未通过签名或哈希校验。文件可能已损坏，请重新下载。";
             break;
         default:
             break;
         }
     } else if (module == RM_FS && description == RD_NOT_FOUND) {
-        text = "The file was not found.";
+        text = "未找到文件。";
     }
     if (text.empty()) {
-        text = "Error " + hexCode(code) + ".";
+        text = "错误 " + hexCode(code) + "。";
     } else {
         text += " (" + hexCode(code) + ")";
     }

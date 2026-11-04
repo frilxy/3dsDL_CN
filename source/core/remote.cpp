@@ -409,11 +409,11 @@ bool markedByPage(const HttpRequest &request)
 bool apiRequestAllowed(const HttpRequest &request, std::string &why)
 {
     if (!toConsole(request)) {
-        why = "Open this page by the console's address.";
+        why = "请使用主机地址打开此页面。";
         return false;
     }
     if (request.method != "GET" && !markedByPage(request)) {
-        why = "Changes must come from the 3dsDL page.";
+        why = "更改必须来自 3dsDL 页面。";
         return false;
     }
     return true;
@@ -495,15 +495,14 @@ bool sendOptions(const std::string &form, SendOptions &out, std::string &why)
 {
     out = SendOptions();
     if (extractLinks(formValue(form, "links")).size() > MaxSentLinks) {
-        why = "Send at most " + std::to_string(MaxSentLinks) + " links at once.";
+        why = "每次最多发送 " + std::to_string(MaxSentLinks) + " 个链接。";
         return false;
     }
     const std::string folder = formValue(form, "folder");
     if (!folder.empty()) {
         std::string path;
         if (!localPath("sdmc:", folder, path) || !sendFolderAllowed(path)) {
-            why = "Links can only be saved in /3ds/ or /cias/, or one folder "
-                  "in them.";
+            why = "链接只能保存到 /3ds/、/cias/ 或它们下一级的文件夹中。";
             return false;
         }
         out.folder = path.back() == '/' ? path : path + "/";
@@ -511,8 +510,7 @@ bool sendOptions(const std::string &form, SendOptions &out, std::string &why)
         // data, which a sender has no business in.
         if (std::count(out.folder.begin() + 6, out.folder.end(), '/') > 2) {
             out = SendOptions();
-            why = "Links can only be saved in /3ds/ or /cias/, or one folder "
-                  "in them.";
+            why = "链接只能保存到 /3ds/、/cias/ 或它们下一级的文件夹中。";
             return false;
         }
     }

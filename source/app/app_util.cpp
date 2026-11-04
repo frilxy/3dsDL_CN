@@ -73,7 +73,37 @@ KindLook lookOf(filetype::Kind kind)
 
 std::string plural(uint64_t count, const std::string &word)
 {
-    return units::grouped(count) + " " + word + (count == 1 ? "" : "s");
+    // Chinese counts use classifiers rather than English plural suffixes.
+    // Keep legacy callers readable while the fork tracks upstream changes.
+    static const std::map<std::string, std::string> nouns = {
+        {"file", "文件"}, {"folder", "文件夹"}, {"item", "项目"},
+        {"install", "安装任务"}, {"ticket", "票据"}, {"title", "软件"},
+        {"deleted ticket", "已删除的票据"},
+        {"unfinished install", "未完成的安装"}, {"seed", "种子"},
+        {"installed game", "已安装的游戏"}, {"backup", "备份"},
+        {"download", "次下载"}, {"unused ticket", "未使用的票据"},
+        {"CIA", "CIA"}, {"save", "存档"}};
+    const auto found = nouns.find(word);
+    const std::string &label = found == nouns.end() ? word : found->second;
+    const std::string number = units::grouped(count);
+    if (label == "项目") {
+        return number + " 项";
+    }
+    if (label == "备份" || label == "存档") {
+        return number + " 份" + label;
+    }
+    if (label == "软件" || label == "已安装的游戏") {
+        return number + " 款" + label;
+    }
+    if (label.compare(0, std::string("个").size(), "个") == 0 ||
+        label.compare(0, std::string("次").size(), "次") == 0) {
+        return number + " " + label;
+    }
+    // Latin words such as CIA keep a space between the count and the noun.
+    if (!label.empty() && label.front() < 0x80) {
+        return number + " 个 " + label;
+    }
+    return number + " 个" + label;
 }
 
 bool readArchive(const std::string &path, archives::Scan scan,
@@ -92,7 +122,7 @@ bool readArchive(const std::string &path, archives::Scan scan,
     bool ok = false;
     error.clear();
     const bool finished = tasks::busy(
-        "Archive", "Reading " + basename(path) + "...",
+        "压缩包", "正在读取 " + basename(path) + "...",
         [&](tasks::Busy &busy) {
             const int64_t size = fs::fileSize(path);
             busy.bytes = true;
@@ -112,15 +142,15 @@ std::string sortDescription(fs::SortOrder order, bool reverse)
 {
     switch (order) {
     case fs::SortOrder::Size:
-        return reverse ? "Smallest First" : "Largest First";
+        return reverse ? "从小到大" : "从大到小";
     case fs::SortOrder::Date:
-        return reverse ? "Oldest First" : "Newest First";
+        return reverse ? "从旧到新" : "从新到旧";
     case fs::SortOrder::Type:
-        return reverse ? "Type, Z to A" : "Type, A to Z";
+        return reverse ? "类型，Z 到 A" : "类型，A 到 Z";
     case fs::SortOrder::Name:
         break;
     }
-    return reverse ? "Name, Z to A" : "Name, A to Z";
+    return reverse ? "名称，Z 到 A" : "名称，A 到 Z";
 }
 
 void drawLabelledPanel(float y, float height, const std::string &label,
@@ -135,7 +165,7 @@ void drawLabelledPanel(float y, float height, const std::string &label,
 std::string ciaName(const cia::Info &info)
 {
     return info.smdh.shortName.empty()
-        ? "title " + cia::titleIdText(info.titleId)
+        ? "软件 " + cia::titleIdText(info.titleId)
         : info.smdh.shortName;
 }
 
@@ -152,7 +182,7 @@ void addCiaParagraphs(ui::Dialog &dialog, const cia::Info &info)
          ui::color::Text, 0.46f, 2});
     uint16_t installed = 0;
     if (installer::installedVersion(info.titleId, installed)) {
-        dialog.body.push_back({"Installed now: " +
+        dialog.body.push_back({"当前已安装：" +
                                    titleVersion(info.titleId, installed),
                                installed > info.version ? ui::color::Warning
                                                         : ui::color::Muted,
@@ -176,16 +206,16 @@ void drawCiaTop(const cia::Info &info, const std::string &title,
                     left + 60, top + 30, ui::type::Small, ui::color::InkSoft,
                     280);
     float y = top + 60;
-    y = ui::drawTagRow(left, y, 76, "Title ID", cia::titleIdText(info.titleId));
+    y = ui::drawTagRow(left, y, 76, "软件 ID", cia::titleIdText(info.titleId));
     uint16_t installed = 0;
     const bool isInstalled = installedCached(info.titleId, installed);
-    y = ui::drawTagRow(left, y, 76, "Version",
+    y = ui::drawTagRow(left, y, 76, "版本",
                        versionRow(info.titleId, info.version, isInstalled,
                                   installed));
-    ui::drawTagRow(left, y, 76, "Size",
+    ui::drawTagRow(left, y, 76, "大小",
                    units::bytes(info.fileSize) + ", " +
-                       (cia::installsToNand(info.titleId) ? "system memory"
-                                                          : "SD card"));
+                       (cia::installsToNand(info.titleId) ? "系统存储"
+                                                          : "SD 卡"));
 }
 
 std::string titleVersion(uint64_t titleId, uint16_t version)
@@ -202,12 +232,12 @@ std::string versionRow(uint64_t titleId, uint16_t version, bool isInstalled,
         return text.substr(0, text.find(' '));
     };
     if (!isInstalled) {
-        return shortText(version) + ", not installed";
+        return shortText(version) + "，未安装";
     }
     if (installed == version) {
-        return shortText(version) + ", installed";
+        return shortText(version) + "，已安装";
     }
-    return shortText(version) + ", installed " + shortText(installed);
+    return shortText(version) + "，已安装版本 " + shortText(installed);
 }
 
 } // namespace screens

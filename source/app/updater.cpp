@@ -57,11 +57,10 @@ net::FetchRequest githubRequest(const std::string &url, size_t maxBytes,
 std::string explain(const net::FetchResult &result)
 {
     if (result.httpStatus == 403 || result.httpStatus == 429) {
-        return "GitHub is limiting how often it can be asked from this "
-               "network. Try again in an hour.";
+        return "GitHub 限制了此网络的请求频率。请一小时后重试。";
     }
     if (result.httpStatus == 404) {
-        return "No release of 3dsDL has been published yet.";
+        return "3dsDL 尚未发布任何版本。";
     }
     return result.message;
 }
@@ -76,7 +75,7 @@ Status check(const std::atomic<bool> *stop = nullptr)
     const net::FetchResult result = net::fetch(request);
     if (result.cancelled) {
         status.state = State::Failed;
-        status.message = "The check was stopped.";
+        status.message = "检查已停止。";
         return status;
     }
     if (!result.ok) {
@@ -183,7 +182,7 @@ void startCheck()
         running.store(false);
         Status failed;
         failed.state = State::Failed;
-        failed.message = "The update check could not start.";
+        failed.message = "无法开始检查更新。";
         finish(failed);
     }
 }
@@ -248,8 +247,7 @@ bool fetchChecksums(const update::Release &release, std::string &listing,
 {
     const update::Asset *sums = update::findAsset(release, update::ChecksumAsset);
     if (sums == nullptr) {
-        error = "This release has no checksum file, so 3dsDL cannot make "
-                "sure the download is intact.";
+        error = "此版本未提供校验和文件，3dsDL 无法确认下载文件是否完整。";
         return false;
     }
     cancel.store(false);

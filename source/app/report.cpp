@@ -41,12 +41,12 @@ void App::reportScreen()
         issue = QrCode(std::string(feedback::IssuesPage) + "/new");
     }
     const Place places[] = {
-        {"Report a Bug", ui::Icon::Warning, ui::color::IconOrange,
+        {"报告错误", ui::Icon::Warning, ui::color::IconOrange,
          feedback::withoutScheme(feedback::IssuesPage), issue},
-        {"Discord Server", ui::Icon::Chip, ui::color::IconPink,
+        {"Discord 服务器", ui::Icon::Chip, ui::color::IconPink,
          feedback::withoutScheme(feedback::DiscordInvite),
          QrCode(feedback::DiscordInvite)},
-        {"Developer on X", ui::Icon::Globe, ui::color::IconTeal,
+        {"开发者的 X 主页", ui::Icon::Globe, ui::color::IconTeal,
          feedback::withoutScheme(feedback::DeveloperPage),
          QrCode(feedback::DeveloperPage)},
     };
@@ -56,7 +56,7 @@ void App::reportScreen()
     int shown = 0; // stays on the last place while the ring is on Back
     while (ui::keepRunning() && !quit_) {
         ui::ScreenSpec spec;
-        spec.back = "Back";
+        spec.back = "返回";
         for (int index = 0; index < PlaceCount; ++index) {
             ui::Control control;
             control.rect = {30, 12 + index * 44.0f, 260, 36};
@@ -71,7 +71,7 @@ void App::reportScreen()
                 shown = focus;
             }
             const Place &place = places[shown];
-            ui::drawTopChrome("Report an Issue", ui::Icon::Warning,
+            ui::drawTopChrome("反馈问题", ui::Icon::Warning,
                               ui::color::IconOrange);
             ui::drawPanel();
             // The code is centred in a column wide enough for the largest
@@ -103,7 +103,7 @@ void App::reportScreen()
         spec.drawBottom = [&]() {
             const ui::Rect panel = {13, 143, 294, 58};
             ui::drawPanel(panel);
-            ui::drawFacts({{"Details", details}, {"Logs", storage::DataFolder}},
+            ui::drawFacts({{"详细信息", details}, {"日志", storage::DataFolder}},
                           panel);
         };
 

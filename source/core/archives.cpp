@@ -39,15 +39,15 @@ using Handle = std::unique_ptr<struct archive, Closer>;
 std::string describe(struct archive *handle)
 {
     if (archive_errno(handle) == ENOMEM) {
-        return "Not enough memory to read this archive.";
+        return "内存不足，无法读取此压缩包。";
     }
     const char *message = archive_error_string(handle);
     if (message == nullptr || *message == '\0') {
-        return "This archive cannot be read.";
+        return "无法读取此压缩包。";
     }
     std::string text = message;
     if (text.find("Unrecognized archive format") != std::string::npos) {
-        return "This is not an archive 3dsDL can read.";
+        return "3dsDL 无法读取此压缩包。";
     }
     if (text.back() != '.') {
         text += '.';
@@ -345,7 +345,7 @@ Result extractOther(const std::string &path, const std::string &folder,
     const auto stop = [&]() {
         writer.abandon();
         result.cancelled = true;
-        result.message = "Extraction cancelled.";
+        result.message = "已取消解压。";
         return result;
     };
 
@@ -443,14 +443,14 @@ Result extractOther(const std::string &path, const std::string &folder,
                     unsupported = true;
                     break;
                 }
-                result.message = entry.path + " is damaged. " + describe(raw);
+                result.message = entry.path + "已损坏。" + describe(raw);
                 return result;
             }
             const uint64_t at = static_cast<uint64_t>(offset);
             if (at < writer.written() ||
                 (size >= 0 && at + length > static_cast<uint64_t>(size))) {
                 writer.abandon();
-                result.message = entry.path + " is damaged.";
+                result.message = entry.path + "已损坏。";
                 return result;
             }
             const uint64_t hole = at - writer.written();
@@ -557,7 +557,7 @@ bool read(const std::string &path, Scan scan, Listing &listing,
     listing = Listing();
     struct stat info {};
     if (stat(path.c_str(), &info) != 0) {
-        error = "Could not open the archive.";
+        error = "无法打开压缩包。";
         return false;
     }
     listing.archiveSize = static_cast<uint64_t>(info.st_size);

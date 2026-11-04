@@ -23,9 +23,9 @@ constexpr uint64_t MaxFileSize = 0xffffffffull;
 std::string writeError(const std::string &path)
 {
     if (errno == ENOSPC) {
-        return "The SD card is full.";
+        return "SD 卡已满。";
     }
-    return "Could not write " + path + " (" + std::strerror(errno) + ").";
+    return "无法写入 " + path + "（" + std::strerror(errno) + "）。";
 }
 
 bool writeAll(int fd, const unsigned char *data, size_t size)
@@ -159,7 +159,7 @@ bool Writer::makeRoot()
         return true;
     }
     if (!fs::makeDirectories(folder_)) {
-        return fail("Could not create " + folder_ + ".");
+        return fail("无法创建文件夹 " + folder_ + "。");
     }
     names_.madeEmpty("");
     return true;
@@ -177,7 +177,7 @@ bool Writer::makeFolder(const std::string &path)
     if (mkdir(full.c_str(), 0777) == 0) {
         names_.madeEmpty(path);
     } else if (errno != EEXIST && !fs::directoryExists(full)) {
-        return fail("Could not create the folder " + path + ".");
+        return fail("无法创建文件夹 " + path + "。");
     }
     made_.insert(path);
     return true;
@@ -193,8 +193,7 @@ Writer::Start Writer::start(const std::string &path, int64_t size)
     buffered_ = 0;
     replacing_ = false;
     if (size > static_cast<int64_t>(MaxFileSize)) {
-        fail(path + " is over 4 GiB, more than the SD card can hold in one "
-                    "file.");
+        fail(path + " 超过 4 GiB，超出 SD 卡的单文件大小限制。");
         return Start::Failed;
     }
     if (!makeFolder(parentOf(path))) {
@@ -276,8 +275,7 @@ bool Writer::write(const void *data, size_t size)
 {
     const unsigned char *bytes = static_cast<const unsigned char *>(data);
     if (written_ + size > MaxFileSize) {
-        return fail(path_ + " is over 4 GiB, more than the SD card can hold "
-                            "in one file.");
+        return fail(path_ + " 超过 4 GiB，超出 SD 卡的单文件大小限制。");
     }
     written_ += size;
     if (buffered_ == 0 && size >= PieceSize) {
@@ -299,8 +297,7 @@ bool Writer::write(const void *data, size_t size)
 bool Writer::writeZeros(uint64_t count)
 {
     if (written_ + count > MaxFileSize) {
-        return fail(path_ + " is over 4 GiB, more than the SD card can hold "
-                            "in one file.");
+        return fail(path_ + " 超过 4 GiB，超出 SD 卡的单文件大小限制。");
     }
     written_ += count;
     while (count > 0) {
@@ -331,7 +328,7 @@ bool Writer::finish()
         return false;
     }
     if (size_ >= 0 && written_ != static_cast<uint64_t>(size_)) {
-        return fail(path_ + " is not the size the archive says.");
+        return fail(path_ + " 的大小与压缩包记录不符。");
     }
     const int fd = fd_;
     fd_ = -1;
@@ -353,14 +350,14 @@ bool Writer::finish()
         !(std::remove(old.c_str()) == 0 &&
           std::rename(target_.c_str(), old.c_str()) == 0)) {
         std::remove(writing_.c_str());
-        return fail("Could not replace " + path_ + ".");
+        return fail("无法替换 " + path_ + "。");
     }
     if (std::rename(writing_.c_str(), target_.c_str()) != 0) {
         std::remove(writing_.c_str());
         if (replacing_) {
             std::rename(old.c_str(), target_.c_str());
         }
-        return fail("Could not save " + path_ + ".");
+        return fail("无法保存 " + path_ + "。");
     }
     if (replacing_) {
         std::remove(old.c_str());

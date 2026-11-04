@@ -66,15 +66,14 @@ Result commit(const std::string &partPath, const std::string &folder,
             result.ok = true;
             result.usedFallbackName = true;
             result.path = candidate;
-            result.message = "The SD card would not accept the name \"" +
-                             filename + "\", so the file was saved as " +
+            result.message = "SD 卡不接受名称“" +
+                             filename + "”，因此文件已另存为" +
                              candidate + ".";
             return result;
         }
     }
 
-    result.message = "The file could not be renamed, so the downloaded data "
-                     "was left in " + partPath + ".";
+    result.message = "无法重命名文件，下载的数据保留在" + partPath + ".";
     return result;
 }
 

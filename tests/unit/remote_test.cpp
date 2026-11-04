@@ -61,6 +61,9 @@ TEST("remote: responses and the page")
     CHECK(response.find("\r\n\r\nno") != std::string::npos);
 
     const std::string html = remote::page("Sent <2> links", true);
+    CHECK(html.find("<html lang=\"zh-CN\">") != std::string::npos);
+    CHECK(html.find("发送链接") != std::string::npos);
+    CHECK(html.find("传输任务") != std::string::npos);
     CHECK(html.find("action=\"/send\"") != std::string::npos);
     CHECK(html.find("Sent &lt;2&gt; links") != std::string::npos);
     CHECK(html.find("class=\"note good\"") != std::string::npos);

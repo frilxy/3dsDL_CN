@@ -177,7 +177,7 @@ TEST("remote server: the web page, a form post and a redirect back")
     sendText(client, "GET /?sent=2 HTTP/1.1\r\n\r\n");
     response = readAll(client);
     ::close(client);
-    CHECK(response.find("Sent 2 links") != std::string::npos);
+    CHECK(response.find("已发送2个链接") != std::string::npos);
     (void)after.get();
 
     std::future<net::Received> missing = receiveOne(receiver);
@@ -418,7 +418,7 @@ TEST("remote server: files go up, come back, move and go away")
         std::lock_guard<std::mutex> hold(lock);
         // The refused upload, the replacing one and the download.
         CHECK_EQ(finished.size(), static_cast<size_t>(3));
-        CHECK(!finished[0].ok && finished[0].message == "a b.bin already exists.");
+        CHECK(!finished[0].ok && finished[0].message == "a b.bin 已存在。");
         CHECK(finished[1].ok);
         CHECK(!finished[2].upload && finished[2].ok);
         CHECK_EQ(finished[2].done, static_cast<uint64_t>(3));
@@ -556,7 +556,7 @@ TEST("remote server: uploads wait in the staging folder, then take their place")
     CHECK(fs::readFile(root.path + "/a.bin", stored) && stored == "first");
     CHECK(fs::makeDirectories(root.path + "/dir"));
     CHECK(bodyOf(put(port, "/api/file?path=%2Fdir&replace=1", "x"))
-              .find("A folder is already called dir.") != std::string::npos);
+              .find("已有名为 dir 的文件夹") != std::string::npos);
     CHECK(!fs::fileExists(staging.path + "/.3dsdl-upload.part"));
 
     // Replacing writes over the old copy, shorter or longer.
@@ -978,7 +978,7 @@ TEST("remote server: what a sender asks for comes with its links")
     response = readAll(client);
     ::close(client);
     CHECK(response.rfind("HTTP/1.1 400", 0) == 0);
-    CHECK(response.find("/3ds/ or /cias/") != std::string::npos);
+    CHECK(response.find("/3ds/、/cias/") != std::string::npos);
 
     // A page that sent options and no links, then an FBI send, both waiting
     // when the receiver looks: one wait serves both, and the FBI links come
@@ -1063,7 +1063,7 @@ TEST("remote server: a send says if 3dsDL's page made it, holds 20 links, and a 
     std::string response = readAll(client);
     ::close(client);
     CHECK(response.rfind("HTTP/1.1 400", 0) == 0);
-    CHECK(response.find("at most 20") != std::string::npos);
+    CHECK(response.find("最多发送 20") != std::string::npos);
 
     // The page is told why, as JSON.
     client = post("Host: 127.0.0.1\r\nX-Requested-With: 3dsDL\r\n",
@@ -1071,7 +1071,7 @@ TEST("remote server: a send says if 3dsDL's page made it, holds 20 links, and a 
     CHECK(!receiver.wait(1000, refused));
     response = readAll(client);
     ::close(client);
-    CHECK(response.find("{\"error\":\"Send at most 20") != std::string::npos);
+    CHECK(response.find("每次最多发送 20") != std::string::npos);
 
     // A device the console turned down sends nothing more.
     turnedAway = true;

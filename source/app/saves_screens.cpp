@@ -36,7 +36,7 @@ std::string nowName()
 
 const char *kindTitle(savedata::Kind kind)
 {
-    return kind == savedata::Kind::Save ? "Save Data" : "Extra Data";
+    return kind == savedata::Kind::Save ? "存档" : "额外数据";
 }
 
 ui::Icon kindIcon(savedata::Kind kind)
@@ -174,8 +174,8 @@ void App::saveTitlesScreen()
     int cursor = 0;
     while (ui::keepRunning() && !quit_) {
         ui::ListSpec spec;
-        spec.title = "Save Data";
-        spec.emptyText = "No save data.";
+        spec.title = "存档";
+        spec.emptyText = "没有存档。";
         bool rebuild = true; // once more on each return to the list
         spec.update = [&]() {
             if (seen != libraryGeneration_) {
@@ -225,7 +225,7 @@ void App::saveTitlesScreen()
                    search.busy();
         };
         spec.drawTop = [&](int highlighted) {
-            ui::drawTopChrome("Save Data", ui::Icon::Chip, ui::color::IconTeal);
+            ui::drawTopChrome("存档", ui::Icon::Chip, ui::color::IconTeal);
             ui::drawPanel();
             if (highlighted < 0 || highlighted >= static_cast<int>(withSaves.size())) {
                 ui::drawEmblem(ui::Icon::Chip, ui::color::IconTeal);
@@ -239,9 +239,9 @@ void App::saveTitlesScreen()
                             0.62f, ui::color::InkStrong, 280);
             ui::drawMarquee(title.publisher, left + 60, top + 30, ui::type::Small,
                             ui::color::InkSoft, 280);
-            const float y = ui::drawTagRow(left, top + 60, 96, "Title ID",
+            const float y = ui::drawTagRow(left, top + 60, 96, "软件 ID",
                                            cia::titleIdText(title.id));
-            ui::drawTagRow(left, y, 96, "Backups in",
+            ui::drawTagRow(left, y, 96, "备份位置",
                            savedata::saveOf(title, library::mediaOf(title)).folder);
         };
         const ui::ListResult result = ui::runList(spec, cursor);
@@ -261,15 +261,15 @@ void App::saveTitlesScreen()
 void App::saveDataScreen(const savedata::Target &target,
                          const std::vector<uint16_t> &icon)
 {
-    const std::string what = target.kind == savedata::Kind::Save ? "save data"
-                                                                  : "extra data";
+    const std::string what = target.kind == savedata::Kind::Save ? "存档"
+                                                                  : "额外数据";
     int cursor = 0;
     while (ui::keepRunning() && !quit_) {
         const std::vector<std::string> names = savedata::backups(target);
         ui::ListSpec spec;
         spec.title = target.name.empty() ? kindTitle(target.kind) : target.name;
         ui::ListItem fresh;
-        fresh.label = "New Backup";
+        fresh.label = "新建备份";
         fresh.icon = ui::Icon::Download;
         fresh.iconColor = ui::color::IconGreen;
         fresh.labelColor = ui::color::Accent;
@@ -281,7 +281,7 @@ void App::saveDataScreen(const savedata::Target &target,
             item.iconColor = kindColor(target.kind);
             spec.items.push_back(item);
         }
-        spec.action = "Browse";
+        spec.action = "浏览";
         spec.actionKey = "X";
         spec.actionKeys = KEY_X;
         spec.drawTop = [&](int) {
@@ -296,7 +296,7 @@ void App::saveDataScreen(const savedata::Target &target,
                             left + 60, top + 2, 0.62f, ui::color::InkStrong, 280);
             ui::drawText(plural(names.size(), "backup"), left + 60, top + 30,
                          ui::type::Small, ui::color::InkSoft);
-            ui::drawTagRow(left, top + 60, 76, "Folder", target.folder);
+            ui::drawTagRow(left, top + 60, 76, "文件夹", target.folder);
         };
         const ui::ListResult result = ui::runList(spec, cursor);
         if (result.key == KEY_X) {
@@ -311,7 +311,7 @@ void App::saveDataScreen(const savedata::Target &target,
             std::string typed;
             const std::string suggested = nowName();
             if (!platform::keyboard(platform::KeyboardKind::Name,
-                                    "Backup name (up to 20 characters)",
+                                    "备份名称（最多 20 个字符）",
                                     suggested, typed)) {
                 continue;
             }
@@ -323,10 +323,10 @@ void App::saveDataScreen(const savedata::Target &target,
             }
             if (std::find(names.begin(), names.end(), name) != names.end()) {
                 ui::Dialog dialog;
-                dialog.header = "Backup";
-                dialog.title = "Replace the backup " + name + "?";
+                dialog.header = "备份";
+                dialog.title = "替换备份“" + name + "”？";
                 dialog.tone = ui::Tone::Warning;
-                dialog.buttons = {"Replace", "Cancel"};
+                dialog.buttons = {"替换", "取消"};
                 dialog.dangerous = 0;
                 dialog.initial = 1;
                 dialog.cancelButton = 1;
@@ -336,42 +336,40 @@ void App::saveDataScreen(const savedata::Target &target,
             }
             savedata::Progress progress;
             savedata::Result outcome;
-            tasks::busy("Backup", "Backing up the " + what + "...",
+            tasks::busy("备份", "正在备份" + what + "……",
                         [&]() { outcome = savedata::backup(target, name, progress); });
             if (outcome.ok) {
-                ui::message("Backed Up",
-                            plural(outcome.files, "file") + " saved as " + name +
-                                ".",
+                ui::message("备份完成",
+                            plural(outcome.files, "文件") + "，已保存为 " + name + "。",
                             ui::Tone::Success,
                             outcome.skipped > 0
-                                ? plural(outcome.skipped, "file") +
-                                      " the system was using were left out."
+                                ? plural(outcome.skipped, "文件") +
+                                      "因系统正在使用而未备份。"
                                 : target.folder + name);
             } else {
-                ui::message("Not Backed Up", outcome.message, ui::Tone::Error);
+                ui::message("备份失败", outcome.message, ui::Tone::Error);
             }
             continue;
         }
 
         const std::string name = names[result.index - 1];
         const int choice = ui::menu(
-            {{"Restore", true, true}, {"Delete Backup", true, true}},
+            {{"恢复", true, true}, {"删除备份", true, true}},
             [&](int) {
                 ui::drawTopChrome(name, kindIcon(target.kind), kindColor(target.kind));
                 ui::drawPanel();
-                ui::drawFacts({{"Title", target.name.empty()
+                ui::drawFacts({{"软件", target.name.empty()
                                              ? kindTitle(target.kind)
                                              : target.name},
-                               {"Folder", target.folder + name + "/"}});
+                               {"文件夹", target.folder + name + "/"}});
             });
         if (choice == 0) {
             // No body, so the backup's facts stay on the top screen.
             ui::Dialog dialog;
-            dialog.header = "Restore";
-            dialog.title = "Replace the " + what + " on the console with " +
-                           name + "?";
+            dialog.header = "恢复";
+            dialog.title = "用“" + name + "”替换主机上的" + what + "？";
             dialog.tone = ui::Tone::Warning;
-            dialog.buttons = {"Restore", "Cancel"};
+            dialog.buttons = {"恢复", "取消"};
             dialog.dangerous = 0;
             dialog.initial = 1;
             dialog.cancelButton = 1;
@@ -381,17 +379,17 @@ void App::saveDataScreen(const savedata::Target &target,
             savedata::Progress progress;
             savedata::Result safety;
             savedata::Result outcome;
-            const std::string safetyName = nowName() + " Before Restore";
-            tasks::busy("Restore", "Backing up what is there now...", [&]() {
+            const std::string safetyName = nowName() + " 恢复前";
+            tasks::busy("恢复", "正在备份当前数据……", [&]() {
                 safety = savedata::backup(target, safetyName, progress);
             });
             if (!safety.ok) {
                 ui::Dialog warn;
-                warn.header = "Restore";
-                warn.title = "What is there now could not be backed up.";
+                warn.header = "恢复";
+                warn.title = "无法备份主机上的现有数据。";
                 warn.tone = ui::Tone::Warning;
                 warn.body.push_back({safety.message, ui::color::Text, 0.5f, 3});
-                warn.buttons = {"Restore Anyway", "Cancel"};
+                warn.buttons = {"仍要恢复", "取消"};
                 warn.dangerous = 0;
                 warn.initial = 1;
                 warn.cancelButton = 1;
@@ -399,29 +397,28 @@ void App::saveDataScreen(const savedata::Target &target,
                     continue;
                 }
             }
-            tasks::busy("Restore", "Restoring " + name + "...", [&]() {
+            tasks::busy("恢复", "正在恢复 " + name + "……", [&]() {
                 outcome = savedata::restore(target, name, progress);
             });
             if (outcome.ok) {
-                ui::message("Restored",
-                            plural(outcome.files, "file") + " restored from " +
-                                name + ".",
+                ui::message("已恢复",
+                            plural(outcome.files, "文件") + "，已从 " + name + " 恢复。",
                             ui::Tone::Success,
-                            safety.ok ? "The earlier " + what + " is kept as " +
-                                            safetyName + "."
+                            safety.ok ? "原有的" + what + "已保留为 " +
+                                            safetyName + "。"
                                       : "");
             } else {
-                ui::message("Not Restored", outcome.message, ui::Tone::Error,
-                            safety.ok ? "The earlier " + what + " is kept as " +
-                                            safetyName + "."
+                ui::message("恢复失败", outcome.message, ui::Tone::Error,
+                            safety.ok ? "原有的" + what + "已保留为 " +
+                                            safetyName + "。"
                                       : "");
             }
         } else if (choice == 1) {
             ui::Dialog dialog;
-            dialog.header = "Delete";
-            dialog.title = "Delete the backup " + name + "?";
+            dialog.header = "删除";
+            dialog.title = "删除备份“" + name + "”？";
             dialog.tone = ui::Tone::Warning;
-            dialog.buttons = {"Delete", "Cancel"};
+            dialog.buttons = {"删除", "取消"};
             dialog.dangerous = 0;
             dialog.initial = 1;
             dialog.cancelButton = 1;
@@ -431,7 +428,7 @@ void App::saveDataScreen(const savedata::Target &target,
                 const fileops::Result removed =
                     fileops::remove(target.folder + name, quiet, done, 0);
                 if (removed.status != fileops::Status::Ok) {
-                    ui::message("Not Deleted", removed.message, ui::Tone::Error);
+                    ui::message("未删除", removed.message, ui::Tone::Error);
                 }
             }
         }
@@ -444,7 +441,7 @@ void App::dataBrowser(const savedata::Target &target)
         target.kind == savedata::Kind::Save ? "save" : "extdata";
     std::string error;
     if (!savedata::mount(target, device, error)) {
-        ui::message("Cannot Open", error, ui::Tone::Error);
+        ui::message("无法打开", error, ui::Tone::Error);
         return;
     }
     const std::string root = device + ":/";
@@ -457,8 +454,8 @@ void App::dataBrowser(const savedata::Target &target)
         ui::ListSpec spec;
         spec.title = target.name + "  " + folder.substr(root.size() - 1);
         spec.heading = spec.title;
-        spec.back = folder == root ? "Close" : "Back";
-        spec.emptyText = readable ? "This folder is empty." : "This folder cannot be read.";
+        spec.back = folder == root ? "关闭" : "返回";
+        spec.emptyText = readable ? "此文件夹为空。" : "无法读取此文件夹。";
         for (const fs::Entry &entry : entries) {
             ui::ListItem item;
             item.label = entry.name;
@@ -469,7 +466,7 @@ void App::dataBrowser(const savedata::Target &target)
             }
             spec.items.push_back(item);
         }
-        spec.action = "Copy All";
+        spec.action = "全部复制";
         spec.actionKey = "X";
         spec.actionKeys = KEY_X;
         spec.drawTop = [&](int highlighted) {
@@ -481,13 +478,13 @@ void App::dataBrowser(const savedata::Target &target)
             ui::drawMarquee(target.name, left, y, 0.62f, ui::color::InkStrong,
                             ui::TopPanel.w - 36);
             y += 32;
-            y = ui::drawTagRow(left, y, 76, "Folder", folder.substr(root.size() - 1));
+            y = ui::drawTagRow(left, y, 76, "文件夹", folder.substr(root.size() - 1));
             if (highlighted >= 0 && highlighted < static_cast<int>(entries.size())) {
                 const fs::Entry &entry = entries[highlighted];
-                y = ui::drawTagRow(left, y, 76, entry.folder ? "Folder" : "File",
+                y = ui::drawTagRow(left, y, 76, entry.folder ? "文件夹" : "文件",
                                    entry.name);
                 if (!entry.folder && entry.size >= 0) {
-                    ui::drawTagRow(left, y, 76, "Size",
+                    ui::drawTagRow(left, y, 76, "大小",
                                    units::bytes(static_cast<uint64_t>(entry.size)));
                 }
             }
@@ -522,15 +519,15 @@ void App::dataBrowser(const savedata::Target &target)
             }
             const std::string file = folder + entry.name;
             const int choice = ui::menu(
-                {{"View as Hex", false, true}, {"Copy to SD Card", false, true}},
+                {{"以十六进制查看", false, true}, {"复制到 SD 卡", false, true}},
                 [&](int) {
                     ui::drawTopChrome(entry.name, ui::Icon::File, ui::color::IconGrey);
                     ui::drawPanel();
                     std::vector<ui::Fact> facts = {
-                        {"Folder", folder.substr(root.size() - 1)}};
+                        {"文件夹", folder.substr(root.size() - 1)}};
                     if (entry.size >= 0) {
                         facts.push_back(
-                            {"Size", units::bytes(static_cast<uint64_t>(entry.size))});
+                            {"大小", units::bytes(static_cast<uint64_t>(entry.size))});
                     }
                     ui::drawFacts(facts);
                 });
@@ -559,7 +556,7 @@ void App::dataBrowser(const savedata::Target &target)
         if (!into.empty()) {
             destination = naming::unusedPath(destination, into, taken) + "/";
             if (!fs::makeDirectories(destination)) {
-                ui::message("Not Copied", "Could not create " + destination + ".",
+                ui::message("未复制", "无法创建 " + destination + "。",
                             ui::Tone::Error);
                 continue;
             }
@@ -570,7 +567,7 @@ void App::dataBrowser(const savedata::Target &target)
         }
         std::string last;
         const fileops::Result copied = tasks::fileOperation(
-            "Copy", "Copying to the SD card", destination, total, false,
+            "复制", "正在复制到 SD 卡", destination, total, false,
             [&](fileops::Observer &observer) {
                 uint64_t done = 0;
                 fileops::Result outcome;
@@ -585,11 +582,11 @@ void App::dataBrowser(const savedata::Target &target)
                 return outcome;
             });
         if (copied.status == fileops::Status::Ok) {
-            ui::message("Copied",
-                        "Copied to " + (into.empty() ? last : destination) + ".",
+            ui::message("已复制",
+                        "已复制到 " + (into.empty() ? last : destination) + "。",
                         ui::Tone::Success);
         } else if (copied.status == fileops::Status::Failed) {
-            ui::message("Not Copied", copied.message, ui::Tone::Error);
+            ui::message("未复制", copied.message, ui::Tone::Error);
         }
     }
     savedata::unmount(device);

@@ -2,7 +2,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <vector>
 
 // Small string helpers shared by the app, the download engine and the tests.
 // Nothing in core/ depends on libctru, so it all builds on the host as well.
@@ -24,6 +26,18 @@ std::string sanitizeUtf8(const std::string &value, char replacement = '_');
 
 // Cuts value to at most maxBytes without splitting a UTF-8 sequence.
 std::string truncateUtf8(const std::string &value, size_t maxBytes);
+
+struct WrappedLines {
+    std::vector<std::string> lines;
+    bool truncated = false;
+};
+
+// Wraps at UTF-8 code-point boundaries using caller-provided glyph widths.
+// Spaces are preferred break points; breakAfter marks additional points such
+// as URL separators. maxLines limits output and sets truncated when text remains.
+WrappedLines wrapUtf8(const std::string &value, float maxWidth, size_t maxLines,
+                      const std::function<float(uint32_t)> &glyphWidth,
+                      const std::function<bool(uint32_t)> &breakAfter);
 
 std::string latin1ToUtf8(const std::string &value);
 
