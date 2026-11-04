@@ -329,7 +329,7 @@ TEST("engine: HTTP errors are explained and nothing is saved")
         net::download(request("/status/404", folder), recorder);
     CHECK(result.outcome == net::Outcome::Failed);
     CHECK_EQ(result.httpStatus, 404L);
-    CHECK(contains(result.message, "找不到服务器"));
+    CHECK(contains(result.message, "找不到该文件"));
     CHECK(!result.resumable);
 
     result = net::download(request("/status/503", folder), recorder);
