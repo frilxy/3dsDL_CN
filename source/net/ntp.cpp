@@ -73,7 +73,7 @@ bool resolve(const std::string &host, uint16_t port, sockaddr_in &address,
     addrinfo *results = nullptr;
     if (getaddrinfo(host.c_str(), nullptr, &hints, &results) != 0 ||
         results == nullptr) {
-        error = "Could not find " + host + ".";
+        error = "找不到时间服务器 " + host + "。";
         return false;
     }
     std::memcpy(&address, results->ai_addr, sizeof(address));
@@ -97,29 +97,29 @@ bool parseResponse(const uint8_t *packet, size_t size, uint64_t nonce,
                    int64_t &unixMilliseconds, std::string &error)
 {
     if (size < PacketSize) {
-        error = "The time server sent a short reply.";
+        error = "时间服务器返回的数据不完整。";
         return false;
     }
     const uint8_t leap = packet[0] >> 6;
     const uint8_t mode = packet[0] & 0x7;
     const uint8_t stratum = packet[1];
     if (mode != ModeServer) {
-        error = "The reply was not from a time server.";
+        error = "收到的回复并非来自时间服务器。";
         return false;
     }
     if (read64(packet + 24) != nonce) {
-        error = "The reply did not match the request.";
+        error = "回复与请求不匹配。";
         return false;
     }
     if (stratum == 0 || stratum > 15 || leap == LeapUnsynchronised) {
-        error = "The time server is not synchronised.";
+        error = "时间服务器尚未同步。";
         return false;
     }
 
     const uint64_t transmit = read64(packet + 40);
     uint64_t seconds = transmit >> 32;
     if (seconds == 0) {
-        error = "The time server sent no time.";
+        error = "时间服务器未提供时间。";
         return false;
     }
     // NTP seconds wrap in 2036; small values belong to the next era.
@@ -146,7 +146,7 @@ Result query(const std::string &host, uint16_t port, int timeoutMilliseconds,
 
     Socket socket(::socket(AF_INET, SOCK_DGRAM, 0));
     if (socket.get() < 0) {
-        result.error = "Could not open a network socket.";
+        result.error = "无法打开网络套接字。";
         return result;
     }
 
@@ -159,7 +159,7 @@ Result query(const std::string &host, uint16_t port, int timeoutMilliseconds,
     if (sendto(socket.get(), request, sizeof(request), 0,
                reinterpret_cast<const sockaddr *>(&address),
                sizeof(address)) != static_cast<ssize_t>(sizeof(request))) {
-        result.error = "Could not reach " + host + ".";
+        result.error = "无法连接到时间服务器 " + host + "。";
         return result;
     }
 
@@ -184,7 +184,7 @@ Result query(const std::string &host, uint16_t port, int timeoutMilliseconds,
         const ssize_t received =
             recvfrom(socket.get(), reply, sizeof(reply), 0, nullptr, nullptr);
         if (received < 0) {
-            result.error = "Could not read the reply from " + host + ".";
+            result.error = "无法读取来自 " + host + " 的回复。";
             return result;
         }
         int64_t serverTime = 0;
@@ -200,7 +200,7 @@ Result query(const std::string &host, uint16_t port, int timeoutMilliseconds,
     }
 
     if (result.error.empty()) {
-        result.error = host + " did not answer.";
+        result.error = host + "没有响应。";
     }
     return result;
 }
@@ -209,7 +209,7 @@ Result queryAny(const std::vector<std::string> &hosts, uint16_t port,
                 int timeoutMilliseconds, const std::atomic<bool> *stop)
 {
     Result last;
-    last.error = "No time servers to ask.";
+    last.error = "没有可查询的时间服务器。";
     for (const std::string &host : hosts) {
         if (stop != nullptr && stop->load()) {
             break;

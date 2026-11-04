@@ -120,8 +120,8 @@ run_cia_tool bannertool makebanner \
     -a resources/banner/jingle.wav \
     -o build/3dsDL.bnr
 run_cia_tool bannertool makesmdh \
-    -s "3dsDL" \
-    -l "Download files straight onto your 3DS" \
+    -s "3dsDL 简体中文版" \
+    -l "在 3DS 上下载文件与管理软件" \
     -p "ankushKun" \
     -i resources/icon-3dsdl.png \
     -f visible,nosavebackups \

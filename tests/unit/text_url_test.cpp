@@ -34,6 +34,38 @@ TEST("text: truncation never splits a character")
     CHECK(text::isValidUtf8(text::truncateUtf8(euro + euro + euro, 7)));
 }
 
+TEST("text: wrapping Chinese and mixed text stays within width")
+{
+    const auto width = [](uint32_t codePoint) {
+        return codePoint < 128 ? 1.0f : 2.0f;
+    };
+    const auto breakAfter = [](uint32_t codePoint) {
+        return codePoint == ' ' || codePoint == '/';
+    };
+    const std::string chinese = "\xe4\xb8\xad\xe6\x96\x87\xe6\xb5\x8b\xe8\xaf\x95";
+    const text::WrappedLines lines = text::wrapUtf8(chinese, 4, 8, width, breakAfter);
+    CHECK_EQ(lines.lines.size(), static_cast<size_t>(2));
+    CHECK_EQ(lines.lines[0], "\xe4\xb8\xad\xe6\x96\x87");
+    CHECK_EQ(lines.lines[1], "\xe6\xb5\x8b\xe8\xaf\x95");
+    CHECK(!lines.truncated);
+
+    const std::string mixed = "abc \xe4\xb8\xad\xe6\x96\x87";
+    const text::WrappedLines mixedLines = text::wrapUtf8(mixed, 5, 8, width, breakAfter);
+    CHECK_EQ(mixedLines.lines.size(), static_cast<size_t>(2));
+    CHECK_EQ(mixedLines.lines[0], "abc");
+    CHECK_EQ(mixedLines.lines[1], "\xe4\xb8\xad\xe6\x96\x87");
+    CHECK(text::isValidUtf8(mixedLines.lines[0] + mixedLines.lines[1]));
+}
+
+TEST("text: wrapping marks truncation at the line limit")
+{
+    const auto width = [](uint32_t) { return 1.0f; };
+    const auto breakAfter = [](uint32_t codePoint) { return codePoint == ' '; };
+    const text::WrappedLines lines = text::wrapUtf8("a\nb\nc", 10, 2, width, breakAfter);
+    CHECK_EQ(lines.lines.size(), static_cast<size_t>(2));
+    CHECK(lines.truncated);
+}
+
 TEST("text: latin-1 conversion and single-line fields")
 {
     CHECK_EQ(text::latin1ToUtf8("caf\xe9"), std::string("caf\xc3\xa9"));

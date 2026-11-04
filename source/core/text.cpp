@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <utility>
+#include <vector>
 
 namespace text {
 
@@ -142,6 +144,121 @@ std::string truncateUtf8(const std::string &value, size_t maxBytes)
         end = index;
     }
     return value.substr(0, end);
+}
+
+WrappedLines wrapUtf8(
+    const std::string &value, float maxWidth, size_t maxLines,
+    const std::function<float(uint32_t)> &glyphWidth,
+    const std::function<bool(uint32_t)> &breakAfter)
+{
+    WrappedLines result;
+    if (maxLines == 0) {
+        result.truncated = !value.empty();
+        return result;
+    }
+
+    struct Glyph {
+        size_t offset;
+        size_t length;
+        uint32_t codePoint;
+        float width;
+    };
+    std::vector<Glyph> glyphs;
+    glyphs.reserve(value.size());
+    for (size_t index = 0; index < value.size();) {
+        uint32_t codePoint = 0xfffd;
+        size_t length = utf8SequenceLength(value, index, &codePoint);
+        if (length == 0) {
+            length = 1;
+            codePoint = 0xfffd;
+        }
+        glyphs.push_back({index, length, codePoint, glyphWidth(codePoint)});
+        index += length;
+    }
+
+    std::string line;
+    float width = 0.0f;
+    size_t breakAt = 0;
+    const auto push = [&](const std::string &finished) {
+        if (result.lines.size() == maxLines) {
+            result.truncated = true;
+            return false;
+        }
+        size_t end = finished.size();
+        while (end > 0 && finished[end - 1] == ' ') {
+            --end;
+        }
+        result.lines.push_back(finished.substr(0, end));
+        return true;
+    };
+    const auto measure = [&](const std::string &part, size_t *lastBreak) {
+        float measured = 0.0f;
+        size_t point = 0;
+        size_t foundBreak = 0;
+        while (point < part.size()) {
+            uint32_t codePoint = 0xfffd;
+            size_t length = utf8SequenceLength(part, point, &codePoint);
+            if (length == 0) {
+                length = 1;
+            }
+            measured += glyphWidth(codePoint);
+            point += length;
+            if (breakAfter(codePoint)) {
+                foundBreak = point;
+            }
+        }
+        *lastBreak = foundBreak;
+        return measured;
+    };
+
+    for (const Glyph &glyph : glyphs) {
+        if (glyph.codePoint == '\n') {
+            if (!push(line)) {
+                break;
+            }
+            line.clear();
+            width = 0.0f;
+            breakAt = 0;
+            continue;
+        }
+        if (glyph.codePoint == ' ' && line.empty()) {
+            continue;
+        }
+
+        while (width + glyph.width > maxWidth && !line.empty()) {
+            std::string rest;
+            if (breakAt > 0 && breakAt < line.size()) {
+                rest = line.substr(breakAt);
+                line.erase(breakAt);
+            }
+            if (!push(line)) {
+                break;
+            }
+            line = std::move(rest);
+            while (!line.empty() && line.front() == ' ') {
+                line.erase(line.begin());
+            }
+            width = measure(line, &breakAt);
+            if (glyph.codePoint == ' ' && line.empty()) {
+                break;
+            }
+        }
+        if (result.truncated) {
+            break;
+        }
+        if (glyph.codePoint == ' ' && line.empty()) {
+            continue;
+        }
+        line.append(value, glyph.offset, glyph.length);
+        width += glyph.width;
+        if (breakAfter(glyph.codePoint)) {
+            breakAt = line.size();
+        }
+    }
+    if (!result.truncated && !line.empty()) {
+        push(line);
+    }
+    return result;
 }
 
 std::string latin1ToUtf8(const std::string &value)

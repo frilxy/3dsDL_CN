@@ -481,7 +481,7 @@ TEST("engine: refuses files that do not fit")
     };
     net::Result result = net::download(settings, recorder);
     CHECK(result.outcome == net::Outcome::Failed);
-    CHECK(contains(result.message, "Not enough free space"));
+    CHECK(contains(result.message, "SD 卡可用空间不足"));
     CHECK(result.noSpace);
     CHECK(listAll(folder.path()).empty());
 
@@ -515,7 +515,7 @@ TEST("engine: SD card write failures are reported and cleaned up")
     };
     const net::Result result = net::download(settings, recorder);
     CHECK(result.outcome == net::Outcome::Failed);
-    CHECK_EQ(result.message, std::string("The SD card is full."));
+    CHECK_EQ(result.message, std::string("SD 卡已满。"));
     CHECK(result.noSpace);
     CHECK(!result.resumable);
     CHECK(listAll(folder.path()).empty());
@@ -555,7 +555,7 @@ TEST("engine: rejects bad input before connecting")
     settings.folder = folder.path() + "missing/";
     net::Result result = net::download(settings, recorder);
     CHECK(result.outcome == net::Outcome::Failed);
-    CHECK(contains(result.message, "does not exist"));
+    CHECK(contains(result.message, "不存在"));
 
     settings = request("/file/10", folder);
     settings.url = "ftp://example.com/file";
@@ -641,7 +641,7 @@ TEST("engine: failure messages")
                                         "BADCERT_CN_MISMATCH"),
                    "different site"));
     CHECK(contains(net::describeFailure(cert, 0, "something else"),
-                   "Check clock"));
+                   "检查时钟"));
 }
 
 TEST("engine: discarding a partial download")

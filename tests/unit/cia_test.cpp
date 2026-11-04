@@ -205,7 +205,7 @@ TEST("cia: rejects files that are not complete CIAs")
     CHECK(writeText(temp.path() + "text.cia", "hello, this is not a CIA"));
     CHECK(!cia::isCiaFile(temp.path() + "text.cia"));
     CHECK(!cia::readInfo(temp.path() + "text.cia", info, error));
-    CHECK_EQ(error, std::string("This is not a CIA file."));
+    CHECK_EQ(error, std::string("这不是 CIA 文件。"));
 
     const std::string whole = makeCia();
     CHECK(writeText(temp.path() + "cut.cia", whole.substr(0, 0x3000)));

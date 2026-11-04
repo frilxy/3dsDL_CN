@@ -75,7 +75,7 @@ Kind kindOf(const fs::Entry &entry)
 // The top screen's title for a folder, as Files shows it.
 std::string folderTitle(const std::string &folder)
 {
-    return naming::parentFolder(folder) == folder ? "SD Card"
+    return naming::parentFolder(folder) == folder ? "SD 卡"
                                                   : fileops::name(folder);
 }
 
@@ -101,7 +101,7 @@ bool confirm(const std::string &header, const std::string &title,
     if (!body.empty()) {
         dialog.body.push_back({body, ui::color::Text, 0.48f, 5});
     }
-    dialog.buttons = {yes, "Cancel"};
+    dialog.buttons = {yes, "取消"};
     dialog.dangerous = dangerous ? 0 : -1;
     dialog.initial = dangerous ? 1 : 0;
     dialog.cancelButton = 1;
@@ -110,9 +110,9 @@ bool confirm(const std::string &header, const std::string &title,
 
 std::string contentsText(const fileops::Totals &totals)
 {
-    std::string text = plural(totals.files, "file");
+    std::string text = plural(totals.files, "文件");
     if (totals.folders > 0) {
-        text += " in " + plural(totals.folders, "folder");
+        text += "，位于" + plural(totals.folders, "文件夹") + "中";
     }
     return text;
 }
@@ -124,7 +124,7 @@ std::string totalsText(const fileops::Totals &totals)
 
 ui::Fact clipboardFact(size_t count, bool cut)
 {
-    return {"Clipboard", plural(count, "item") + (cut ? ", cut" : ", copied")};
+    return {"剪贴板", plural(count, "项目") + (cut ? "，已剪切" : "，已复制")};
 }
 
 // What the top screen shows about an entry, worked out once because it
@@ -331,9 +331,9 @@ void drawPicturePanel(const fs::Entry &entry, const Details &details,
                               std::to_string(details.height) + " pixels"
                         : filetype::label(Kind::Image),
                     x, top + 28, ui::type::Tiny, ui::color::InkSoft, textWidth);
-    std::vector<ui::Fact> facts = {{"Size", sizeText(entry.size)}};
+    std::vector<ui::Fact> facts = {{"大小", sizeText(entry.size)}};
     if (!modified.empty()) {
-        facts.push_back({"Changed", modified});
+        facts.push_back({"修改时间", modified});
     }
     // drawFacts keeps 18 pixels from each side and centres the rows.
     ui::drawFacts(facts, {x - 18, top + 58, textWidth + 36, 26.0f * facts.size() - 6},
@@ -362,10 +362,10 @@ void drawEntryTop(const std::string &path, const fs::Entry &entry,
 
     if (kind == Kind::Folder) {
         drawEntryPanel({}, kind, entry.name, path + "/",
-                       {{"Type", "Folder"},
-                        {"Contains", plural(details.items, "item")},
-                        {"Size", sizeText(entry.size)}, // once added up
-                        {"Changed", modified}});
+                       {{"类型", "文件夹"},
+                        {"包含", plural(details.items, "item")},
+                        {"大小", sizeText(entry.size)}, // once added up
+                        {"修改时间", modified}});
         return;
     }
     if (kind == Kind::Cia && details.ciaReadable) {
@@ -373,14 +373,14 @@ void drawEntryTop(const std::string &path, const fs::Entry &entry,
         drawEntryPanel(info.smdh.icon, kind, ciaName(info),
                        info.smdh.publisher.empty() ? entry.name
                                                    : info.smdh.publisher,
-                       {{"Type", std::string(info.compressed ? "ZCIA, "
+                       {{"类型", std::string(info.compressed ? "ZCIA, "
                                                              : "CIA, ") +
                                      cia::kindName(cia::kind(info.titleId))},
-                        {"Version",
+                        {"版本",
                          versionRow(info.titleId, info.version,
                                     details.installed,
                                     details.installedVersion)},
-                        {"Size", sizeText(entry.size)}});
+                        {"大小", sizeText(entry.size)}});
         return;
     }
     if (kind == Kind::Image) {
@@ -392,11 +392,11 @@ void drawEntryTop(const std::string &path, const fs::Entry &entry,
         drawEntryPanel(details.cover, kind,
                        info.title.empty() ? entry.name : info.title,
                        songByline(info, entry.name),
-                       {{"Album", audiometa::albumText(info)},
-                        {"Length", audiometa::length(info.milliseconds)},
-                        {"Format", audiometa::formatText(info)},
-                        {"Size", sizeText(entry.size)},
-                        {"Changed", modified}});
+                       {{"专辑", audiometa::albumText(info)},
+                        {"时长", audiometa::length(info.milliseconds)},
+                        {"格式", audiometa::formatText(info)},
+                        {"大小", sizeText(entry.size)},
+                        {"修改时间", modified}});
         return;
     }
     if (details.metaReadable) {
@@ -405,13 +405,13 @@ void drawEntryTop(const std::string &path, const fs::Entry &entry,
                        meta.name.empty() ? entry.name : meta.name,
                        meta.publisher.empty() ? filetype::label(kind)
                                               : meta.publisher,
-                       {{"Type", filetype::label(kind)},
-                        {"Title ID", meta.hasTitleId
+                       {{"类型", filetype::label(kind)},
+                        {"软件 ID", meta.hasTitleId
                                          ? cia::titleIdText(meta.titleId)
                                          : ""},
-                        {"Code", meta.productCode},
-                        {"Note", meta.note},
-                        {"Size", sizeText(entry.size)}});
+                        {"代码", meta.productCode},
+                        {"备注", meta.note},
+                        {"大小", sizeText(entry.size)}});
         return;
     }
     if (!details.head.empty()) {
@@ -433,14 +433,14 @@ void drawEntryTop(const std::string &path, const fs::Entry &entry,
         return;
     }
     drawEntryPanel({}, kind, entry.name, filetype::label(kind),
-                   {{"Picture", details.width > 0
+                   {{"图片", details.width > 0
                                     ? std::to_string(details.width) + " x " +
                                           std::to_string(details.height) +
                                           " pixels"
                                     : ""},
-                    {"Size", sizeText(entry.size)},
-                    {"Changed", modified},
-                    {"Problem", details.error}});
+                    {"大小", sizeText(entry.size)},
+                    {"修改时间", modified},
+                    {"问题", details.error}});
 }
 
 // --- Text editor helpers -------------------------------------------------------
@@ -789,7 +789,7 @@ public:
     {
         // A large PNG takes seconds, so a wait for one shows as busy.
         if (thread_ != nullptr && !done_) {
-            tasks::busy("Files", "", [this]() { finish(); });
+            tasks::busy("文件", "", [this]() { finish(); });
         }
         finish();
         uploaded_ = false;
@@ -1051,9 +1051,9 @@ void App::browseFiles(const std::string &select)
         ui::ListSpec spec;
         spec.title = current;
         spec.heading = current;
-        spec.emptyText = "This folder is empty.";
-        spec.back = atRoot ? "Close" : "Back";
-        spec.action = "Options";
+        spec.emptyText = "此文件夹为空。";
+        spec.back = atRoot ? "关闭" : "返回";
+        spec.action = "选项";
         spec.actionKey = "Y";
         spec.actionKeys = KEY_Y;
         spec.longPressKey = KEY_Y;
@@ -1063,12 +1063,12 @@ void App::browseFiles(const std::string &select)
         // screen's corners say.
         spec.extraKeys = KEY_SELECT | KEY_START | KEY_L | KEY_R;
         // X sorts, as on the Software lists.
-        spec.headingActions = {{"Sort", "X", KEY_X}};
+        spec.headingActions = {{"排序", "X", KEY_X}};
         const auto hint = [&]() {
-            return !marked.empty() ? std::to_string(marked.size()) + " marked"
+            return !marked.empty() ? "已标记 " + std::to_string(marked.size()) + " 项"
                  : !clipboard_.empty()
-                     ? std::to_string(clipboard_.size()) +
-                           (clipboardCut_ ? " to move" : " to paste")
+                     ? "已" + (clipboardCut_ ? "剪切 " : "复制 ") +
+                           std::to_string(clipboard_.size()) + " 项"
                      : "";
         };
         spec.hint = hint();
@@ -1201,7 +1201,7 @@ void App::browseFiles(const std::string &select)
                                                 entries);
                     }
                     if (!reader.readable()) {
-                        spec.emptyText = "The SD card could not be read.";
+                        spec.emptyText = "无法读取 SD 卡。";
                     }
                 }
                 if (replacing) {
@@ -1250,16 +1250,16 @@ void App::browseFiles(const std::string &select)
 
         spec.drawTop = [&](int index) {
             const std::string title =
-                atRoot ? "SD Card" : fileops::name(current);
+                atRoot ? "SD 卡" : fileops::name(current);
             ui::drawTopChrome(title, ui::Icon::Folder, ui::color::IconOrange,
                               sortDescription(settings_.fileSort,
                                               settings_.fileSortReverse));
             if (index < 0 || index >= static_cast<int>(entries.size())) {
                 ui::drawPanel();
-                std::vector<ui::Fact> facts = {{"Path", current}};
+                std::vector<ui::Fact> facts = {{"路径", current}};
                 if (!complete) {
-                    facts.push_back({"Reading",
-                                     plural(entries.size(), "item") + " so far",
+                    facts.push_back({"正在读取",
+                                     plural(entries.size(), "项目") + " 项",
                                      ui::color::Badge});
                 }
                 if (!clipboard_.empty()) {
@@ -1267,14 +1267,14 @@ void App::browseFiles(const std::string &select)
                         clipboardFact(clipboard_.size(), clipboardCut_));
                 }
                 ui::drawFacts(facts);
-                ui::drawShoulderKeys({"Favourites"});
+                ui::drawShoulderKeys({"收藏"});
                 preview.show("");
                 return;
             }
             const fs::Entry &entry = entries[index];
             const std::string path = current + entry.name;
             ui::drawShoulderKeys(
-                {"Favourites"},
+                {"收藏"},
                 starKey(starred.count(favorites::key(favoritePath(current, entry))) > 0));
             auto found = details.find(path);
             if (found == details.end()) {
@@ -1453,7 +1453,7 @@ void App::toggleFavorite(const std::string &path)
     const bool added = favorites::toggle(settings_.favorites, path);
     persistSettings();
     ui::Notice notice;
-    notice.title = added ? "Added to Favourites" : "Removed from Favourites";
+    notice.title = added ? "已添加到收藏" : "已从收藏中移除";
     notice.text = fileops::name(path);
     notice.icon = ui::Icon::Star;
     notice.iconColor = ui::color::IconGold;
@@ -1496,8 +1496,8 @@ bool App::favoritesScreen()
         }
 
         ui::ListSpec spec;
-        spec.title = "Favourites";
-        spec.emptyText = "Press R on a folder or file to add it.";
+        spec.title = "收藏";
+        spec.emptyText = "按 R 将文件夹或文件添加到收藏。";
         for (const Row &row : rows) {
             ui::ListItem item;
             const KindLook look = lookOf(kindOf(row.entry));
@@ -1509,19 +1509,19 @@ bool App::favoritesScreen()
                 item.detail = folderTitle(folderOf(row.path));
             } else {
                 item.labelColor = ui::color::InkSoft;
-                item.badge = "Missing";
+                item.badge = "缺失";
                 item.badgeColor = ui::color::Neutral;
             }
             spec.items.push_back(item);
         }
         if (!rows.empty()) {
-            spec.action = "Remove";
+            spec.action = "移除";
             spec.actionKey = "R";
             spec.actionKeys = KEY_R;
         }
         spec.extraKeys = KEY_L; // L closes what it opened
         spec.drawTop = [&](int index) {
-            ui::drawTopChrome("Favourites", ui::Icon::Star, ui::color::IconGold);
+            ui::drawTopChrome("收藏", ui::Icon::Star, ui::color::IconGold);
             if (index < 0 || index >= static_cast<int>(rows.size())) {
                 ui::drawPanel();
                 ui::drawEmblem(ui::Icon::Star, ui::color::IconGold);
@@ -1564,10 +1564,10 @@ bool App::favoritesScreen()
             return true;
         }
         ui::Dialog dialog;
-        dialog.header = "Favourites";
-        dialog.title = row.entry.name + " is no longer on the SD card.";
+        dialog.header = "收藏";
+        dialog.title = row.entry.name + " 已不在 SD 卡上。";
         dialog.body.push_back({row.favorite, ui::color::Muted, 0.46f, 2});
-        dialog.buttons = {"Remove", "Keep"};
+        dialog.buttons = {"移除", "保留"};
         dialog.cancelButton = 1;
         if (ui::choose(dialog) == 0) {
             toggleFavorite(row.favorite);
@@ -1649,12 +1649,12 @@ void App::ciaOptions(const std::string &path)
             return;
         }
         ui::Dialog dialog;
-        dialog.header = "CIA Installer";
-        dialog.title = "This CIA cannot be installed.";
+        dialog.header = "CIA 安装器";
+        dialog.title = "无法安装此 CIA。";
         dialog.tone = ui::Tone::Warning;
         dialog.body.push_back({basename(path), ui::color::Text, 0.5f, 2});
         dialog.body.push_back({error, ui::color::Warning, 0.48f, 3});
-        dialog.buttons = {"Open as Hex", "Close"};
+        dialog.buttons = {"以十六进制打开", "关闭"};
         dialog.initial = 1;
         dialog.cancelButton = 1;
         if (ui::choose(dialog) == 0) {
@@ -1664,7 +1664,7 @@ void App::ciaOptions(const std::string &path)
     }
 
     ui::ScreenSpec spec;
-    spec.back = "Back";
+    spec.back = "返回";
     const auto add = [&](ui::Rect rect, const char *label, float scale,
                          u32 labelColor) {
         ui::Control control;
@@ -1675,16 +1675,16 @@ void App::ciaOptions(const std::string &path)
         control.enabled = installer::available() || labelColor != 0;
         spec.controls.push_back(control);
     };
-    add({26, 42, 268, 38}, "Install", ui::type::Button, 0);
-    add({26, 90, 268, 38}, "Install and Delete File", ui::type::Body + 0.06f, 0);
-    add({26, 140, 268, 26}, "Delete File", ui::type::Small + 0.06f,
+    add({26, 42, 268, 38}, "安装", ui::type::Button, 0);
+    add({26, 90, 268, 38}, "安装后删除文件", ui::type::Body + 0.06f, 0);
+    add({26, 140, 268, 26}, "删除文件", ui::type::Small + 0.06f,
         ui::color::Bad);
-    spec.drawTop = [&]() { screens::drawCiaTop(info, "CIA Installer"); };
+    spec.drawTop = [&]() { screens::drawCiaTop(info, "CIA 安装器"); };
     // The top screen shows whether it is installed; only say why the
     // install buttons are off.
     if (!installer::available()) {
         spec.drawBottom = []() {
-            ui::drawMarquee("Installing is not available.", 160, 12,
+            ui::drawMarquee("安装功能不可用。", 160, 12,
                             ui::type::Body, ui::color::Ink, 300,
                             C2D_AlignCenter);
         };
@@ -1703,7 +1703,7 @@ void App::ciaOptions(const std::string &path)
 void App::showChecksum(const std::string &path)
 {
     std::string hash;
-    if (!tasks::busy("SHA-256", "Reading " + basename(path) + "...",
+    if (!tasks::busy("SHA-256", "正在读取 " + basename(path) + "……",
                      [&](tasks::Busy &busy) {
                          busy.bytes = true;
                          busy.total = static_cast<uint64_t>(
@@ -1714,7 +1714,7 @@ void App::showChecksum(const std::string &path)
         return;
     }
     if (hash.empty()) {
-        ui::message("No Checksum", "The file could not be read.",
+        ui::message("无校验和", "无法读取文件。",
                     ui::Tone::Error, path);
         return;
     }
@@ -1735,17 +1735,17 @@ void App::showChecksum(const std::string &path)
         const std::string expected = update::checksumFor(listing, name);
         if (!expected.empty()) {
             matches = expected == hash;
-            verdict = matches ? "It matches " + entry.name + "."
-                              : "It does not match " + entry.name +
-                                    ", which expects " + expected + ".";
+            verdict = matches ? "校验和与 " + entry.name + " 一致。"
+                              : "校验和与 " + entry.name +
+                                    " 不一致；预期值为 " + expected + "。";
             break;
         }
     }
     ui::Dialog dialog;
     dialog.header = "SHA-256";
     dialog.title = verdict.empty() ? "SHA-256 of " + name
-                   : matches       ? name + " is intact."
-                                   : name + " does not match its checksum.";
+                   : matches       ? name + " 完整无误。"
+                                   : name + " 与其校验和不匹配。";
     dialog.tone = verdict.empty() ? ui::Tone::Info
                   : matches       ? ui::Tone::Success
                                   : ui::Tone::Error;
@@ -1756,7 +1756,7 @@ void App::showChecksum(const std::string &path)
                                matches ? ui::color::Good : ui::color::Bad,
                                0.44f, 3});
     }
-    dialog.buttons = {"Close"};
+    dialog.buttons = {"关闭"};
     ui::choose(dialog);
 }
 
@@ -1828,50 +1828,50 @@ bool App::entryOptions(const std::string &folder,
 
     // What was cut or copied goes into this folder in one step from here.
     if (!clipboard_.empty()) {
-        add(clipboardCut_ ? "Move Here" : "Paste Here", Action::Paste);
+        add(clipboardCut_ ? "移动到此处" : "粘贴到此处", Action::Paste);
     }
     if (single && kind == Kind::Cia) {
-        add("Install", Action::Install);
-        add("Install and Delete", Action::InstallDelete);
+        add("安装", Action::Install);
+        add("安装后删除", Action::InstallDelete);
     } else if (single && kind == Kind::Ticket) {
-        add("Install Ticket", Action::InstallTicket);
+        add("安装票据", Action::InstallTicket);
     } else if (single && kind == Kind::Text) {
-        add("Edit", Action::Edit);
+        add("编辑", Action::Edit);
     } else if (single) {
-        add("Open", Action::Open);
+        add("打开", Action::Open);
         if (kind == Kind::Archive) {
-            add("Extract", Action::Extract);
+            add("解压", Action::Extract);
         }
     }
     if ((!single || isFolder) && !cias.empty()) {
-        add("Install " + plural(cias.size(), "CIA"), Action::InstallAll);
-        add("Install and Delete", Action::InstallDeleteAll);
+        add("安装 " + plural(cias.size(), "个 CIA"), Action::InstallAll);
+        add("安装后删除", Action::InstallDeleteAll);
     }
     if (single && !isFolder && kind != Kind::Text && kind != Kind::Cia) {
-        add("Open as Text", Action::ViewText);
+        add("以文本打开", Action::ViewText);
     }
     if (single && !isFolder) {
-        add("Open as Hex", Action::ViewHex);
+        add("以十六进制打开", Action::ViewHex);
     }
     if (single) {
-        add("Rename", Action::Rename);
+        add("重命名", Action::Rename);
     }
-    add("Copy", Action::Copy);
-    add("Cut", Action::Cut);
-    add("Delete", Action::Delete, true);
-    add("Properties", Action::Properties);
+    add("复制", Action::Copy);
+    add("剪切", Action::Cut);
+    add("删除", Action::Delete, true);
+    add("属性", Action::Properties);
     if (single && !isFolder) {
         add("SHA-256", Action::Checksum);
     }
     if (single) {
-        add(isMarked ? "Unmark" : "Mark", Action::Mark);
-        add(favorites::contains(settings_.favorites, favorite) ? "Unfavourite"
-                                                               : "Favourite",
+        add(isMarked ? "取消标记" : "标记", Action::Mark);
+        add(favorites::contains(settings_.favorites, favorite) ? "取消收藏"
+                                                               : "收藏",
             Action::Favorite);
     } else {
-        add("Clear Marks", Action::ClearMarks);
+        add("清除标记", Action::ClearMarks);
     }
-    add("This Folder...", Action::Folder);
+    add("此文件夹……", Action::Folder);
 
     // The top screen shows what the options act on: the entry as Files
     // shows it, or what the marked items add up to without walking folders.
@@ -1898,15 +1898,15 @@ bool App::entryOptions(const std::string &folder,
             }
         }
         if (files > 0) {
-            facts.push_back({"Files", std::to_string(files) + ", " +
+            facts.push_back({"文件", std::to_string(files) + ", " +
                                           units::bytes(bytes)});
         }
         if (folders > 0) {
-            facts.push_back({"Folders", std::to_string(folders)});
+            facts.push_back({"文件夹", std::to_string(folders)});
         }
     }
     const std::string title = single ? folderTitle(folder)
-                                     : plural(paths.size(), "Marked Item");
+                                     : plural(paths.size(), "已标记项目");
     PreviewLoader preview;
     const int choice = ui::menu(items, [&](int) {
         if (single) {
@@ -1948,7 +1948,7 @@ bool App::entryOptions(const std::string &folder,
         return true;
     case Action::Extract:
         offerExtraction(path, folderOf(path), "",
-                        "Extract " + basename(path) + "?");
+                        "要解压 " + basename(path) + " 吗？");
         return true;
     case Action::Edit:
     case Action::ViewText:
@@ -1963,10 +1963,10 @@ bool App::entryOptions(const std::string &folder,
     case Action::Cut:
         clipboard_ = paths;
         clipboardCut_ = actions[choice] == Action::Cut;
-        ui::message(clipboardCut_ ? "Ready to Move" : "Ready to Copy",
-                    std::string("Open a folder and choose ") +
-                        (clipboardCut_ ? "Move Here" : "Paste Here") +
-                        " in Options.");
+        ui::message(clipboardCut_ ? "已准备移动" : "已准备复制",
+                    std::string("请打开文件夹，然后在“选项”中选择“") +
+                        (clipboardCut_ ? "移动到此处" : "粘贴到此处") +
+                        "”。");
         return true;
     case Action::Delete:
         return deleteEntries(paths);
@@ -2022,21 +2022,21 @@ bool App::folderOptions(const std::string &folder,
     };
 
     // Sort first, so SELECT and A reach it from any folder.
-    add("Sort...", Action::Sort);
+    add("排序……", Action::Sort);
     if (!clipboard_.empty()) {
-        add(clipboardCut_ ? "Move Here" : "Paste Here", Action::Paste);
-        add("Forget Clipboard", Action::ClearClipboard);
+        add(clipboardCut_ ? "移动到此处" : "粘贴到此处", Action::Paste);
+        add("清空剪贴板", Action::ClearClipboard);
     }
-    add("New Folder", Action::NewFolder);
-    add("New File", Action::NewFile);
-    add(std::string("Hidden: ") + (settings_.showHiddenFiles ? "On" : "Off"),
+    add("新建文件夹", Action::NewFolder);
+    add("新建文件", Action::NewFile);
+    add(std::string("隐藏文件：") + (settings_.showHiddenFiles ? "显示" : "不显示"),
         Action::Hidden);
     // These act on every entry, so they wait until the folder is read.
     if (!entries.empty()) {
-        add("Mark All", Action::MarkAll, complete);
+        add("全部标记", Action::MarkAll, complete);
     }
     if (!marked.empty()) {
-        add("Clear Marks", Action::ClearMarks);
+        add("清除标记", Action::ClearMarks);
     }
     size_t cias = 0;
     for (const fs::Entry &entry : entries) {
@@ -2045,30 +2045,30 @@ bool App::folderOptions(const std::string &folder,
         }
     }
     if (cias > 0) {
-        add("Install All CIAs", Action::InstallAll, complete);
+        add("安装全部 CIA", Action::InstallAll, complete);
     }
     const bool atRoot = naming::parentFolder(folder) == folder;
     if (!atRoot) {
-        add(favorites::contains(settings_.favorites, folder) ? "Unfavourite"
-                                                             : "Favourite",
+        add(favorites::contains(settings_.favorites, folder) ? "取消收藏"
+                                                             : "收藏",
             Action::Favorite);
     }
-    add("Favourites...", Action::Favorites);
-    add("Properties", Action::Properties);
+    add("收藏……", Action::Favorites);
+    add("属性", Action::Properties);
 
     const std::string name = folderTitle(folder);
     std::vector<ui::Fact> facts = {
-        {"Path", folder},
-        {"Sorted", sortDescription(settings_.fileSort, settings_.fileSortReverse)}};
-    facts.push_back(complete ? ui::Fact {"Contains", plural(entries.size(), "item")}
-                             : ui::Fact {"Reading", plural(entries.size(), "item") +
+        {"路径", folder},
+        {"排序方式", sortDescription(settings_.fileSort, settings_.fileSortReverse)}};
+    facts.push_back(complete ? ui::Fact {"包含", plural(entries.size(), "item")}
+                             : ui::Fact {"正在读取", plural(entries.size(), "item") +
                                                         " so far",
                                          ui::color::Badge});
     if (cias > 0) {
         facts.push_back({"CIAs", std::to_string(cias)});
     }
     if (!marked.empty()) {
-        facts.push_back({"Marked", plural(marked.size(), "item")});
+        facts.push_back({"已标记", plural(marked.size(), "项目")});
     }
     if (!clipboard_.empty()) {
         facts.push_back(clipboardFact(clipboard_.size(), clipboardCut_));
@@ -2114,10 +2114,10 @@ bool App::folderOptions(const std::string &folder,
             }
         }
         ui::Dialog dialog;
-        dialog.header = "install";
-        dialog.title = "Install " + plural(paths.size(), "CIA") + "?";
-        dialog.body.push_back({"From " + folder, ui::color::Muted, 0.46f, 2});
-        dialog.buttons = {"Install", "Install and Delete", "Cancel"};
+        dialog.header = "安装";
+        dialog.title = "要安装 " + plural(paths.size(), "个 CIA") + " 吗？";
+        dialog.body.push_back({"来自 " + folder, ui::color::Muted, 0.46f, 2});
+        dialog.buttons = {"安装", "安装后删除", "取消"};
         dialog.cancelButton = 2;
         const int answer = ui::choose(dialog);
         if (answer == 0 || answer == 1) {
@@ -2155,10 +2155,10 @@ bool App::sortScreen(const std::string &folder)
     static const struct {
         fs::SortOrder order;
         const char *label;
-    } Orders[] = {{fs::SortOrder::Name, "Name"},
-                  {fs::SortOrder::Date, "Date"},
-                  {fs::SortOrder::Size, "Size"},
-                  {fs::SortOrder::Type, "Type"}};
+    } Orders[] = {{fs::SortOrder::Name, "名称"},
+                  {fs::SortOrder::Date, "日期"},
+                  {fs::SortOrder::Size, "大小"},
+                  {fs::SortOrder::Type, "类型"}};
     int focus = 0;
     for (int index = 0; index < 4; ++index) {
         if (Orders[index].order == settings_.fileSort) {
@@ -2169,7 +2169,7 @@ bool App::sortScreen(const std::string &folder)
     // both be set; Back leaves.
     while (ui::keepRunning() && !quit_) {
         ui::ScreenSpec spec;
-        spec.back = "Back";
+        spec.back = "返回";
         for (int index = 0; index < 4; ++index) {
             ui::Control control;
             control.rect = {index % 2 == 0 ? 26.0f : 164.0f,
@@ -2182,18 +2182,18 @@ bool App::sortScreen(const std::string &folder)
         }
         ui::Control reverse;
         reverse.rect = {26, 139, 268, 40};
-        reverse.label = "Reverse Order";
+        reverse.label = "反向排序";
         reverse.style = settings_.fileSortReverse ? ui::Style::Chosen
                                                   : ui::Style::Normal;
         spec.controls.push_back(reverse);
         spec.drawTop = [&]() {
-            ui::drawTopChrome("Sort", ui::Icon::Folder, ui::color::IconOrange);
+            ui::drawTopChrome("排序", ui::Icon::Folder, ui::color::IconOrange);
             ui::drawPanel();
             std::vector<ui::Fact> facts = {
-                {"Order", sortDescription(settings_.fileSort,
+                {"排序", sortDescription(settings_.fileSort,
                                           settings_.fileSortReverse)}};
             if (!folder.empty()) {
-                facts.push_back({"Folder", folder});
+                facts.push_back({"文件夹", folder});
             }
             ui::drawFacts(facts);
         };
@@ -2220,7 +2220,7 @@ void App::installCias(const std::vector<std::string> &paths, bool deleteAfter)
         std::string error;
         if (!readCia(paths.front(), info, error)) {
             if (!error.empty()) {
-                ui::message("Cannot install", error, ui::Tone::Error,
+                ui::message("无法安装", error, ui::Tone::Error,
                             basename(paths.front()));
             }
             return;
@@ -2250,22 +2250,21 @@ void App::installCias(const std::vector<std::string> &paths, bool deleteAfter)
     for (const std::string &name : failed) {
         list += (list.empty() ? "" : ", ") + name;
     }
-    ui::message(failed.empty() ? "All installed" : "Some were not installed",
-                "Installed " + std::to_string(installed) + " of " +
-                    plural(paths.size(), "CIA") + "." +
-                    (kept > 0 ? " " + std::to_string(kept) +
-                                    (kept == 1 ? " was" : " were") +
-                                    " already installed."
+    ui::message(failed.empty() ? "全部安装完成" : "部分未安装",
+                "已安装 " + std::to_string(installed) + " / " +
+                    std::to_string(paths.size()) + " 个 CIA。" +
+                    (kept > 0 ? "另有 " + std::to_string(kept) +
+                                    " 个已安装并保留。"
                               : ""),
                 failed.empty() ? ui::Tone::Success : ui::Tone::Warning,
-                failed.empty() ? "" : "Not installed: " + list);
+                failed.empty() ? "" : "未安装：" + list);
 }
 
 bool App::renameEntry(const std::string &path)
 {
     const std::string oldName = fileops::name(path);
     std::string typed;
-    if (!platform::keyboard(platform::KeyboardKind::Name, "New name", oldName,
+    if (!platform::keyboard(platform::KeyboardKind::Name, "新名称", oldName,
                             typed)) {
         return false;
     }
@@ -2275,12 +2274,12 @@ bool App::renameEntry(const std::string &path)
         return false;
     }
     if (!fileops::validName(newName, error)) {
-        ui::message("Cannot use that name", error, ui::Tone::Error, newName);
+        ui::message("不能使用此名称", error, ui::Tone::Error, newName);
         return false;
     }
     const std::string target = folderOf(path) + newName;
     if (!fileops::move(path, target, error)) {
-        ui::message("Could not rename", error, ui::Tone::Error);
+        ui::message("无法重命名", error, ui::Tone::Error);
         return !fileops::exists(path);
     }
     if (favorites::moved(settings_.favorites, path, target)) {
@@ -2292,7 +2291,7 @@ bool App::renameEntry(const std::string &path)
 bool App::deleteEntries(const std::vector<std::string> &paths)
 {
     fileops::Totals totals;
-    if (!tasks::busy("delete", "Counting what will be deleted...",
+    if (!tasks::busy("delete", "正在统计待删除内容……",
                      [&](tasks::Busy &busy) {
                          fileops::Lookup lookup;
                          for (const std::string &path : paths) {
@@ -2309,12 +2308,12 @@ bool App::deleteEntries(const std::vector<std::string> &paths)
     }
     const bool single = paths.size() == 1;
     const std::string what = single ? fileops::name(paths.front())
-                                    : plural(paths.size(), "item");
+                                    : plural(paths.size(), "项目");
     // How much goes. Delete already says it is for good.
     const std::string body = totals.folders > 0 || !single
                                  ? totalsText(totals)
                                  : units::bytes(totals.bytes);
-    if (!confirm("delete", "Delete " + what + "?", body, "Delete", true)) {
+    if (!confirm("delete", "删除" + what + "？", body, "删除", true)) {
         return false;
     }
 
@@ -2354,13 +2353,12 @@ bool App::deleteEntries(const std::vector<std::string> &paths)
         persistSettings();
     }
     if (result.status == fileops::Status::Failed) {
-        ui::message("Delete stopped", result.message, ui::Tone::Error,
-                    plural(result.files, "file") + " deleted before that.");
+        ui::message("删除已停止", result.message, ui::Tone::Error,
+                    plural(result.files, "文件") + " 已在停止前删除。");
     } else if (result.status == fileops::Status::Cancelled &&
                ui::keepRunning()) {
-        ui::message("Delete stopped",
-                    plural(result.files, "file") + " deleted before you "
-                                                   "stopped it.",
+        ui::message("删除已停止",
+                    plural(result.files, "文件") + " 已在你停止操作前删除。",
                     ui::Tone::Warning);
     }
     return true;
@@ -2389,7 +2387,7 @@ bool App::pasteInto(const std::string &folder)
     // be asked about together.
     for (const std::string &source : clipboard_) {
         if (!lookup.exists(source)) {
-            problems.push_back(fileops::name(source) + " no longer exists.");
+            problems.push_back(fileops::name(source) + " 已不存在。");
             continue;
         }
         const std::string name = fileops::name(source);
@@ -2398,7 +2396,7 @@ bool App::pasteInto(const std::string &folder)
         step.destination = folder + name;
         step.folder = lookup.isFolder(source);
         if (step.folder && fileops::isInside(step.destination, source)) {
-            problems.push_back(name + " cannot go inside itself.");
+            problems.push_back("不能将 " + name + " 放入其自身内部。");
             continue;
         }
         if (clipboardCut_ && step.destination == source) {
@@ -2414,7 +2412,7 @@ bool App::pasteInto(const std::string &folder)
             }
         }
         if (step.destination.empty()) {
-            problems.push_back("No free name was found for " + name + ".");
+            problems.push_back("找不到可用于 " + name + " 的空闲名称。");
             continue;
         }
         if (!step.clash) {
@@ -2427,9 +2425,9 @@ bool App::pasteInto(const std::string &folder)
     const auto askOne = [&](const Step &step) {
         ui::Dialog dialog;
         dialog.header = "paste";
-        dialog.title = fileops::name(step.source) + " is already here.";
+        dialog.title = fileops::name(step.source) + " 已存在于此处。";
         dialog.tone = ui::Tone::Warning;
-        dialog.buttons = {"Keep Both", step.merge ? "Merge" : "Replace", "Skip"};
+        dialog.buttons = {"两者都保留", step.merge ? "合并" : "替换", "跳过"};
         dialog.dangerous = 1;
         dialog.cancelButton = 2;
         const int answer = ui::choose(dialog);
@@ -2451,13 +2449,13 @@ bool App::pasteInto(const std::string &folder)
         answers[clashes[0]] = askOne(planned[clashes[0]]);
     } else if (clashes.size() > 1) {
         const std::vector<ui::MenuItem> items = {
-            {merges == 0               ? "Replace All"
-             : merges == clashes.size() ? "Merge All"
-                                        : "Replace and Merge",
+            {merges == 0               ? "全部替换"
+             : merges == clashes.size() ? "全部合并"
+                                        : "替换并合并",
              true, true},
-            {"Keep Both", false, true},
-            {"Skip These", false, true},
-            {"Ask for Each", false, true}};
+            {"两者都保留", false, true},
+            {"跳过这些", false, true},
+            {"逐项询问", false, true}};
         const int choice = ui::menu(
             items,
             [&](int) {
@@ -2465,22 +2463,22 @@ bool App::pasteInto(const std::string &folder)
                                   ui::color::IconOrange);
                 ui::drawPanel();
                 std::vector<ui::Fact> facts = {
-                    {"Already here", plural(clashes.size(), "item"),
+                    {"已存在", plural(clashes.size(), "item"),
                      ui::color::Badge}};
                 for (size_t shown = 0; shown < clashes.size() && shown < 5;
                      ++shown) {
                     const Step &step = planned[clashes[shown]];
-                    facts.push_back({step.folder ? "Folder" : "File",
+                    facts.push_back({step.folder ? "文件夹" : "文件",
                                      fileops::name(step.source)});
                 }
                 if (clashes.size() > 5) {
-                    facts.push_back({"And", std::to_string(clashes.size() - 5) +
+                    facts.push_back({"另有", std::to_string(clashes.size() - 5) +
                                                 " more",
                                      ui::color::Neutral});
                 }
                 ui::drawFacts(facts);
             },
-            "Cancel");
+            "取消");
         if (choice < 0) {
             return false;
         }
@@ -2520,7 +2518,7 @@ bool App::pasteInto(const std::string &folder)
 
     uint64_t bytes = 0;
     if (!clipboardCut_ && !steps.empty()) {
-        if (!tasks::busy("paste", "Measuring what will be copied...",
+        if (!tasks::busy("paste", "正在统计待复制内容……",
                          [&](tasks::Busy &busy) {
                              for (const Step &step : steps) {
                                  bytes += fileops::measure(step.source,
@@ -2534,10 +2532,9 @@ bool App::pasteInto(const std::string &folder)
         }
         const int64_t free = platform::sdFreeBytes();
         if (free >= 0 && static_cast<uint64_t>(free) < bytes) {
-            ui::message("Not enough space",
-                        "Copying needs " + units::bytes(bytes) + " and " +
-                            units::bytes(static_cast<uint64_t>(free)) +
-                            " is free.",
+            ui::message("空间不足",
+                        "复制需要 " + units::bytes(bytes) + "，当前可用空间为 " +
+                            units::bytes(static_cast<uint64_t>(free)) + "。",
                         ui::Tone::Error);
             return false;
         }
@@ -2637,14 +2634,14 @@ bool App::pasteInto(const std::string &folder)
     if (result.status == fileops::Status::Failed) {
         problems.insert(problems.begin(), result.message);
     } else if (result.status == fileops::Status::Cancelled) {
-        problems.insert(problems.begin(), "Stopped before it finished.");
+        problems.insert(problems.begin(), "任务尚未完成便已停止。");
     }
     if (!problems.empty() && ui::keepRunning()) {
         std::string list;
         for (const std::string &problem : problems) {
             list += (list.empty() ? "" : " ") + problem;
         }
-        ui::message("Not everything was pasted", list, ui::Tone::Warning);
+        ui::message("未能全部粘贴", list, ui::Tone::Warning);
     }
     return true;
 }
@@ -2652,23 +2649,23 @@ bool App::pasteInto(const std::string &folder)
 bool App::createFolder(const std::string &folder)
 {
     std::string typed;
-    if (!platform::keyboard(platform::KeyboardKind::Name, "New folder name",
+    if (!platform::keyboard(platform::KeyboardKind::Name, "新文件夹名称",
                             "", typed)) {
         return false;
     }
     const std::string name = text::trim(typed);
     std::string error;
     if (!fileops::validName(name, error)) {
-        ui::message("Cannot use that name", error, ui::Tone::Error, name);
+        ui::message("不能使用此名称", error, ui::Tone::Error, name);
         return false;
     }
     if (fileops::exists(folder + name)) {
-        ui::message("Already exists", name + " is already in this folder.",
+        ui::message("已存在", name + " 已存在于此文件夹中。",
                     ui::Tone::Error);
         return false;
     }
     if (!fs::makeDirectories(folder + name + "/")) {
-        ui::message("Could not create the folder", folder + name,
+        ui::message("无法创建文件夹", folder + name,
                     ui::Tone::Error);
         return false;
     }
@@ -2679,23 +2676,23 @@ bool App::createFile(const std::string &folder)
 {
     std::string typed;
     if (!platform::keyboard(platform::KeyboardKind::Name,
-                            "New file name", "new.txt", typed)) {
+                            "新文件名称", "new.txt", typed)) {
         return false;
     }
     const std::string name = text::trim(typed);
     std::string error;
     if (!fileops::validName(name, error)) {
-        ui::message("Cannot use that name", error, ui::Tone::Error, name);
+        ui::message("不能使用此名称", error, ui::Tone::Error, name);
         return false;
     }
     const std::string path = folder + name;
     if (fileops::exists(path)) {
-        ui::message("Already exists", name + " is already in this folder.",
+        ui::message("已存在", name + " 已存在于此文件夹中。",
                     ui::Tone::Error);
         return false;
     }
     if (!fs::writeFile(path, "")) {
-        ui::message("Could not create the file", path, ui::Tone::Error);
+        ui::message("无法创建文件", path, ui::Tone::Error);
         return false;
     }
     textEditor(path);
@@ -2716,7 +2713,7 @@ void App::showProperties(const std::vector<std::string> &paths)
     };
     if (single && !folder) {
         totals = fileops::measure(paths.front());
-    } else if (!tasks::busy("properties", "Adding up sizes...",
+    } else if (!tasks::busy("properties", "正在计算大小……",
                             [&](tasks::Busy &busy) {
                                 busy.bytes = true;
                                 fileops::Lookup lookup;
@@ -2745,21 +2742,21 @@ void App::showProperties(const std::vector<std::string> &paths)
     const int64_t modified = single ? fileops::modifiedTime(path) : 0;
     std::vector<std::pair<std::string, std::string>> tags;
     if (folder || !single) {
-        tags.push_back({"Contains", contentsText(totals)});
+        tags.push_back({"包含", contentsText(totals)});
     } else {
-        tags.push_back({"Type", filetype::label(filetype::fromName(basename(path)))});
+        tags.push_back({"类型", filetype::label(filetype::fromName(basename(path)))});
     }
-    tags.push_back({"Size", units::bytes(totals.bytes)});
+    tags.push_back({"大小", units::bytes(totals.bytes)});
     if (totals.bytes >= 1024) {
-        tags.push_back({"Bytes", units::grouped(totals.bytes)});
+        tags.push_back({"字节", units::grouped(totals.bytes)});
     }
     if (modified > 0) {
-        tags.push_back({"Changed", units::dateTime(modified)});
+        tags.push_back({"修改时间", units::dateTime(modified)});
     }
 
     ui::Dialog dialog;
     dialog.title = units::bytes(totals.bytes);
-    dialog.buttons = {"OK"};
+    dialog.buttons = {"确定"};
     dialog.drawTop = [&]() {
         if (single) {
             ui::drawTopChrome(folderTitle(parent), ui::Icon::Folder,
@@ -2771,7 +2768,7 @@ void App::showProperties(const std::vector<std::string> &paths)
                            folder ? path + "/" : path, tags);
             return;
         }
-        ui::drawTopChrome(plural(paths.size(), "Marked Item"), ui::Icon::Check,
+        ui::drawTopChrome(plural(paths.size(), "已标记项目"), ui::Icon::Check,
                           ui::color::Tag);
         std::vector<ui::Fact> facts;
         for (const auto &tag : tags) {
@@ -2788,23 +2785,22 @@ void App::showProperties(const std::vector<std::string> &paths)
 void App::installTicketFile(const std::string &path)
 {
     if (!installer::available()) {
-        ui::message("Cannot Install", installer::unavailableReason(),
+        ui::message("无法安装", installer::unavailableReason(),
                     ui::Tone::Error);
         return;
     }
     uint64_t titleId = 0;
     std::string error;
     bool installed = false;
-    tasks::busy("Tickets", "Installing the ticket...", [&]() {
+    tasks::busy("票据", "正在安装票据……", [&]() {
         installed = library::installTicket(path, titleId, error);
     });
     if (installed) {
-        ui::message("Ticket Installed",
-                    "The ticket for " + cia::titleIdText(titleId) +
-                        " is installed.",
+        ui::message("票据已安装",
+                    "软件 " + cia::titleIdText(titleId) + " 的票据已安装。",
                     ui::Tone::Success);
     } else {
-        ui::message("Ticket Not Installed", error, ui::Tone::Error);
+        ui::message("票据未安装", error, ui::Tone::Error);
     }
 }
 
@@ -2827,8 +2823,7 @@ bool startHomebrew(const std::string &path, std::string &error)
     // waits forever, since Luma never registers it there.
     Handle loader = 0;
     if (R_FAILED(svcConnectToPort(&loader, "hb:ldr"))) {
-        error = "Starting homebrew needs Luma3DS, and its homebrew loader "
-                "did not answer.";
+        error = "启动自制软件需要 Luma3DS，但其自制软件加载器没有响应。";
         return false;
     }
     // Under the Homebrew Launcher this app is the loader's own title, which
@@ -2840,10 +2835,10 @@ bool startHomebrew(const std::string &path, std::string &error)
     if (!envIsHomebrew() &&
         (title == 0 || !installer::installedVersion(title, version))) {
         svcCloseHandle(loader);
-        error = "Luma3DS starts homebrew in place of " +
+        error = "Luma3DS 会用以下项目代替 " +
                 cia::titleIdText(title) +
-                ", which is not installed. Open the Homebrew Launcher "
-                "and start it from there.";
+                "，但它尚未安装。请打开自制软件启动器"
+                "并从那里启动。";
         return false;
     }
     // The loader takes the path inside the SD card, without "sdmc:".
@@ -2874,7 +2869,7 @@ bool startHomebrew(const std::string &path, std::string &error)
     }
     svcCloseHandle(loader);
     if (R_FAILED(code)) {
-        error = "The homebrew loader did not take " + basename(path) + ".";
+        error = "自制软件加载器未能启动 " + basename(path) + "。";
         return false;
     }
     if (envIsHomebrew()) {
@@ -2897,21 +2892,21 @@ void App::titleDetails(const std::string &path, Kind kind)
     const std::string folder = folderTitle(folderOf(path));
 
     ui::ScreenSpec spec;
-    spec.back = "Back";
+    spec.back = "返回";
     const bool ticket = kind == Kind::Ticket && details.metaReadable;
     const bool homebrew = kind == Kind::Homebrew;
     // One or two buttons, centred in the space above the tabs.
     const bool pair = ticket || homebrew;
     ui::Control hex;
     hex.rect = {46, pair ? 109.0f : 87.0f, 228, 34};
-    hex.label = "Open as Hex";
+    hex.label = "以十六进制打开";
     hex.icon = ui::Icon::Hex;
     hex.scale = ui::type::Body + 0.06f;
     spec.controls.push_back(hex);
     if (ticket) {
         ui::Control install = hex;
         install.rect = {46, 65, 228, 34};
-        install.label = "Install Ticket";
+        install.label = "安装票据";
         install.icon = ui::Icon::Lock;
         install.iconColor = ui::color::IconGreen;
         spec.controls.push_back(install);
@@ -2919,7 +2914,7 @@ void App::titleDetails(const std::string &path, Kind kind)
     if (homebrew) {
         ui::Control start = hex;
         start.rect = {46, 65, 228, 34};
-        start.label = "Start";
+        start.label = "启动";
         start.icon = ui::Icon::App;
         start.iconColor = ui::color::IconGreen;
         spec.controls.push_back(start);
@@ -2939,7 +2934,7 @@ void App::titleDetails(const std::string &path, Kind kind)
         if (startHomebrew(path, error)) {
             quit_ = true;
         } else {
-            ui::message("Cannot Start", error, ui::Tone::Error);
+            ui::message("无法启动", error, ui::Tone::Error);
         }
     }
 }
@@ -3064,7 +3059,7 @@ void stepThrough(const std::vector<std::string> &paths, size_t index,
         viewer.load(path);
         const std::string facts = viewer.facts(path);
         const std::string position = viewer.noun + " " +
-                                     std::to_string(index + 1) + " of " +
+                                     std::to_string(index + 1) + " / " +
                                      std::to_string(paths.size());
 
         float swipeStart = -1;
@@ -3118,13 +3113,13 @@ void stepThrough(const std::vector<std::string> &paths, size_t index,
                          ui::color::InkSoft, C2D_AlignCenter);
             const ui::Style style =
                 paths.size() > 1 ? ui::Style::Normal : ui::Style::Disabled;
-            ui::drawButton(pad.rects[previous], "Previous", style,
+            ui::drawButton(pad.rects[previous], "上一项", style,
                            ui::type::Small + 0.02f, ui::Icon::None, 0,
                            pad.isDown(input, previous));
-            ui::drawButton(pad.rects[next], "Next", style,
+            ui::drawButton(pad.rects[next], "下一项", style,
                            ui::type::Small + 0.02f, ui::Icon::None, 0,
                            pad.isDown(input, next));
-            ui::drawTab(ui::Tab::Left, "Back", "B", pad.isDown(input, back));
+            ui::drawTab(ui::Tab::Left, "返回", "B", pad.isDown(input, back));
             ui::endFrame();
         }
     }
@@ -3164,14 +3159,14 @@ void drawSongTop(const std::string &name, const audiometa::Info &info,
             facts.push_back({tag, value});
         }
     };
-    add("Artist", info.artist.empty() ? info.albumArtist : info.artist);
-    add("Album", audiometa::albumText(info));
-    add("Length", audiometa::length(info.milliseconds));
-    add("Track", audiometa::trackText(info));
-    add("Genre", info.genre);
-    add("Loop", audiometa::loopText(info));
+    add("艺术家", info.artist.empty() ? info.albumArtist : info.artist);
+    add("专辑", audiometa::albumText(info));
+    add("时长", audiometa::length(info.milliseconds));
+    add("音轨", audiometa::trackText(info));
+    add("流派", info.genre);
+    add("循环", audiometa::loopText(info));
     if (facts.empty()) {
-        facts.push_back({"Type", filetype::label(Kind::Audio)});
+        facts.push_back({"类型", filetype::label(Kind::Audio)});
     }
     // drawFacts keeps 18 pixels from each side of its area.
     const float left = art.x + art.w + 14 - 18;
@@ -3191,11 +3186,11 @@ void App::pictureViewer(const std::vector<std::string> &pictures,
     Viewer viewer;
     viewer.icon = ui::Icon::Picture;
     viewer.iconColor = ui::color::IconPink;
-    viewer.noun = "Picture";
+    viewer.noun = "图片";
     viewer.load = [&](const std::string &path) {
         picture::Picture loaded;
         error.clear();
-        tasks::busy("Pictures", "", [&]() {
+        tasks::busy("图片", "", [&]() {
             picture::load(path, 400, 240, PictureBackground, loaded, error);
         });
         shown = std::move(loaded);
@@ -3219,7 +3214,7 @@ void App::pictureViewer(const std::vector<std::string> &pictures,
             ui::drawImage(*image, (ui::TopWidth - shown.width) / 2,
                           (ui::ScreenHeight - shown.height) / 2);
         } else {
-            ui::drawWrapped(error.empty() ? "The picture could not be shown."
+            ui::drawWrapped(error.empty() ? "无法显示图片。"
                                           : error,
                             200, 100, ui::type::Body, ui::color::rgb(0xFFD36B),
                             330, 4, C2D_AlignCenter);
@@ -3238,11 +3233,11 @@ void App::songViewer(const std::vector<std::string> &songs, size_t index,
     Viewer viewer;
     viewer.icon = ui::Icon::Music;
     viewer.iconColor = ui::color::IconPink;
-    viewer.noun = "Song";
+    viewer.noun = "歌曲";
     viewer.load = [&](const std::string &path) {
         audiometa::Info loaded;
         std::vector<uint16_t> pixels;
-        tasks::busy("Songs", "", [&]() {
+        tasks::busy("歌曲", "", [&]() {
             audiometa::read(path, loaded, true);
             pixels = coverPixels(loaded.cover, folderCover, SongCover);
         });
@@ -3267,7 +3262,7 @@ void App::archiveViewer(const std::string &path)
     std::string error;
     if (!readArchive(path, archives::Scan::Full, listing, error)) {
         if (!error.empty()) {
-            ui::message("Cannot Open the Archive", error, ui::Tone::Error,
+            ui::message("无法打开压缩包", error, ui::Tone::Error,
                         basename(path));
         }
         return;
@@ -3277,8 +3272,8 @@ void App::archiveViewer(const std::string &path)
     while (ui::keepRunning()) {
         ui::ListSpec spec;
         spec.title = basename(path);
-        spec.emptyText = "This archive is empty.";
-        spec.action = "Extract";
+        spec.emptyText = "此压缩包为空。";
+        spec.action = "解压";
         spec.actionKey = "X";
         spec.actionKeys = KEY_X;
         for (const archives::Entry &entry : listing.entries) {
@@ -3300,17 +3295,17 @@ void App::archiveViewer(const std::string &path)
                               ui::color::IconGold);
             ui::drawPanel();
             std::vector<ui::Fact> facts = {
-                {"Format", listing.format},
-                {"Holds", plural(listing.fileCount, "file")},
-                {"Extracted", units::bytes(listing.totalSize)}};
+                {"格式", listing.format},
+                {"包含", plural(listing.fileCount, "file")},
+                {"已解压", units::bytes(listing.totalSize)}};
             if (index >= 0 && index < static_cast<int>(listing.entries.size())) {
                 const archives::Entry &entry = listing.entries[index];
-                facts.push_back({"Selected", entry.name});
+                facts.push_back({"已选中", entry.name});
                 if (entry.path.empty()) {
-                    facts.push_back({"Skipped", "Path leaves the folder",
+                    facts.push_back({"已跳过", "路径超出文件夹范围",
                                      ui::color::Bad});
                 } else if (!entry.supported) {
-                    facts.push_back({"Skipped", "Encrypted, a link or unknown",
+                    facts.push_back({"已跳过", "已加密、为链接或格式未知",
                                      ui::color::Bad});
                 }
             }
@@ -3319,7 +3314,7 @@ void App::archiveViewer(const std::string &path)
         const ui::ListResult result = ui::runList(spec, cursor);
         if (result.key == KEY_X) {
             offerExtraction(path, folderOf(path), "",
-                            "Extract " + basename(path) + "?", &listing);
+                            "解压 " + basename(path) + "？", &listing);
             return;
         }
         if (result.key != KEY_A) {
@@ -3338,7 +3333,7 @@ void App::hexViewer(const std::string &path)
     const uint64_t size = fileSize > 0 ? static_cast<uint64_t>(fileSize) : 0;
     std::FILE *file = std::fopen(path.c_str(), "rb");
     if (file == nullptr) {
-        ui::message("Cannot Open the File", path, ui::Tone::Error);
+        ui::message("无法打开文件", path, ui::Tone::Error);
         return;
     }
 
@@ -3441,24 +3436,24 @@ void App::hexViewer(const std::string &path)
         const ui::Rect panel = {13, 47, 294, 28};
         ui::drawPanel(panel);
         char where[96];
-        std::snprintf(where, sizeof(where), "Offset 0x%llX of %s",
+        std::snprintf(where, sizeof(where), "偏移 0x%llX，共 %s",
                       static_cast<unsigned long long>(top),
                       units::bytes(size).c_str());
         ui::drawText(where, 160, panel.y + 6, ui::type::Small, ui::color::Ink,
                      C2D_AlignCenter);
-        ui::drawButton(pad.rects[pageUp], "Page Up", ui::Style::Normal,
+        ui::drawButton(pad.rects[pageUp], "上一页", ui::Style::Normal,
                        ui::type::Small + 0.02f, ui::Icon::None, 0,
                        pad.isDown(input, pageUp));
-        ui::drawButton(pad.rects[pageDown], "Page Down", ui::Style::Normal,
+        ui::drawButton(pad.rects[pageDown], "下一页", ui::Style::Normal,
                        ui::type::Small + 0.02f, ui::Icon::None, 0,
                        pad.isDown(input, pageDown));
-        ui::drawButton(pad.rects[start], "Go to Start", ui::Style::Normal,
+        ui::drawButton(pad.rects[start], "跳到开头", ui::Style::Normal,
                        ui::type::Small + 0.02f, ui::Icon::None, 0,
                        pad.isDown(input, start));
-        ui::drawButton(pad.rects[end], "Go to End", ui::Style::Normal,
+        ui::drawButton(pad.rects[end], "跳到末尾", ui::Style::Normal,
                        ui::type::Small + 0.02f, ui::Icon::None, 0,
                        pad.isDown(input, end));
-        ui::drawTab(ui::Tab::Left, "Back", "B", pad.isDown(input, back));
+        ui::drawTab(ui::Tab::Left, "返回", "B", pad.isDown(input, back));
         ui::endFrame();
     }
     std::fclose(file);
@@ -3469,13 +3464,13 @@ void App::textEditor(const std::string &path)
     textdoc::Document document;
     switch (textdoc::load(path, document)) {
     case textdoc::Load::Unreadable:
-        ui::message("Cannot Open the File", path, ui::Tone::Error);
+        ui::message("无法打开文件", path, ui::Tone::Error);
         return;
     case textdoc::Load::NotText: {
         ui::Dialog dialog;
         dialog.header = basename(path);
-        dialog.title = "This is not a text file.";
-        dialog.buttons = {"Close", "Open as Hex"};
+        dialog.title = "这不是文本文件。";
+        dialog.buttons = {"关闭", "以十六进制打开"};
         dialog.initial = 1;
         dialog.cancelButton = 0;
         if (ui::choose(dialog) == 1) {
@@ -3495,10 +3490,10 @@ void App::textEditor(const std::string &path)
     const bool readOnly = document.readOnly;
     std::string readOnlyReason;
     if (document.truncated) {
-        readOnlyReason = "Only the first " +
-                         units::bytes(textdoc::MaxEditableBytes) + " is shown.";
+        readOnlyReason = "仅显示前 " +
+                         units::bytes(textdoc::MaxEditableBytes) + "。";
     } else if (readOnly) {
-        readOnlyReason = "Not UTF-8 text.";
+        readOnlyReason = "不是 UTF-8 文本。";
     }
 
     constexpr float LinePitch = 16;
@@ -3534,8 +3529,7 @@ void App::textEditor(const std::string &path)
             saved = true;
             return true;
         }
-        ui::message("Not Saved", "The file could not be written. The SD card "
-                                 "may be full or read-only.",
+        ui::message("未保存", "无法写入文件。SD 卡可能已满或处于只读状态。",
                     ui::Tone::Error, path);
         return false;
     };
@@ -3543,13 +3537,13 @@ void App::textEditor(const std::string &path)
         std::string typed;
         const std::string initial = inserting ? "" : document.lines[index];
         if (initial.size() > 1900) {
-            ui::message("Line Too Long",
-                        "This line is too long for the keyboard.",
+            ui::message("行过长",
+                        "此行过长，无法在键盘中编辑。",
                         ui::Tone::Warning);
             return;
         }
         if (!platform::keyboard(platform::KeyboardKind::Text,
-                                "Line " + std::to_string(index + 1), initial,
+                                "第 " + std::to_string(index + 1) + " 行", initial,
                                 typed)) {
             return;
         }
@@ -3622,7 +3616,7 @@ void App::textEditor(const std::string &path)
 
         if (readOnly && (action == edit || action == insert ||
                          action == remove || action == save)) {
-            ui::message("Read-Only", readOnlyReason);
+            ui::message("只读", readOnlyReason);
             action = -1;
         }
         if (action == edit) {
@@ -3647,9 +3641,9 @@ void App::textEditor(const std::string &path)
             }
             ui::Dialog dialog;
             dialog.header = basename(path);
-            dialog.title = "Save your changes before closing?";
+            dialog.title = "关闭前要保存更改吗？";
             dialog.tone = ui::Tone::Warning;
-            dialog.buttons = {"Discard", "Keep Editing", "Save"};
+            dialog.buttons = {"放弃更改", "继续编辑", "保存"};
             dialog.dangerous = 0;
             dialog.initial = 2;
             dialog.cancelButton = 1;
@@ -3723,17 +3717,17 @@ void App::textEditor(const std::string &path)
         ui::beginBottom();
         const ui::Rect recess = {13, top, 294, 72};
         ui::drawRecess(recess);
-        ui::drawText("Line " + std::to_string(cursor + 1) + " of " +
+        ui::drawText("第 " + std::to_string(cursor + 1) + " 行，共 " +
                          std::to_string(count),
                      recess.x + 10, recess.y + 5, ui::type::Tiny,
                      ui::color::InkSoft);
         const std::string current = shown(document.lines[cursor]);
-        ui::drawWrapped(current.empty() ? "(empty line)" : current,
+        ui::drawWrapped(current.empty() ? "（空行）" : current,
                         recess.x + 10, recess.y + 24, ui::type::Small,
                         current.empty() ? ui::color::InkSoft
                                         : ui::color::InkStrong,
                         recess.w - 20, 2);
-        const char *const labels[] = {"Edit", "New Line", "Delete"};
+        const char *const labels[] = {"编辑", "新建行", "删除"};
         for (int index = 0; index < 3; ++index) {
             ui::drawButton(pad.rects[index], labels[index],
                            readOnly ? ui::Style::Disabled : ui::Style::Normal,
@@ -3747,9 +3741,9 @@ void App::textEditor(const std::string &path)
             ui::drawText(readOnlyReason, 160, top + 132, ui::type::Tiny,
                          ui::color::InkSoft, C2D_AlignCenter);
         }
-        ui::drawTab(ui::Tab::Left, "Close", "B", pad.isDown(input, close));
+        ui::drawTab(ui::Tab::Left, "关闭", "B", pad.isDown(input, close));
         if (!readOnly) {
-            ui::drawTab(ui::Tab::Right, "Save", "START",
+            ui::drawTab(ui::Tab::Right, "保存", "START",
                         pad.isDown(input, save));
         }
         ui::endFrame();

@@ -177,7 +177,7 @@ TEST("remote server: the web page, a form post and a redirect back")
     sendText(client, "GET /?sent=2 HTTP/1.1\r\n\r\n");
     response = readAll(client);
     ::close(client);
-    CHECK(response.find("Sent 2 links") != std::string::npos);
+    CHECK(response.find("已发送2个链接") != std::string::npos);
     (void)after.get();
 
     std::future<net::Received> missing = receiveOne(receiver);
@@ -556,7 +556,7 @@ TEST("remote server: uploads wait in the staging folder, then take their place")
     CHECK(fs::readFile(root.path + "/a.bin", stored) && stored == "first");
     CHECK(fs::makeDirectories(root.path + "/dir"));
     CHECK(bodyOf(put(port, "/api/file?path=%2Fdir&replace=1", "x"))
-              .find("A folder is already called dir.") != std::string::npos);
+              .find("已有名为 dir 的文件夹") != std::string::npos);
     CHECK(!fs::fileExists(staging.path + "/.3dsdl-upload.part"));
 
     // Replacing writes over the old copy, shorter or longer.
@@ -1071,7 +1071,7 @@ TEST("remote server: a send says if 3dsDL's page made it, holds 20 links, and a 
     CHECK(!receiver.wait(1000, refused));
     response = readAll(client);
     ::close(client);
-    CHECK(response.find("{\"error\":\"Send at most 20") != std::string::npos);
+    CHECK(response.find("每次最多发送 20") != std::string::npos);
 
     // A device the console turned down sends nothing more.
     turnedAway = true;

@@ -151,11 +151,24 @@ fontGlyphPos_s glyphPos(uint32_t codePoint)
 // first glyph's left bearing.
 float inkOffset(const std::string &value, float scale)
 {
-    if (value.empty()) {
+    uint32_t firstCodePoint = 0;
+    size_t length = text::utf8SequenceLength(value, 0, &firstCodePoint);
+    if (length == 0) {
         return 0;
     }
-    const fontGlyphPos_s first = glyphPos(static_cast<unsigned char>(value.front()));
-    const fontGlyphPos_s last = glyphPos(static_cast<unsigned char>(value.back()));
+    uint32_t lastCodePoint = firstCodePoint;
+    for (size_t index = length; index < value.size();) {
+        uint32_t codePoint = 0;
+        length = text::utf8SequenceLength(value, index, &codePoint);
+        if (length == 0) {
+            codePoint = 0xfffd;
+            length = 1;
+        }
+        lastCodePoint = codePoint;
+        index += length;
+    }
+    const fontGlyphPos_s first = glyphPos(firstCodePoint);
+    const fontGlyphPos_s last = glyphPos(lastCodePoint);
     const float trailing = last.xAdvance - (last.xOffset + last.width);
     return (trailing - first.xOffset) / 2 * fontScale * scale * TextBoost;
 }
@@ -1341,72 +1354,12 @@ std::string fitMiddle(const std::string &value, float scale, float maxWidth)
 std::vector<std::string> wrap(const std::string &value, float scale,
                               float maxWidth, size_t maxLines)
 {
-    std::vector<std::string> lines;
-    if (maxLines == 0) {
-        return lines;
-    }
-
-    const std::vector<Glyph> all = glyphs(value, scale);
-    std::string line;
-    float width = 0.0f;
-    size_t breakAt = 0; // bytes of line up to the last break opportunity
-    bool cut = false;
-
-    const auto push = [&](const std::string &finished) {
-        if (lines.size() == maxLines) {
-            cut = true;
-            return;
-        }
-        lines.push_back(rtrimSpaces(finished));
-    };
-
-    for (const Glyph &glyph : all) {
-        if (cut) {
-            break;
-        }
-        if (glyph.codePoint == '\n') {
-            push(line);
-            line.clear();
-            width = 0.0f;
-            breakAt = 0;
-            continue;
-        }
-        if (glyph.codePoint == ' ' && line.empty()) {
-            continue;
-        }
-
-        if (width + glyph.width > maxWidth && !line.empty()) {
-            std::string rest;
-            if (breakAt > 0 && breakAt < line.size()) {
-                rest = line.substr(breakAt);
-                line.erase(breakAt);
-            }
-            push(line);
-            line = rest;
-            while (!line.empty() && line.front() == ' ') {
-                line.erase(line.begin());
-            }
-            width = textWidth(line, scale);
-            breakAt = 0;
-            if (cut) {
-                break;
-            }
-            if (glyph.codePoint == ' ' && line.empty()) {
-                continue;
-            }
-        }
-
-        line.append(value, glyph.offset, glyph.length);
-        width += glyph.width;
-        if (isBreakAfter(glyph.codePoint)) {
-            breakAt = line.size();
-        }
-    }
-    if (!cut && !line.empty()) {
-        push(line);
-    }
-
-    if (cut && !lines.empty()) {
+    const text::WrappedLines wrapped = text::wrapUtf8(
+        value, maxWidth, maxLines,
+        [scale](uint32_t codePoint) { return advance(codePoint) * scale * TextBoost; },
+        isBreakAfter);
+    std::vector<std::string> lines = wrapped.lines;
+    if (wrapped.truncated && !lines.empty()) {
         lines.back() = withEllipsis(lines.back(), scale, maxWidth);
     }
     return lines;
@@ -1799,19 +1752,19 @@ void drawStatusBar()
         fillRound(pill.inset(1), 4,
                   {{0, color::rgb(0xA8DEF7)}, {0.5f, color::rgb(0x63C4F1)},
                    {1, color::rgb(0x2DA8DE)}});
-        drawCentered("Connected", pill, 0.32f, color::rgb(0xFFFFFF));
+        drawCentered("已连接", pill, 0.32f, color::rgb(0xFFFFFF));
     } else {
         fillRound(pill, 5, color::rgb(0xC8C8C8));
         fillRound(pill.inset(1), 4,
                   {{0, color::rgb(0xEFEFEF)}, {1, color::rgb(0xD6D6D6)}});
-        drawCentered("Not Connected", pill, 0.3f, color::rgb(0x8B8B8B));
+        drawCentered("未连接", pill, 0.3f, color::rgb(0x8B8B8B));
     }
 
     const time_t seconds = static_cast<time_t>(platform::now());
     tm parts {};
     gmtime_r(&seconds, &parts);
-    static const char *const Days[] = {"Sun", "Mon", "Tue", "Wed",
-                                       "Thu", "Fri", "Sat"};
+    static const char *const Days[] = {"周日", "周一", "周二", "周三",
+                                       "周四", "周五", "周六"};
     char clock[40];
     std::snprintf(clock, sizeof(clock), "%d/%d (%s)  %d:%02d",
                   parts.tm_mon + 1, parts.tm_mday, Days[parts.tm_wday % 7],
@@ -1827,7 +1780,7 @@ void drawStatusBar()
         constexpr float Scale = 0.37f;
         const float left = pill.x + pill.w + 6;
         const float clockLeft = 364 - textWidth(clock, 0.4f);
-        drawFitted("SD " +
+        drawFitted("SD 卡 " +
                        units::shortBytes(static_cast<uint64_t>(status.sdFree)),
                    left, 1 + (lineHeight(0.4f) - lineHeight(Scale)) / 2, Scale,
                    status.sdFree < LowSdSpace ? color::Caution : color::InkSoft,
@@ -2558,7 +2511,7 @@ int choose(const Dialog &dialog)
     inDialog = true;
     lockTouch();
     const std::vector<std::string> labels =
-        dialog.buttons.empty() ? std::vector<std::string>{"OK"}
+        dialog.buttons.empty() ? std::vector<std::string>{"确定"}
                                : dialog.buttons;
     const int count = static_cast<int>(labels.size());
     // A dangerous choice between two gets the system's red button, with
@@ -2708,7 +2661,7 @@ void message(const std::string &title, const std::string &text, Tone tone,
             dialog.body.push_back({detail, color::InkSoft, 0.5f, 3});
         }
     }
-    dialog.buttons = {"OK"};
+    dialog.buttons = {"确定"};
     choose(dialog);
 }
 
@@ -2947,7 +2900,7 @@ ScreenResult runScreen(const ScreenSpec &spec, int &focus)
             return showPressed >= 0 && targets[showPressed].choice == choice;
         };
         if (spec.closeBar) {
-            drawTab(Tab::Full, "Close", "START", tabDown(ScreenBack));
+            drawTab(Tab::Full, "关闭", "START", tabDown(ScreenBack));
         } else {
             if (!spec.back.empty()) {
                 drawTab(Tab::Left, spec.back, "B", tabDown(ScreenBack));
@@ -3051,7 +3004,7 @@ int chooseOption(const std::string &title,
     const int chosen =
         std::max(0, std::min(current, static_cast<int>(options.size()) - 1));
     ScreenSpec spec;
-    spec.back = "Back";
+    spec.back = "返回";
     const float pitch = 39;
     const float height = pitch * options.size() + 8;
     const float top = std::max(22.0f, 24 + (180 - height) / 2);
@@ -3697,10 +3650,10 @@ void drawProgress(const ProgressView &view)
         y += lineHeight(type::Body);
     }
     if (view.cancellable && view.stopping) {
-        drawButton(ProgressCancelButton, "Stopping...", Style::Disabled,
+        drawButton(ProgressCancelButton, "正在停止……", Style::Disabled,
                    type::Button);
     } else if (view.cancellable) {
-        drawButton(ProgressCancelButton, "Cancel");
+        drawButton(ProgressCancelButton, "取消");
         drawFocus(ProgressCancelButton, 9);
     }
     endFrame();
@@ -3753,9 +3706,9 @@ void drawBusy(const BusyView &view)
     const float rowY = view.progress ? box.y + 30
                        : counting    ? box.y + contentHeight / 2 - 12
                                      : box.y + contentHeight / 2;
-    const float width = 30 + 12 + textWidth("Please wait...", type::Body);
+    const float width = 30 + 12 + textWidth("请稍候……", type::Body);
     drawSpinner(box.x + (box.w - width) / 2 + 15, rowY, 15);
-    drawCentered("Please wait...",
+    drawCentered("请稍候……",
                  {box.x + (box.w - width) / 2 + 42, rowY - 20, 200, 40},
                  type::Body, color::InkDialog, true);
     if (view.progress && !view.left.empty()) {
@@ -3775,7 +3728,7 @@ void drawBusy(const BusyView &view)
                    color::InkSoft, box.w - 60, C2D_AlignCenter);
     }
     if (view.cancellable) {
-        drawStrip(box, {view.stopping ? "Stopping..." : "Cancel"}, -1,
+        drawStrip(box, {view.stopping ? "正在停止……" : "取消"}, -1,
                   view.pressed ? 0 : -1, false, StripHeight, -1);
     }
     endFrame();
@@ -3823,14 +3776,14 @@ void drawScanner(const C2D_Image *preview, const std::string &statusText,
                                                : color::rgb(0xFFFFFF));
 
     beginBottom();
-    const std::string title = "Scan QR Code";
+    const std::string title = "扫描二维码";
     const float width = 26 + textWidth(title, 0.72f);
     drawIcon(Icon::Scan, 160 - width / 2, 9, 20, color::Accent);
     drawText(title, 160 - width / 2 + 26, 19 - lineHeight(0.72f) / 2 + 1, 0.72f,
              color::Accent);
-    drawButton(ScannerTypeButton, "Type a URL Instead", Style::Normal,
+    drawButton(ScannerTypeButton, "改为输入网址", Style::Normal,
                type::Body + 0.06f);
-    drawTab(Tab::Left, "Back", "B");
+    drawTab(Tab::Left, "返回", "B");
     endFrame();
 }
 
