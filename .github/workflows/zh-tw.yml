@@ -1,0 +1,110 @@
+name: Traditional Chinese build
+
+# The same English source as the Simplified build, with zh/zh-tw.tsv applied
+# instead. Both catalogs translate one English block at a time, so following
+# upstream costs the same for either.
+on:
+  push:
+    tags: ["v*-tw*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Traditional catalog applies cleanly
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply zh/zh-tw.tsv
+        run: python3 scripts/zh/apply.py --profile tw --check
+
+  build:
+    name: 3DSX and CIA (tw)
+    runs-on: ubuntu-24.04
+    needs: [catalog]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply zh/zh-tw.tsv
+        run: python3 scripts/zh/apply.py --profile tw
+
+      - name: Rebuild the page editor
+        run: ./scripts/make-editor.sh
+
+      - name: Build with the pinned toolchain
+        run: ./scripts/build.sh
+        env:
+          THREEDSDL_BUILD_JOBS: 4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 3dsDL-tw-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: Publish a Traditional Chinese preview
+    # A preview goes out as a pre-release, which GitHub never calls the
+    # latest, so the update check in an installed copy does not offer it.
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-tw')
+    needs: [catalog, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: 3dsDL-tw-${{ github.sha }}
+          path: dist
+
+      - name: Name the files after the version
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          cd dist
+          for file in 3dsDL.cia 3dsDL.3dsx 3dsDL.smdh; do
+            mv "${file}" "3dsDL-${version}.${file##*.}"
+          done
+          sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
+            > "3dsDL-${version}.sha256"
+
+      - name: Make the QR code FBI scans
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME#v}"
+          python3 -m pip install --quiet --disable-pip-version-check segno
+          python3 - "${version}" <<'PY'
+          import os, sys, segno
+          version = sys.argv[1]
+          tag = os.environ["GITHUB_REF_NAME"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          url = (f"https://github.com/{repo}/releases/download/{tag}/"
+                 f"3dsDL-{version}.cia")
+          segno.make(url, error="m").save(
+              f"dist/3dsDL-{version}-cia-qr.png", scale=10, border=4)
+          with open("release-notes.md", "w", encoding="utf-8") as notes:
+              notes.write(
+                  f"![在 FBI 中掃碼安裝]"
+                  f"(https://github.com/{repo}/releases/download/{tag}/"
+                  f"3dsDL-{version}-cia-qr.png)\n\n"
+                  "FBI → Remote Install → Scan QR Code 即可安裝。\n\n")
+              notes.write(open(".github/zh-tw-release-notes.md",
+                               encoding="utf-8").read())
+          PY
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/3dsDL-* \
+            --title "3dsDL ${version} 繁體中文版" \
+            --notes-file release-notes.md \
+            --prerelease
