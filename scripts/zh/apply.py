@@ -9,6 +9,8 @@ catalog no longer matches is listed, and those are the only things to fix.
     python3 scripts/zh/apply.py --check    # report what no longer matches
     python3 scripts/zh/apply.py --reverse  # back to upstream's English
 
+    python3 scripts/zh/apply.py --profile tw   # the Traditional Chinese catalog
+
 Exit status is 1 under --check when a block did not apply, which is what CI
 and a maintainer want to see after an upstream merge.
 """
@@ -20,6 +22,13 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "zh" / "zh.tsv"
 SUFFIX = ROOT / "zh" / "VERSION_SUFFIX"
+
+# A profile is one translation of the same English source: its catalog and
+# the version suffix its builds carry.
+PROFILES = {
+    "cn": ("zh.tsv", "VERSION_SUFFIX"),
+    "tw": ("zh-tw.tsv", "VERSION_SUFFIX_TW"),
+}
 
 
 def unescape(text):
@@ -80,7 +89,14 @@ def main():
     parser.add_argument("--reverse", action="store_true",
                         help="turn the translations back into upstream's English")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--profile", choices=sorted(PROFILES), default="cn",
+                        help="which translation to apply (default cn)")
     args = parser.parse_args()
+
+    global CATALOG, SUFFIX
+    catalog, suffix = PROFILES[args.profile]
+    CATALOG = ROOT / "zh" / catalog
+    SUFFIX = ROOT / "zh" / suffix
 
     entries = load()
     if args.reverse:
