@@ -30,6 +30,7 @@ C2D_TextBuf textBuffer = nullptr;
 // A font carried in the app's own romfs, so Chinese shows even when the
 // console's shared font has no CJK. Null means the system font is used.
 C2D_Font appFont = nullptr;
+bool fontTried = false;
 bool closing = false;
 bool onBottom = false;
 uint64_t startTime = 0;
@@ -128,14 +129,25 @@ void loadFontMetrics()
     fontLineFeed = fontGetInfo(font)->lineFeed;
 }
 
+// The bundled font lives in romfs, which is mounted after ui::init, so it is
+// loaded the first time something is drawn.
+C2D_Font font()
+{
+    if (!fontTried) {
+        fontTried = true;
+        appFont = C2D_FontLoad("romfs:/font/font.bcfnt");
+    }
+    return appFont;
+}
+
 float advance(uint32_t codePoint)
 {
-    if (codePoint < 128 && asciiReady) {
+    if (codePoint < 128 && asciiReady && font() == nullptr) {
         return asciiAdvance[codePoint];
     }
     fontGlyphPos_s glyph;
-    C2D_FontCalcGlyphPos(appFont, &glyph,
-                         C2D_FontGlyphIndexFromCodePoint(appFont, codePoint),
+    C2D_FontCalcGlyphPos(font(), &glyph,
+                         C2D_FontGlyphIndexFromCodePoint(font(), codePoint),
                          0, 1.0f, 1.0f);
     return glyph.xAdvance * fontScale;
 }
@@ -143,8 +155,8 @@ float advance(uint32_t codePoint)
 fontGlyphPos_s glyphPos(uint32_t codePoint)
 {
     fontGlyphPos_s glyph;
-    C2D_FontCalcGlyphPos(appFont, &glyph,
-                         C2D_FontGlyphIndexFromCodePoint(appFont, codePoint),
+    C2D_FontCalcGlyphPos(font(), &glyph,
+                         C2D_FontGlyphIndexFromCodePoint(font(), codePoint),
                          0, 1.0f, 1.0f);
     return glyph;
 }
@@ -235,7 +247,7 @@ void drawSqueezed(const std::string &value, float x, float y, float scale,
                   float squeeze, u32 textColor, u32 flags)
 {
     C2D_Text textObject;
-    if (appFont != nullptr) {
+    if (font() != nullptr) {
         C2D_TextFontParse(&textObject, appFont, textBuffer, value.c_str());
     } else {
         C2D_TextParse(&textObject, textBuffer, value.c_str());
@@ -982,7 +994,6 @@ bool init()
     topTarget = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
     bottomTarget = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
     textBuffer = C2D_TextBufNew(8192);
-    appFont = C2D_FontLoad("romfs:/font/font.bcfnt");
 
     if (topTarget == nullptr || bottomTarget == nullptr ||
         textBuffer == nullptr) {
@@ -1428,7 +1439,7 @@ void drawText(const std::string &value, float x, float y, float scale,
               u32 textColor, u32 flags)
 {
     C2D_Text textObject;
-    if (appFont != nullptr) {
+    if (font() != nullptr) {
         C2D_TextFontParse(&textObject, appFont, textBuffer, value.c_str());
     } else {
         C2D_TextParse(&textObject, textBuffer, value.c_str());
