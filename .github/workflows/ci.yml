@@ -58,7 +58,9 @@ jobs:
   release:
     name: Draft release
     # A -cn tag publishes the Chinese test build from zh.yml, not this one.
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-cn')
+    # A tag with a suffix (v0.9.0-cn, v0.9.0-tw-rc.1) belongs to a translation
+    # build, so this upstream release job leaves it alone.
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
     needs: [host-tests, build]
     runs-on: ubuntu-24.04
     permissions:
