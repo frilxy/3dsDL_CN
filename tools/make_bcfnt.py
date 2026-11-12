@@ -44,12 +44,21 @@ ROWS = SHEET // STRIDE
 PLAIN_ASCII = range(0x20, 0x7F)
 
 
-def tiled(x, y, width):
-    """The GPU's texel order: 8x8 tiles, Morton within each."""
-    tile = ((y >> 3) * (width >> 3) + (x >> 3)) << 6
-    morton = ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) |
-              ((x & 4) << 2) | ((y & 4) << 3))
-    return tile + morton
+# tex3ds's 8x8 tile permutation (source/swizzle.cpp): the console's order is
+# this rotation of twelve foursomes plus four swaps, not plain Morton.
+FOURSOMES = ((2, 8, 16, 4), (3, 9, 17, 5), (6, 10, 24, 20), (7, 11, 25, 21),
+             (14, 26, 28, 22), (15, 27, 29, 23), (34, 40, 48, 36),
+             (35, 41, 49, 37), (38, 42, 56, 52), (39, 43, 57, 53),
+             (46, 58, 60, 54), (47, 59, 61, 55))
+PAIRS = ((12, 18), (13, 19), (44, 50), (45, 51))
+
+
+def swizzle_tile(tile):
+    for a, b, c, d in FOURSOMES:
+        tile[a], tile[b], tile[c], tile[d] = tile[b], tile[c], tile[d], tile[a]
+    for a, b in PAIRS:
+        tile[a], tile[b] = tile[b], tile[a]
+    return tile
 
 
 def wanted():
@@ -94,19 +103,20 @@ def main():
         widths.append((0, glyph_width, advance))
         entries.append((ord(char), index, advance))
 
-    # Tiled copy of the sheet: two bytes a texel, white with the coverage in
-    # the alpha byte.
+    # Tiled copy of the sheet: two bytes a texel, the coverage in the byte the
+    # GPU reads as alpha.
     sheet = bytearray(SHEET * SHEET * 2)
-    for y in range(SHEET):
-        row = row_texels[y]
-        for x in range(SHEET):
-            value = row[x]
-            if value:
-                # A texel is 0xFF00 | coverage as the GPU reads it, which on
-                # this console lands as the coverage byte first.
-                at = tiled(x, y, SHEET) * 2
-                sheet[at] = value
-                sheet[at + 1] = 0xFF
+    for ty in range(SHEET // 8):
+        for tx in range(SHEET // 8):
+            tile = []
+            for y in range(8):
+                row = row_texels[ty * 8 + y]
+                for x in range(8):
+                    tile.append(row[tx * 8 + x])
+            base = (ty * (SHEET // 8) + tx) * 64 * 2
+            for n, value in enumerate(swizzle_tile(tile)):
+                sheet[base + n * 2] = value
+                sheet[base + n * 2 + 1] = 0xFF
 
     # One character map over every range the glyphs use, so a lookup is a
     # subtraction rather than a scan of 730 entries per character drawn.
