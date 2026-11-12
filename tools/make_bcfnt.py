@@ -47,8 +47,8 @@ PLAIN_ASCII = range(0x20, 0x7F)
 def tiled(x, y, width):
     """The GPU's texel order: 8x8 tiles, Morton within each."""
     tile = ((y >> 3) * (width >> 3) + (x >> 3)) << 6
-    morton = ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) |
-              ((x & 4) << 2) | ((y & 4) << 3))
+    morton = ((y & 1) | ((x & 1) << 1) | ((y & 2) << 1) | ((x & 2) << 2) |
+              ((y & 4) << 2) | ((x & 4) << 3))
     return tile + morton
 
 
@@ -104,7 +104,7 @@ def main():
             if value:
                 # A texel is 0xFF00 | coverage as the GPU reads it, which on
                 # this console lands as the coverage byte first.
-                at = (y * SHEET + x) * 2
+                at = tiled(x, y, SHEET) * 2
                 sheet[at] = value
                 sheet[at + 1] = 0xFF
 
