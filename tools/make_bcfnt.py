@@ -36,10 +36,11 @@ EM = 26            # ideograph size in pixels
 CELL = 30
 BASELINE = 24      # from the cell's top, in pixels
 LINE_FEED = 30     # the line the screens are laid out for
-SHEET = 512        # the console wants power-of-two textures
+SHEET_W = 256      # the console wants power-of-two textures, and its own font
+SHEET_H = 1024     # uses tall narrow sheets in a 4-bit format
 STRIDE = CELL + 1  # libctru advances a cell plus one pixel
-COLS = SHEET // STRIDE
-ROWS = SHEET // STRIDE
+COLS = SHEET_W // STRIDE
+ROWS = SHEET_H // STRIDE
 PER_SHEET = COLS * ROWS
 
 PLAIN_ASCII = range(0x20, 0x7F)
@@ -82,7 +83,7 @@ def main():
     # uploads through, so the tiling below matches what the GPU has already
     # been shown to accept. Index 0 stays blank, which is what the character
     # map points at for anything the font does not carry.
-    row_texels = [[0] * SHEET for _ in range(SHEET * sheets)]
+    row_texels = [[0] * SHEET_W for _ in range(SHEET_H * sheets)]
 
     canvas = Image.new("L", (CELL, CELL), 0)
     draw = ImageDraw.Draw(canvas)
@@ -110,20 +111,22 @@ def main():
 
     # Tiled copy of the sheet: two bytes a texel, the coverage in the byte the
     # GPU reads as alpha.
-    tile_bytes = SHEET * SHEET * 2
+    # A4: four bits of coverage a texel, two texels a byte, in the same tile
+    # permutation the tiles above use.
+    tile_bytes = SHEET_W * SHEET_H // 2
     sheet = bytearray(tile_bytes * sheets)
     for s in range(sheets):
-        for ty in range(SHEET // 8):
-            for tx in range(SHEET // 8):
+        for ty in range(SHEET_H // 8):
+            for tx in range(SHEET_W // 8):
                 tile = []
                 for y in range(8):
-                    row = row_texels[s * SHEET + ty * 8 + y]
+                    row = row_texels[s * SHEET_H + ty * 8 + y]
                     for x in range(8):
-                        tile.append(row[tx * 8 + x])
-                base = s * tile_bytes + (ty * (SHEET // 8) + tx) * 64 * 2
-                for n, value in enumerate(swizzle_tile(tile)):
-                    sheet[base + n * 2] = value
-                    sheet[base + n * 2 + 1] = 0xFF
+                        tile.append(min(15, row[tx * 8 + x] // 17))
+                base = s * tile_bytes + (ty * (SHEET_W // 8) + tx) * 32
+                swizzled = swizzle_tile(tile)
+                for n in range(32):
+                    sheet[base + n] = swizzled[n * 2] | (swizzled[n * 2 + 1] << 4)
 
     # One character map over every range the glyphs use, so a lookup is a
     # subtraction rather than a scan of 730 entries per character drawn.
@@ -176,13 +179,13 @@ def main():
     out[tglp_off + 0x09] = CELL            # cell height
     out[tglp_off + 0x0A] = BASELINE        # baseline position
     out[tglp_off + 0x0B] = CELL            # max character width
-    struct.pack_into("<I", out, tglp_off + 0x0C, SHEET * SHEET * 2)  # sheet bytes
+    struct.pack_into("<I", out, tglp_off + 0x0C, SHEET_W * SHEET_H // 2)
     struct.pack_into("<H", out, tglp_off + 0x10, sheets)         # sheets
-    struct.pack_into("<H", out, tglp_off + 0x12, 5)              # LA8
+    struct.pack_into("<H", out, tglp_off + 0x12, 11)             # A4
     struct.pack_into("<H", out, tglp_off + 0x14, COLS)           # glyphs a row
     struct.pack_into("<H", out, tglp_off + 0x16, ROWS)           # glyph rows
-    struct.pack_into("<H", out, tglp_off + 0x18, SHEET)
-    struct.pack_into("<H", out, tglp_off + 0x1A, SHEET)
+    struct.pack_into("<H", out, tglp_off + 0x18, SHEET_W)
+    struct.pack_into("<H", out, tglp_off + 0x1A, SHEET_H)
     struct.pack_into("<I", out, tglp_off + 0x1C, sheet_off + 8)
 
     out[sheet_off:cwdh_off] = sheet
