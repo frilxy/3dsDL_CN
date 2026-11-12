@@ -147,6 +147,9 @@ C2D_Font font()
         fontTried = true;
         appFont = C2D_FontLoad("romfs:/hanfont.bcfnt");
         if (appFont != nullptr) {
+            // Text is drawn smaller than the sheet's texels, so it has to be
+            // filtered or the strokes break up.
+            C2D_FontSetFilter(appFont, GPU_LINEAR, GPU_LINEAR);
             loadFontMetrics();
             prepareAscii();
         }
