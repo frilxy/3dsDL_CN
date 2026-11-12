@@ -90,7 +90,7 @@ jobs:
           # The release is named after the version alone; the suffix only
           # tells the two packages apart.
           version="${GITHUB_REF_NAME#v}"
-          base="${version%-cn}"
+          base="${version}"
           cd dist
           for kind in cia 3dsx smdh; do
             mv "3dsDL.${kind}" "3dsDL-${base}.${kind}"
@@ -108,7 +108,7 @@ jobs:
           set -eu
           version="${GITHUB_REF_NAME#v}"
           python3 -m pip install --quiet --disable-pip-version-check segno
-          python3 - "${version%-cn}" <<'PY'
+          python3 - "${version}" <<'PY'
           import os, sys, segno
           base = sys.argv[1]
           tag = os.environ["GITHUB_REF_NAME"]
