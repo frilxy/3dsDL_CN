@@ -1510,6 +1510,9 @@ void drawFromAtlas(const std::string &value, float x, float y, float scale,
         x -= textWidth(value, scale);
     }
     const float top = y;
+    // Keep the atlas quads out of a batch holding citro2d's own draws, so the
+    // two never share texture state.
+    C2D_Flush();
     float pen = x;
     for (size_t index = 0; index < value.size();) {
         uint32_t codePoint = 0;
@@ -1525,6 +1528,7 @@ void drawFromAtlas(const std::string &value, float x, float y, float scale,
         }
         index += length;
     }
+    C2D_Flush();
 }
 
 void drawText(const std::string &value, float x, float y, float scale,
