@@ -27,6 +27,10 @@ constexpr size_t MaxObjects = 8192;
 C3D_RenderTarget *topTarget = nullptr;
 C3D_RenderTarget *bottomTarget = nullptr;
 C2D_TextBuf textBuffer = nullptr;
+// The app's own font, so Chinese shows on a console whose shared font has
+// none. Loaded once, after romfs is mounted.
+C2D_Font appFont = nullptr;
+bool fontTried = false;
 bool closing = false;
 bool onBottom = false;
 uint64_t startTime = 0;
@@ -118,11 +122,39 @@ bool frameShown = false;
 
 // --- Font ----------------------------------------------------------------------
 
+void prepareAscii();
+
 void loadFontMetrics()
 {
+    if (appFont != nullptr) {
+        // Laid out from the font that actually draws, so widths and line
+        // heights agree with what lands on screen.
+        FINF_s *info = C2D_FontGetInfo(appFont);
+        fontScale = 30.0f / info->tglp->cellHeight;
+        fontLineFeed = info->lineFeed;
+        return;
+    }
     CFNT_s *font = fontGetSystemFont();
     fontScale = 30.0f / fontGetGlyphInfo(font)->cellHeight;
     fontLineFeed = fontGetInfo(font)->lineFeed;
+}
+
+// ui::init runs before romfsInit, so the first attempt (from prepareAscii)
+// cannot open the file. beginFrame clears fontTried each frame until it loads.
+C2D_Font font()
+{
+    if (appFont == nullptr && !fontTried) {
+        fontTried = true;
+        appFont = C2D_FontLoad("romfs:/hanfont.bcfnt");
+        if (appFont != nullptr) {
+            // Text is drawn smaller than the sheet's texels, so it has to be
+            // filtered or the strokes break up.
+            C2D_FontSetFilter(appFont, GPU_LINEAR, GPU_LINEAR);
+            loadFontMetrics();
+            prepareAscii();
+        }
+    }
+    return appFont;
 }
 
 float advance(uint32_t codePoint)
@@ -131,8 +163,8 @@ float advance(uint32_t codePoint)
         return asciiAdvance[codePoint];
     }
     fontGlyphPos_s glyph;
-    C2D_FontCalcGlyphPos(nullptr, &glyph,
-                         C2D_FontGlyphIndexFromCodePoint(nullptr, codePoint),
+    C2D_FontCalcGlyphPos(font(), &glyph,
+                         C2D_FontGlyphIndexFromCodePoint(font(), codePoint),
                          0, 1.0f, 1.0f);
     return glyph.xAdvance * fontScale;
 }
@@ -140,8 +172,8 @@ float advance(uint32_t codePoint)
 fontGlyphPos_s glyphPos(uint32_t codePoint)
 {
     fontGlyphPos_s glyph;
-    C2D_FontCalcGlyphPos(nullptr, &glyph,
-                         C2D_FontGlyphIndexFromCodePoint(nullptr, codePoint),
+    C2D_FontCalcGlyphPos(font(), &glyph,
+                         C2D_FontGlyphIndexFromCodePoint(font(), codePoint),
                          0, 1.0f, 1.0f);
     return glyph;
 }
@@ -162,6 +194,9 @@ float inkOffset(const std::string &value, float scale)
 
 void prepareAscii()
 {
+    // Cleared first so advance() measures again instead of reading the table
+    // the system font filled before this one loaded.
+    asciiReady = false;
     for (uint32_t codePoint = 0; codePoint < 128; ++codePoint) {
         asciiAdvance[codePoint] = advance(codePoint);
     }
@@ -232,7 +267,11 @@ void drawSqueezed(const std::string &value, float x, float y, float scale,
                   float squeeze, u32 textColor, u32 flags)
 {
     C2D_Text textObject;
-    C2D_TextParse(&textObject, textBuffer, value.c_str());
+    if (font() != nullptr) {
+        C2D_TextFontParse(&textObject, appFont, textBuffer, value.c_str());
+    } else {
+        C2D_TextParse(&textObject, textBuffer, value.c_str());
+    }
     C2D_TextOptimize(&textObject);
     C2D_DrawText(&textObject, flags | C2D_WithColor, x, y, Depth,
                  scale * TextBoost * squeeze, scale * TextBoost, textColor);
@@ -1022,6 +1061,10 @@ void shutdown()
     }
     if (textBuffer != nullptr) {
         C2D_TextBufDelete(textBuffer);
+        if (appFont != nullptr) {
+            C2D_FontFree(appFont);
+            appFont = nullptr;
+        }
         textBuffer = nullptr;
     }
     C2D_Fini();
@@ -1213,6 +1256,7 @@ Input readInput()
 
 void beginFrame()
 {
+    fontTried = false; // let a load that came too early try again
     if (frameHook) {
         frameHook();
     }
@@ -1416,7 +1460,11 @@ void drawText(const std::string &value, float x, float y, float scale,
               u32 textColor, u32 flags)
 {
     C2D_Text textObject;
-    C2D_TextParse(&textObject, textBuffer, value.c_str());
+    if (font() != nullptr) {
+        C2D_TextFontParse(&textObject, appFont, textBuffer, value.c_str());
+    } else {
+        C2D_TextParse(&textObject, textBuffer, value.c_str());
+    }
     C2D_TextOptimize(&textObject);
     C2D_DrawText(&textObject, flags | C2D_WithColor, x, y, Depth,
                  scale * TextBoost, scale * TextBoost, textColor);
