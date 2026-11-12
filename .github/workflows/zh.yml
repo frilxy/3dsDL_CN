@@ -138,5 +138,5 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
-            --title "3dsDL ${version%-cn} 简体中文版" \
+            --title "${GITHUB_REF_NAME}" \
             --notes-file release-notes.md
