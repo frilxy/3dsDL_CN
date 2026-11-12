@@ -43,7 +43,7 @@ bool MdnsResponder::open(const std::string &name, uint32_t address,
     close();
     socket_ = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_ < 0) {
-        error = "Could not open a network socket.";
+        error = "无法打开网络套接字。";
         return false;
     }
     const int on = 1;
@@ -58,7 +58,7 @@ bool MdnsResponder::open(const std::string &name, uint32_t address,
     local.sin_port = htons(port);
     if (bind(socket_, reinterpret_cast<sockaddr *>(&local), sizeof(local)) !=
         0) {
-        error = "Port " + std::to_string(port) + " is in use.";
+        error = "端口 " + std::to_string(port) + "已被占用。";
         close();
         return false;
     }
@@ -68,7 +68,7 @@ bool MdnsResponder::open(const std::string &name, uint32_t address,
         membership.imr_interface.s_addr = htonl(INADDR_ANY);
         if (setsockopt(socket_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &membership,
                        sizeof(membership)) != 0) {
-            error = "The network does not allow multicast.";
+            error = "当前网络不允许使用多播。";
             close();
             return false;
         }

@@ -8,44 +8,44 @@ namespace tz {
 const std::vector<Zone> &zones()
 {
     static const std::vector<Zone> all = {
-        {-720, "Baker Island"},
-        {-660, "American Samoa, Niue"},
-        {-600, "Hawaii, Tahiti"},
-        {-570, "Marquesas Islands"},
-        {-540, "Alaska"},
-        {-480, "Pacific Time (US, Canada)"},
-        {-420, "Mountain Time (US, Canada)"},
-        {-360, "Central Time (US, Canada), Mexico City"},
-        {-300, "Eastern Time (US, Canada), Colombia, Peru"},
-        {-240, "Atlantic Time, Venezuela, Bolivia"},
-        {-210, "Newfoundland"},
-        {-180, "Brazil, Argentina, Uruguay"},
-        {-120, "South Georgia"},
-        {-60, "Azores, Cape Verde"},
-        {0, "UK, Ireland, Portugal, Iceland, Ghana"},
-        {60, "Central Europe, Nigeria, Algeria"},
-        {120, "Eastern Europe, Egypt, South Africa"},
-        {180, "Moscow, Turkey, Saudi Arabia, Kenya"},
-        {210, "Iran"},
-        {240, "UAE, Oman, Azerbaijan"},
-        {270, "Afghanistan"},
-        {300, "Pakistan, Uzbekistan, Maldives"},
-        {330, "India, Sri Lanka"},
-        {345, "Nepal"},
-        {360, "Bangladesh, Bhutan"},
-        {390, "Myanmar"},
-        {420, "Thailand, Vietnam, Jakarta"},
-        {480, "China, Singapore, Philippines, Perth"},
-        {525, "Eucla"},
-        {540, "Japan, Korea"},
-        {570, "Adelaide, Darwin"},
-        {600, "Sydney, Brisbane, Guam"},
-        {630, "Lord Howe Island"},
-        {660, "Solomon Islands, New Caledonia"},
-        {720, "New Zealand, Fiji"},
-        {765, "Chatham Islands"},
-        {780, "Tonga, Samoa"},
-        {840, "Line Islands (Kiribati)"},
+        {-720, "贝克岛"},
+        {-660, "美属萨摩亚、纽埃"},
+        {-600, "夏威夷、大溪地"},
+        {-570, "马克萨斯群岛"},
+        {-540, "阿拉斯加"},
+        {-480, "太平洋时间（美国、加拿大）"},
+        {-420, "山地时间（美国、加拿大）"},
+        {-360, "中部时间（美国、加拿大）、墨西哥城"},
+        {-300, "东部时间（美国、加拿大）、哥伦比亚、秘鲁"},
+        {-240, "大西洋时间、委内瑞拉、玻利维亚"},
+        {-210, "纽芬兰"},
+        {-180, "巴西、阿根廷、乌拉圭"},
+        {-120, "南乔治亚岛"},
+        {-60, "亚速尔群岛、佛得角"},
+        {0, "英国、爱尔兰、葡萄牙、冰岛、加纳"},
+        {60, "中欧、尼日利亚、阿尔及利亚"},
+        {120, "东欧、埃及、南非"},
+        {180, "莫斯科、土耳其、沙特阿拉伯、肯尼亚"},
+        {210, "伊朗"},
+        {240, "阿联酋、阿曼、阿塞拜疆"},
+        {270, "阿富汗"},
+        {300, "巴基斯坦、乌兹别克斯坦、马尔代夫"},
+        {330, "印度、斯里兰卡"},
+        {345, "尼泊尔"},
+        {360, "孟加拉国、不丹"},
+        {390, "缅甸"},
+        {420, "泰国、越南、雅加达"},
+        {480, "中国、新加坡、菲律宾、珀斯"},
+        {525, "尤克拉"},
+        {540, "日本、韩国"},
+        {570, "阿德莱德、达尔文"},
+        {600, "悉尼、布里斯班、关岛"},
+        {630, "豪勋爵岛"},
+        {660, "所罗门群岛、新喀里多尼亚"},
+        {720, "新西兰、斐济"},
+        {765, "查塔姆群岛"},
+        {780, "汤加、萨摩亚"},
+        {840, "莱恩群岛（基里巴斯）"},
     };
     return all;
 }
@@ -104,24 +104,22 @@ std::string describeDrift(int64_t consoleUnixSeconds,
 {
     const int64_t difference = consoleUnixSeconds - correctUnixSeconds;
     const int64_t magnitude = std::llabs(difference);
-    const char *direction = difference < 0 ? "behind" : "ahead";
+    const char *direction = difference < 0 ? "落后" : "超前";
 
     if (magnitude < 60) {
-        return "correct to within a minute";
+        return "误差在一分钟以内";
     }
     char buffer[64];
     if (magnitude < 3600) {
-        std::snprintf(buffer, sizeof(buffer), "%lld minutes %s",
-                      static_cast<long long>(magnitude / 60), direction);
+        std::snprintf(buffer, sizeof(buffer), "%s %lld 分钟", direction,
+                      static_cast<long long>(magnitude / 60));
     } else if (magnitude < 2 * 86400) {
-        std::snprintf(buffer, sizeof(buffer), "%lld hours %lld minutes %s",
+        std::snprintf(buffer, sizeof(buffer), "%s %lld 小时 %lld 分钟", direction,
                       static_cast<long long>(magnitude / 3600),
-                      static_cast<long long>((magnitude / 60) % 60),
-                      direction);
+                      static_cast<long long>((magnitude / 60) % 60));
     } else {
-        std::snprintf(buffer, sizeof(buffer), "about %lld days %s",
-                      static_cast<long long>((magnitude + 43200) / 86400),
-                      direction);
+        std::snprintf(buffer, sizeof(buffer), "%s约 %lld 天", direction,
+                      static_cast<long long>((magnitude + 43200) / 86400));
     }
     return buffer;
 }

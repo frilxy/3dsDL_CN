@@ -213,14 +213,13 @@ bool parseSeedDb(const std::string &data, std::vector<SeedEntry> &out,
     constexpr size_t EntrySize = 32;
     out.clear();
     if (data.size() < Header) {
-        error = "The file is too short to be a seeddb.bin.";
-        return false;
-    }
-    const uint64_t count = readLe(data, 0, 4);
-    if (Header + count * EntrySize != data.size()) {
-        error = "The file says it holds " + std::to_string(count) +
-                " seeds, but its size does not match. It is probably not a "
-                "seeddb.bin.";
+ error = "文件过短，不可能是 seeddb.bin。";
+ return false;
+ }
+ const uint64_t count = readLe(data, 0, 4);
+ if (Header + count * EntrySize != data.size()) {
+ error = "文件标明其中包含" + std::to_string(count) +
+ " 个 seed，但文件大小不匹配。它可能不是 seeddb.bin。";
         return false;
     }
     out.reserve(static_cast<size_t>(count));

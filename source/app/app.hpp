@@ -82,7 +82,7 @@ private:
     void offerExtraction(const std::string &path, const std::string &folder,
                          const std::string &summary,
                          const std::string &title =
-                             "Download complete. Extract the archive?",
+                             "下载完成。是否解压压缩包？",
                          const archives::Listing *known = nullptr,
                          const SentExtraction *sent = nullptr);
 

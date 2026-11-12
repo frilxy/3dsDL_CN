@@ -328,8 +328,8 @@ bool waitForThreads(std::initializer_list<Thread> threads)
     while (!(done = ended(0)) && ui::keepRunning()) {
         ui::readInput();
         ui::BusyView view;
-        view.header = "Receive";
-        view.title = "Stopping...";
+        view.header = "接收";
+        view.title = "正在停止……";
         ui::drawBusy(view);
         gspWaitForVBlank();
     }
@@ -406,32 +406,32 @@ ui::ListItem rowItem(const Row &row)
     switch (row.state) {
     case RowState::Active:
         item.progress = net::progress(row);
-        item.detail = folder ? std::to_string(row.filesDone) + " of " +
+        item.detail = folder ? std::to_string(row.filesDone) + " / " +
                                    std::to_string(row.files)
                              : std::to_string(static_cast<int>(item.progress * 100)) +
                                    "%";
         break;
     case RowState::Received:
-        item.detail = folder ? plural(row.filesDone, "file") : units::bytes(row.total);
+        item.detail = folder ? plural(row.filesDone, "文件") : units::bytes(row.total);
         break;
     case RowState::Sent:
-        item.badge = "Sent";
+        item.badge = "已发送";
         item.badgeColor = ui::color::Tag;
         break;
     case RowState::Queued:
-        item.badge = "Queued";
+        item.badge = "已加入下载队列";
         item.badgeColor = ui::color::Badge;
         break;
     case RowState::Installed:
-        item.badge = "Installed";
+        item.badge = "已安装";
         item.badgeColor = ui::color::Good;
         break;
     case RowState::Failed:
-        item.badge = "Failed";
+        item.badge = "失败";
         item.badgeColor = ui::color::Bad;
         break;
     case RowState::Stopped:
-        item.badge = "Stopped";
+        item.badge = "已停止";
         item.badgeColor = ui::color::Neutral;
         break;
     }
@@ -443,27 +443,27 @@ std::vector<ui::Fact> rowFacts(const Row &row)
 {
     std::vector<ui::Fact> facts;
     if (row.state == RowState::Failed && !row.message.empty()) {
-        facts.push_back({"Failed", row.message, ui::color::Bad});
+        facts.push_back({"失败", row.message, ui::color::Bad});
     }
     if (row.kind == RowKind::Folder) {
-        facts.push_back({"Files", row.filesDone >= row.files
+        facts.push_back({"文件", row.filesDone >= row.files
                                       ? std::to_string(row.files)
-                                      : std::to_string(row.filesDone) + " of " +
+                                      : std::to_string(row.filesDone) + " / " +
                                             std::to_string(row.files)});
     } else if (row.total > 0 && row.done < row.total) {
-        facts.push_back({"Size", units::bytes(row.done) + " of " +
+        facts.push_back({"大小", units::bytes(row.done) + " / " +
                                      units::bytes(row.total)});
     } else if (row.total > 0) {
-        facts.push_back({"Size", units::bytes(row.total)});
+        facts.push_back({"大小", units::bytes(row.total)});
     }
-    facts.push_back({row.upload ? "From" : "To", senderOf(row.device, row.from)});
+    facts.push_back({row.upload ? "来源" : "目标", senderOf(row.device, row.from)});
     if (!row.path.empty()) {
-        facts.push_back({row.upload ? "Saved to" : "Folder",
+        facts.push_back({row.upload ? "已保存到" : "文件夹",
                          row.path.substr(0, row.path.rfind('/') + 1)});
     } else if (!row.url.empty()) {
-        facts.push_back({"Link", row.url});
+        facts.push_back({"链接", row.url});
     }
-    facts.push_back({"Time", clockTime(row.changed)});
+    facts.push_back({"时间", clockTime(row.changed)});
     if (facts.size() > 4) {
         facts.resize(4);
     }
@@ -484,7 +484,7 @@ float fitScale(const std::string &value, float most, float width)
 void drawConnect(const QrCode &code, const std::string &address,
                  const std::string &named)
 {
-    ui::drawTopChrome("Receive", ui::Icon::Chip, ui::color::IconPink);
+    ui::drawTopChrome("接收", ui::Icon::Chip, ui::color::IconPink);
     ui::drawPanel();
     const float px = code.size() <= 25 ? 4 : 3;
     const float side = code.size() * px;
@@ -532,20 +532,20 @@ Span spanOf(const net::Transfer &transfer)
 void drawTransfer(const net::Transfer &transfer, const units::RateMeter &meter,
                   const std::string &address)
 {
-    ui::drawTopChrome("Receive", ui::Icon::Chip, ui::color::IconPink, address);
+    ui::drawTopChrome("接收", ui::Icon::Chip, ui::color::IconPink, address);
     ui::ProgressView view;
     view.name = transfer.name;
     const screens::KindLook look = screens::lookOf(filetype::fromName(transfer.name));
     view.nameIcon = look.icon;
     view.nameIconColor = look.color;
-    view.source = (transfer.upload ? "from " : "to ") +
+    view.source = (transfer.upload ? "来自 " : "到 ") +
                   whoIs(transfer.device, transfer.from);
     const Span span = spanOf(transfer);
     view.fraction = span.total > 0
                         ? static_cast<float>(static_cast<double>(span.done) /
                                              static_cast<double>(span.total))
                         : 1.0f;
-    view.amounts = units::bytes(span.done) + " of " + units::bytes(span.total);
+    view.amounts = units::bytes(span.done) + " / " + units::bytes(span.total);
     if (meter.hasRate() && span.done < span.total) {
         view.speed = units::rate(meter.bytesPerSecond());
         const int64_t left = meter.secondsLeft(span.total - span.done);
@@ -554,7 +554,7 @@ void drawTransfer(const net::Transfer &transfer, const units::RateMeter &meter,
         }
     }
     if (transfer.batch.count > 1) {
-        view.tag = std::to_string(transfer.batch.position) + " of " +
+        view.tag = std::to_string(transfer.batch.position) + " / " +
                    std::to_string(transfer.batch.count);
     }
     ui::drawProgressPanel(view);
@@ -571,7 +571,7 @@ struct Named {
 void drawHandedOver(const std::vector<Named> &names,
                     const std::vector<ui::Fact> &facts)
 {
-    ui::drawTopChrome("Receive", ui::Icon::Chip, ui::color::IconPink);
+    ui::drawTopChrome("接收", ui::Icon::Chip, ui::color::IconPink);
     ui::drawPanel();
     // Four names, or three and how many more.
     const size_t shown = names.size() > 4 ? 3 : names.size();
@@ -602,7 +602,7 @@ void drawHandedOver(const std::vector<Named> &names,
         y += pitch;
     }
     if (names.size() > shown) {
-        ui::drawText("and " + std::to_string(names.size() - shown) + " more",
+        ui::drawText("另有 " + std::to_string(names.size() - shown) + " 项",
                      left + 24, y + (19 - ui::lineHeight(ui::type::Small)) / 2,
                      ui::type::Small, ui::color::InkSoft);
         y += pitch;
@@ -617,19 +617,19 @@ bool App::replaceSent(const std::string &newer, const std::string &older,
 {
     std::string app;
     if (!remote::sameApp(older, newer, &app)) {
-        logging::info("replace.skipped", {{"file", basename(older)}});
+        logging::info("replace.skipped", {{"文件", basename(older)}});
         return false;
     }
     const std::vector<Named> named = {{basename(older), host}};
-    const std::vector<ui::Fact> facts = {{"From", sender},
-                                         {"App", app},
-                                         {"Already in", naming::parentFolder(older)},
-                                         {"Kept as", basename(newer)}};
+    const std::vector<ui::Fact> facts = {{"来源", sender},
+                                         {"应用", app},
+                                         {"已位于", naming::parentFolder(older)},
+                                         {"保留为", basename(newer)}};
     ui::Dialog dialog;
-    dialog.header = "Receive";
-    dialog.title = "A file with this name already exists.";
+    dialog.header = "接收";
+    dialog.title = "已存在同名文件。";
     dialog.tone = ui::Tone::Warning;
-    dialog.buttons = {"Keep Both", "Replace"};
+    dialog.buttons = {"两者都保留", "替换"};
     dialog.dangerous = 1;
     dialog.cancelButton = 0;
     dialog.drawTop = [&]() { drawHandedOver(named, facts); };
@@ -641,12 +641,12 @@ bool App::replaceSent(const std::string &newer, const std::string &older,
     fileIndex_.changed(newer);
     sdChanged(older);
     if (!replaced) {
-        logging::warn("replace.failed", {{"file", basename(older)}});
-        ui::message("Could Not Replace", "The new one is " + newer + ".",
+        logging::warn("replace.failed", {{"文件", basename(older)}});
+        ui::message("无法替换", "新文件位于 " + newer + ".",
                     ui::Tone::Error);
         return false;
     }
-    logging::info("replace.done", {{"file", basename(older)}});
+    logging::info("replace.done", {{"文件", basename(older)}});
     return true;
 }
 
@@ -741,9 +741,9 @@ void App::addToQueue(const std::vector<std::string> &links,
     }
     if (announce) {
         ui::Notice notice;
-        notice.title = added > 0 ? "Added to the Queue" : "Already in the Queue";
+        notice.title = added > 0 ? "已加入下载队列" : "已在下载队列中";
         notice.text = std::to_string(queue_.size()) +
-                      " waiting in Queue on Home.";
+                      " 正在主界面的下载队列中等待。";
         notice.icon = ui::Icon::Download;
         notice.iconColor = ui::color::IconGreen;
         ui::notify(notice);
@@ -775,9 +775,8 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         return;
     }
     if (platform::wifiStatus() == platform::Wifi::Disconnected) {
-        ui::message("Not Connected",
-                    "Turn wireless communication on, then download the queue "
-                    "again.",
+        ui::message("未连接",
+                    "请开启无线通信，然后重新下载队列中的项目。",
                     ui::Tone::Warning);
         return;
     }
@@ -803,7 +802,7 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         const std::string downloadTo = item.sent ? settings_.destination : item.folder;
         if (!fs::makeDirectories(downloadTo)) {
             found->state = QueuedLink::State::Failed;
-            found->message = "Could not create " + downloadTo + ".";
+            found->message = "无法创建：" + downloadTo + ".";
             report(item.url, HistoryStatus::Failed, "", "", 0, found->message);
             ++failed;
             continue;
@@ -827,7 +826,7 @@ void App::runQueue(const std::vector<uint64_t> *ids,
             return platform::sdFreeBytes();
         };
         const std::string step = order.size() > 1
-                                     ? std::to_string(position + 1) + " of " +
+                                     ? std::to_string(position + 1) + " / " +
                                            std::to_string(order.size())
                                      : "";
         const net::Result result = tasks::download(request, step);
@@ -836,7 +835,7 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         }
         if (result.outcome == net::Outcome::Cancelled) {
             found->state = QueuedLink::State::Stopped;
-            found->message = "Stopped.";
+            found->message = "已停止。";
             HistoryEntry stoppedEntry = historyEntry(
                 item.url, downloadTo, HistoryStatus::Cancelled, result.message);
             stoppedEntry.name = result.filename;
@@ -876,7 +875,7 @@ void App::runQueue(const std::vector<uint64_t> *ids,
             sdChanged(item.folder);
         } else if (item.sent) {
             folder = settings_.destination;
-            logging::info("receive.moved", {{"file", result.filename},
+            logging::info("receive.moved", {{"文件", result.filename},
                                             {"why", fromChecked ? "type" : "host"}});
         }
         const finalize::Result placed =
@@ -885,7 +884,7 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         HistoryEntry entry = historyEntry(
             item.url, folder,
             placed.ok ? HistoryStatus::Saved : HistoryStatus::Failed,
-            placed.ok ? "Saved from the queue" : placed.message);
+            placed.ok ? "已从下载队列保存" : placed.message);
         entry.bytes = result.bytes;
         entry.path = placed.path;
         entry.name = result.filename;
@@ -909,10 +908,10 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         }
         if (ciaAction == CiaAction::Ask) {
             ui::Dialog dialog;
-            dialog.header = "Queue";
-            dialog.title = "Install the CIAs from this queue?";
+            dialog.header = "下载队列";
+            dialog.title = "是否安装此下载队列中的 CIA？";
             dialog.tone = ui::Tone::Info;
-            dialog.buttons = {"Install", "Install, Delete", "Keep Files"};
+            dialog.buttons = {"安装", "安装后删除", "保留文件"};
             dialog.cancelButton = 2;
             const int choice = ui::choose(dialog);
             ciaAction = choice == 0   ? CiaAction::Install
@@ -938,18 +937,18 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         return; // the caller shows how each went
     }
 
-    std::string summary = plural(saved, "file") + " downloaded";
+    std::string summary = plural(saved, "文件") + " 已下载";
     if (installed > 0) {
-        summary += ", " + std::to_string(installed) + " installed";
+        summary += ", " + std::to_string(installed) + " 已安装";
     }
     if (failed > 0) {
-        summary += ", " + std::to_string(failed) + " failed";
+        summary += ", " + std::to_string(failed) + " 失败";
     }
     summary += ".";
     if (stopped) {
-        summary += " The queue was stopped; the rest are still in it.";
+        summary += " 下载队列已停止；剩余项目仍在队列中。";
     } else if (failed > 0) {
-        summary += " What failed stays in the queue to try again.";
+        summary += " 失败的项目保留在下载队列中，以便重试。";
     }
     // The names go on the top screen, which would otherwise show the last
     // progress frame behind the dialog.
@@ -958,13 +957,13 @@ void App::runQueue(const std::vector<uint64_t> *ids,
         names += (index > 0 ? ", " : "") + savedNames[index];
     }
     if (savedNames.size() > 6) {
-        names += " and " + std::to_string(savedNames.size() - 6) + " more";
+        names += " 和 " + std::to_string(savedNames.size() - 6) + " 项";
     }
-    ui::message(failed == 0 && !stopped ? "Queue Done" : "Queue Finished",
+    ui::message(failed == 0 && !stopped ? "下载队列处理完成" : "下载队列处理结束",
                 summary,
                 failed == 0 && !stopped ? ui::Tone::Success
                                         : ui::Tone::Warning,
-                names.empty() ? "" : "Saved: " + names + ".");
+                names.empty() ? "" : "已保存：" + names + ".");
 }
 
 void App::queueScreen()
@@ -972,18 +971,18 @@ void App::queueScreen()
     int cursor = 0;
     while (ui::keepRunning() && !quit_) {
         ui::ListSpec spec;
-        spec.title = "Queue";
-        spec.emptyText = "Nothing is waiting.";
+        spec.title = "下载队列";
+        spec.emptyText = "没有等待中的项目。";
         for (const QueuedLink &item : queue_) {
             ui::ListItem row;
             row.label = nameOf(item.url);
             row.icon = ui::Icon::Download;
             row.iconColor = ui::color::IconGreen;
             if (item.state == QueuedLink::State::Failed) {
-                row.badge = "Failed";
+                row.badge = "失败";
                 row.badgeColor = ui::color::Bad;
             } else if (item.state == QueuedLink::State::Stopped) {
-                row.badge = "Stopped";
+                row.badge = "已停止";
                 row.badgeColor = ui::color::Neutral;
             } else {
                 row.detail = url::host(item.url);
@@ -991,27 +990,27 @@ void App::queueScreen()
             spec.items.push_back(row);
         }
         if (!queue_.empty()) {
-            spec.action = "Download All";
+            spec.action = "全部下载";
             spec.actionKey = "X";
             spec.actionKeys = KEY_X;
         }
         spec.drawTop = [&](int highlighted) {
-            ui::drawTopChrome("Queue", ui::Icon::Download, ui::color::IconGreen);
+            ui::drawTopChrome("下载队列", ui::Icon::Download, ui::color::IconGreen);
             ui::drawPanel();
             if (highlighted < 0 || highlighted >= static_cast<int>(queue_.size())) {
                 ui::drawEmblem(ui::Icon::Download, ui::color::IconGreen);
                 return;
             }
             const QueuedLink &item = queue_[highlighted];
-            std::vector<ui::Fact> facts = {{"URL", item.url},
-                                           {"Save to", item.folder}};
+            std::vector<ui::Fact> facts = {{"网址", item.url},
+                                           {"保存到", item.folder}};
             if (!item.message.empty()) {
                 const bool failed = item.state == QueuedLink::State::Failed;
-                facts.push_back({failed ? "Failed" : "Note", item.message,
+                facts.push_back({failed ? "失败" : "备注", item.message,
                                  failed ? ui::color::Bad : ui::color::Neutral});
             } else {
-                facts.push_back({"Position", std::to_string(highlighted + 1) +
-                                                 " of " +
+                facts.push_back({"位置", std::to_string(highlighted + 1) +
+                                                 " / " +
                                                  std::to_string(queue_.size())});
             }
             // The name beside its icon, then the three fact rows (20 px,
@@ -1040,11 +1039,11 @@ void App::queueScreen()
         }
         const QueuedLink item = queue_[result.index];
         const int choice = ui::menu(
-            {{"Download Now", false, true},
-             {"Remove", true, true},
-             {"Remove All", true, true}},
+            {{"立即下载", false, true},
+             {"移除", true, true},
+             {"全部移除", true, true}},
             [&](int) {
-                ui::drawTopChrome("Queue", ui::Icon::Download,
+                ui::drawTopChrome("下载队列", ui::Icon::Download,
                                   ui::color::IconGreen);
                 ui::drawPanel();
                 ui::drawPanelText(nameOf(item.url), ui::TopPanel);
@@ -1060,11 +1059,11 @@ void App::queueScreen()
                          queue_.end());
         } else if (choice == 2) {
             ui::Dialog dialog;
-            dialog.header = "Queue";
-            dialog.title = "Remove " + plural(queue_.size(), "link") +
-                           " from the queue?";
+            dialog.header = "下载队列";
+            dialog.title = "是否将 " + plural(queue_.size(), "链接") +
+                           " 从下载队列中移除？";
             dialog.tone = ui::Tone::Warning;
-            dialog.buttons = {"Remove", "Cancel"};
+            dialog.buttons = {"移除", "取消"};
             dialog.dangerous = 0;
             dialog.initial = 1;
             dialog.cancelButton = 1;
@@ -1080,7 +1079,7 @@ void App::receiveScreen()
     const std::string address = localAddress();
     if (platform::wifiStatus() == platform::Wifi::Disconnected ||
         address.empty()) {
-        ui::message("Not Connected", "Connect to Wi-Fi to receive.",
+        ui::message("未连接", "请连接 Wi-Fi 以接收。",
                     ui::Tone::Warning);
         return;
     }
@@ -1090,7 +1089,7 @@ void App::receiveScreen()
     ReceiveJob &job = *owned;
     std::string error;
     if (!job.receiver.open(remote::FbiPort, WebPort, FallbackWebPort, error)) {
-        ui::message("Cannot Receive", error, ui::Tone::Error);
+        ui::message("无法接收", error, ui::Tone::Error);
         return;
     }
     net::FileSharing sharing;
@@ -1108,7 +1107,7 @@ void App::receiveScreen()
     };
     place(sharing.places, settings_.destination);
     if (!sharing.places.empty()) {
-        sharing.places.back().name = "Downloads";
+        sharing.places.back().name = "下载";
     }
     for (const char *folder : {"sdmc:/3ds", "sdmc:/cias", "sdmc:/3ds/Checkpoint"}) {
         place(sharing.places, folder);
@@ -1166,7 +1165,7 @@ void App::receiveScreen()
                               -2, false);
     }
     if (thread == nullptr) {
-        ui::message("Cannot Receive", "The network listener could not start.",
+        ui::message("无法接收", "无法启动网络监听服务。",
                     ui::Tone::Error);
         return;
     }
@@ -1276,23 +1275,23 @@ void App::receiveScreen()
     const auto askAbout = [&](const ReceiveJob::Asker &asker) {
         const std::string who = whoIs(asker.device, asker.from);
         ui::Dialog dialog;
-        dialog.header = "Receive";
-        dialog.title = "Let " + who + " manage files on the SD card?";
+        dialog.header = "接收";
+        dialog.title = "是否允许 " + who + " 管理 SD 卡上的文件？";
         dialog.tone = ui::Tone::Warning;
-        dialog.buttons = {"Allow", "Don't Allow"};
+        dialog.buttons = {"允许", "不允许"};
         dialog.cancelButton = 1;
         dialog.drawTop = [&]() {
-            ui::drawTopChrome("Receive", ui::Icon::Chip, ui::color::IconPink);
+            ui::drawTopChrome("接收", ui::Icon::Chip, ui::color::IconPink);
             ui::drawPanel();
             std::vector<ui::Fact> facts;
             if (!asker.device.empty()) {
-                facts.push_back({"Device", asker.device});
+                facts.push_back({"设备", asker.device});
             }
-            facts.push_back({"Address", asker.from});
-            facts.push_back({"Until", "You leave Receive"});
+            facts.push_back({"地址", asker.from});
+            facts.push_back({"有效期至", "离开“接收”界面"});
             ui::drawFacts(facts);
         };
-        job.setState("asking", "Asking whether " + who + " may use the SD card.");
+        job.setState("asking", "正在询问是否允许 " + who + " 使用 SD 卡。");
         job.answer(asker.from, ui::choose(dialog) == 0);
         job.setState("ready");
     };
@@ -1307,9 +1306,9 @@ void App::receiveScreen()
         for (size_t index = 0; index < count && ui::keepRunning(); ++index) {
             const std::string &path = received.install[index];
             job.setState("installing",
-                         "Installing " + basename(path) +
+                         "正在安装 " + basename(path) +
                              (count > 1 ? " (" + std::to_string(index + 1) +
-                                              " of " + std::to_string(count) + ")"
+                                              " / " + std::to_string(count) + ")"
                                         : "") +
                              ".");
             cia::Info info;
@@ -1321,10 +1320,10 @@ void App::receiveScreen()
             const bool went = ok && !already;
             if (!went) {
                 if (why.empty()) {
-                    why = "It was not installed.";
+                    why = "未安装。";
                 }
                 reasons.push_back(basename(path) + ": " + why);
-                logging::info("receive.install", {{"file", basename(path)},
+                logging::info("receive.install", {{"文件", basename(path)},
                                                   {"why", why}});
             }
             receiveLog_.installEnded(path, received, ok, went ? "" : why, clockNow());
@@ -1333,15 +1332,15 @@ void App::receiveScreen()
         // Stopped before the rest: those were never tried.
         for (size_t index = reasons.size() + done; index < count; ++index) {
             reasons.push_back(basename(received.install[index]) +
-                              ": 3dsDL closed before it was installed.");
+                              "：3dsDL 在安装前已关闭。");
         }
         installed += static_cast<uint32_t>(done);
         std::string text =
             done == count
-                ? (count == 1 ? "Installed " + basename(received.install[0]) + "."
-                              : "Installed all " + plural(count, "CIA") + ".")
-            : count == 1 ? "Not installed. "
-                         : "Installed " + std::to_string(done) + " of " +
+                ? (count == 1 ? "已安装 " + basename(received.install[0]) + "."
+                              : "已全部安装，共 " + plural(count, "CIA") + ".")
+            : count == 1 ? "未安装。"
+                         : "已安装 " + std::to_string(done) + " / " +
                                std::to_string(count) + ". ";
         for (size_t index = 0; index < reasons.size(); ++index) {
             text += (index > 0 ? " " : "") + reasons[index];
@@ -1354,7 +1353,7 @@ void App::receiveScreen()
     // console says whether it replaces older. True when it did.
     const auto askToReplace = [&](QueueResult &result, const std::string &older,
                                   const std::string &sender) {
-        job.setState("choosing", "Waiting for you to choose on the 3DS.", true);
+        job.setState("choosing", "请在 3DS 上进行选择。", true);
         if (!replaceSent(result.path, older, result.host, sender)) {
             return false;
         }
@@ -1377,14 +1376,14 @@ void App::receiveScreen()
                                          bool agreed, const std::string &sender) {
         SentExtraction sent;
         std::string error;
-        job.setState("busy", "Reading an archive on the 3DS.", true);
+        job.setState("busy", "正在 3DS 上读取压缩包。", true);
         const bool read = screens::readArchive(result.path, archives::Scan::Full,
                                                sent.listing, error);
-        job.setState("choosing", "Waiting for you to choose on the 3DS.", true);
+        job.setState("choosing", "请在 3DS 上进行选择。", true);
         if (!read) {
             if (!error.empty()) {
-                ui::message("Cannot Extract", error, ui::Tone::Error,
-                            "Saved as " + result.path + ".");
+                ui::message("无法解压", error, ui::Tone::Error,
+                            "已保存为 " + result.path + ".");
             }
             return;
         }
@@ -1393,14 +1392,14 @@ void App::receiveScreen()
         // second send goes into the same folder.
         if (!remote::sentExtraction(sent.listing, result.filename,
                                     sent.options, shown)) {
-            logging::warn("extract.refused", {{"file", basename(result.path)}});
-            ui::message("Not Extracted",
-                        "A sent archive only goes into one folder in /3ds/.",
-                        ui::Tone::Warning, "Saved as " + result.path + ".");
+            logging::warn("extract.refused", {{"文件", basename(result.path)}});
+            ui::message("未解压",
+                        "发送的压缩包只能解压到 /3ds/ 下的一个文件夹中。",
+                        ui::Tone::Warning, "已保存为 " + result.path + ".");
             return;
         }
         // What it adds to a folder already there, for the question.
-        std::string summary = "Saved as " + result.path + ".";
+        std::string summary = "已保存为 " + result.path + ".";
         const std::string into = std::string(remote::ArchiveTarget) + shown.top + "/";
         std::vector<std::string> clashes;
         if (shown.topIsFolder && fs::directoryExists(into) &&
@@ -1413,13 +1412,13 @@ void App::receiveScreen()
                 }
             }
             if (!added.empty()) {
-                summary += " Adds " + plural(added.size(), "new file") + " to " +
+                summary += " 将添加 " + plural(added.size(), "新文件") + " 到 " +
                            into + ": " + added[0];
                 for (size_t index = 1; index < added.size() && index < 3; ++index) {
                     summary += ", " + added[index];
                 }
                 summary += added.size() > 3
-                               ? " and " + std::to_string(added.size() - 3) + " more."
+                               ? " 和 " + std::to_string(added.size() - 3) + " 项。"
                                : ".";
             }
         }
@@ -1429,15 +1428,15 @@ void App::receiveScreen()
         // The page's text names no file, as any device on the network sees it.
         sent.extracting = [&](bool started) {
             if (started) {
-                job.setState("busy", "Extracting on the 3DS.", true);
+                job.setState("busy", "正在 3DS 上解压。", true);
             } else {
-                job.setState("choosing", "Waiting for you to choose on the 3DS.",
+                job.setState("choosing", "请在 3DS 上进行选择。",
                              true);
             }
         };
-        job.setState("choosing", "Waiting for you to choose on the 3DS.", true);
+        job.setState("choosing", "请在 3DS 上进行选择。", true);
         offerExtraction(result.path, remote::ArchiveTarget, summary,
-                        "Extract it into /3ds/?", &shown, &sent);
+                        "是否解压到 /3ds/？", &shown, &sent);
     };
 
     // Addresses whose links were turned down while Receive is open: their
@@ -1464,26 +1463,26 @@ void App::receiveScreen()
         const std::string who = whoIs(received.device, received.from);
         const std::string sender = senderOf(received.device, received.from);
         const std::vector<ui::Fact> from = {
-            {"From", senderOf(received.device, received.from)}};
+            {"来源", senderOf(received.device, received.from)}};
         if (!received.install.empty()) {
             std::vector<Named> names;
             for (const std::string &path : received.install) {
                 names.push_back({basename(path), ""});
             }
             ui::Dialog dialog;
-            dialog.header = "Receive";
-            dialog.title = "Install " + plural(received.install.size(), "CIA") +
-                           " from " + who + "?";
+            dialog.header = "接收";
+            dialog.title = "是否再次安装 " + plural(received.install.size(), "CIA") +
+                           "，来自 " + who + "?";
             dialog.tone = ui::Tone::Info;
-            dialog.buttons = {"Install", "Install and Delete", "Not Now"};
+            dialog.buttons = {"安装", "安装后删除", "暂不处理"};
             dialog.cancelButton = 2;
             dialog.drawTop = [&]() { drawHandedOver(names, from); };
-            job.setState("choosing", "Waiting for you to choose on the 3DS.");
+            job.setState("choosing", "请在 3DS 上进行选择。");
             const int choice = ui::choose(dialog);
             if (choice == 0 || choice == 1) {
                 installSent(received, choice == 1);
             } else {
-                job.finish("Not installed: Not Now was chosen on the 3DS.", false);
+                job.finish("未安装：已在 3DS 上选择暂不处理。", false);
             }
             return;
         }
@@ -1504,10 +1503,10 @@ void App::receiveScreen()
         // before anyone agreed to anything.
         const bool anotherSite = !fromFbiTool && !received.ownPage;
         std::set<std::string> refused;
-        job.setState("busy", "Checking the links on the 3DS.", true);
+        job.setState("busy", "正在 3DS 上检查链接。", true);
         const uint64_t checkStarted = osGetTime();
         const bool checked = tasks::busy(
-            "Receive", "Checking " + plural(received.links.size(), "link") + "...",
+            "接收", "正在检查 " + plural(received.links.size(), "链接") + "...",
             [&](tasks::Busy &busy) {
                 busy.total = received.links.size();
                 for (const std::string &link : received.links) {
@@ -1546,7 +1545,7 @@ void App::receiveScreen()
                        {"unknown", received.links.size() - leadsTo.size()},
                        {"ms", osGetTime() - checkStarted}});
         if (!checked) {
-            job.finish("Not downloaded: the check was stopped on the 3DS.", false, true);
+            job.finish("未下载：已在 3DS 上停止检查。", false, true);
             net::finishReceived(received);
             return;
         }
@@ -1557,7 +1556,7 @@ void App::receiveScreen()
                            }),
             received.links.end());
         if (received.links.empty()) {
-            job.finish("Not downloaded: the links lead to addresses on this network.",
+            job.finish("未下载：链接指向此局域网中的地址。",
                        false, true);
             net::finishReceived(received);
             return;
@@ -1594,7 +1593,7 @@ void App::receiveScreen()
             options.folder.empty() ? settings_.destination : options.folder;
         std::vector<ui::Fact> facts = from;
         if (!offerInstall) {
-            facts.push_back({"Save to", folder});
+            facts.push_back({"保存到", folder});
         }
         // Holds the links just queued to where the check found them to lead,
         // or to nowhere when it could not tell.
@@ -1611,17 +1610,17 @@ void App::receiveScreen()
             }
         };
         ui::Dialog dialog;
-        dialog.header = "Receive";
+        dialog.header = "接收";
         dialog.title = offerInstall
-                           ? "Install " + plural(count, "CIA") + " from " + who + "?"
-                           : "Download " + plural(count, "file") + " from " + who + "?";
+                           ? "是否再次安装 " + plural(count, "CIA") + "，来自 " + who + "?"
+                           : "下载 " + plural(count, "文件") + "，来自 " + who + "?";
         dialog.tone = ui::Tone::Info;
         for (const Choice choice : choices) {
-            dialog.buttons.push_back(choice == Choice::Install     ? "Install"
-                                     : choice == Choice::Download  ? "Download"
-                                     : choice == Choice::Queue     ? "Add to Queue"
-                                     : choice == Choice::DontAllow ? "Don't Allow"
-                                                                   : "Cancel");
+            dialog.buttons.push_back(choice == Choice::Install     ? "安装"
+                                     : choice == Choice::Download  ? "下载"
+                                     : choice == Choice::Queue     ? "加入下载队列"
+                                     : choice == Choice::DontAllow ? "不允许"
+                                                                   : "取消");
         }
         dialog.cancelButton = static_cast<int>(
             std::find(choices.begin(), choices.end(), Choice::Cancel) - choices.begin());
@@ -1631,16 +1630,16 @@ void App::receiveScreen()
             dialog.initial = dialog.cancelButton;
         }
         dialog.drawTop = [&]() { drawHandedOver(names, facts); };
-        job.setState("choosing", "Waiting for you to choose on the 3DS.", true);
+        job.setState("choosing", "请在 3DS 上进行选择。", true);
         const int picked = ui::choose(dialog);
         const Choice choice = picked >= 0 && picked < static_cast<int>(choices.size())
                                   ? choices[picked]
                                   : Choice::Cancel;
-        const std::string links = plural(count, "link");
+        const std::string links = plural(count, "链接");
 
         if (choice == Choice::Install) {
             receiveLog_.addLinks(received, RowState::Active, clockNow());
-            job.setState("installing", "Installing " + links + ".", true);
+            job.setState("installing", "正在安装 " + links + ".", true);
             size_t done = 0;
             for (const std::string &link : received.links) {
                 std::string why;
@@ -1656,9 +1655,9 @@ void App::receiveScreen()
             linksIn += static_cast<uint32_t>(count);
             installed += static_cast<uint32_t>(done);
             job.finish(done == count
-                           ? "Installed " + plural(count, "CIA") + " on the 3DS."
-                           : "Installed " + std::to_string(done) + " of " +
-                                 plural(count, "CIA") + " on the 3DS.",
+                           ? "已安装 " + plural(count, "CIA") + "（在 3DS 上）。"
+                           : "已安装 " + std::to_string(done) + " / " +
+                                 plural(count, "CIA") + "（在 3DS 上）。",
                        done == count, true);
         } else if (choice == Choice::Download) {
             // With Ask to Extract off, a sender's extract=1 on links to
@@ -1674,18 +1673,18 @@ void App::receiveScreen()
                     }));
                 if (archiveLinks > 0) {
                     ui::Dialog question;
-                    question.header = "Receive";
+                    question.header = "接收";
                     question.title =
                         archiveLinks == 1
-                            ? "Extract the archive after it downloads?"
-                            : "Extract the archives after they download?";
+                            ? "是否在下载完成后解压此压缩包？"
+                            : "是否在下载完成后解压这些压缩包？";
                     question.tone = ui::Tone::Info;
-                    question.buttons = {"Extract", "Not Now"};
+                    question.buttons = {"解压", "暂不处理"};
                     question.initial = 1;
                     question.cancelButton = 1;
                     // Two facts, as the top screen fits beside four names.
                     std::vector<ui::Fact> where = from;
-                    where.push_back({"Extract to", remote::ArchiveTarget});
+                    where.push_back({"解压到", remote::ArchiveTarget});
                     question.drawTop = [&]() { drawHandedOver(names, where); };
                     agreed = ui::choose(question) == 0;
                 }
@@ -1708,7 +1707,7 @@ void App::receiveScreen()
                 }
             }
             receiveLog_.addLinks(received, RowState::Active, clockNow());
-            job.setState("downloading", "Downloading " + links + ".", true);
+            job.setState("downloading", "正在下载 " + links + ".", true);
             std::vector<QueueResult> results;
             runQueue(&ids, &results);
             // Questions come once the downloads are done, as the queue never
@@ -1774,19 +1773,19 @@ void App::receiveScreen()
                 });
             if ((!options.folder.empty() || options.extract) &&
                 strayed != results.end() && ui::keepRunning()) {
-                job.setState("choosing", "Waiting for you to choose on the 3DS.", true);
+                job.setState("choosing", "请在 3DS 上进行选择。", true);
                 const auto found = leadsTo.find(strayed->url);
-                ui::message("Saved in the Download Folder",
-                            strayed->name + " came from " + strayed->host +
+                ui::message("已保存到下载文件夹",
+                            strayed->name + " 来自 " + strayed->host +
                                 (found != leadsTo.end()
-                                     ? ", not " + found->second + "."
-                                     : ", and its link could not be checked first."),
+                                     ? "，而非 " + found->second + "."
+                                     : "，且无法预先检查其链接。"),
                             ui::Tone::Warning, strayed->path);
             }
             // What a stop left behind is still in the Queue.
             receiveLog_.settleLinks(RowState::Queued, clockNow());
             linksIn += static_cast<uint32_t>(count);
-            job.finish("Done with " + links + " on the 3DS.", true, true);
+            job.finish("已处理完 " + links + "（在 3DS 上）。", true, true);
         } else if (choice == Choice::Queue) {
             // The Queue keeps only the folder: Download All keeps both on a
             // clash, as it always has.
@@ -1795,18 +1794,18 @@ void App::receiveScreen()
             holdToChecked();
             receiveLog_.addLinks(received, RowState::Queued, clockNow());
             linksIn += static_cast<uint32_t>(count);
-            job.finish("Added " + links + " to the Queue on the 3DS.", true, true);
+            job.finish("已添加 " + links + " 到 3DS 的下载队列中。", true, true);
         } else if (choice == Choice::DontAllow) {
             // Until Receive closes, its links and the file page are refused
             // before they reach the console.
             job.denyLinks(received.from);
             logging::info("receive.denied", {{"from", received.from}});
-            job.finish("Not downloaded: the 3DS turned this device down.", false, true);
+            job.finish("未下载：3DS 拒绝了此设备。", false, true);
         } else {
             if (!fromFbiTool) {
                 turnedDown.insert(received.from);
             }
-            job.finish("Not downloaded: Cancel was chosen on the 3DS.", false, true);
+            job.finish("未下载：已在 3DS 上选择取消。", false, true);
         }
         net::finishReceived(received);
     };
@@ -1814,8 +1813,8 @@ void App::receiveScreen()
     // The list takes what has happened each frame, and runs the questions
     // and the work senders ask for over itself.
     ui::ListSpec spec;
-    spec.title = "Receive";
-    spec.emptyText = "Nothing received yet";
+    spec.title = "接收";
+    spec.emptyText = "尚未接收任何内容";
     uint32_t shown = 0;
     const auto fillRows = [&]() {
         spec.items.clear();
@@ -1824,7 +1823,7 @@ void App::receiveScreen()
         }
         // Clear empties the list of what is done; the files stay.
         const bool clearable = receiveLog_.anyFinished();
-        spec.action = clearable ? "Clear" : "";
+        spec.action = clearable ? "清空" : "";
         spec.actionKey = "X";
         spec.actionKeys = clearable ? static_cast<u32>(KEY_X) : 0u;
         shown = receiveLog_.generation();
@@ -1922,15 +1921,15 @@ void App::receivedOptions(net::ReceiveLog::Row row, const std::string &address)
     std::vector<ui::MenuItem> items;
     if (installable) {
         options = {Option::Install, Option::InstallAndDelete};
-        items = {{"Install"}, {"Install and Delete File"}};
+        items = {{"安装"}, {"安装后删除文件"}};
     }
     if (there) {
         options.push_back(Option::Show);
-        items.push_back({"Show in Files"});
+        items.push_back({"在“文件管理”中显示"});
     }
     const std::vector<ui::Fact> facts = rowFacts(row);
     const int choice = ui::menu(items, [&](int) {
-        ui::drawTopChrome("Receive", ui::Icon::Chip, ui::color::IconPink, address);
+        ui::drawTopChrome("接收", ui::Icon::Chip, ui::color::IconPink, address);
         ui::drawPanel();
         // The name beside its icon, then the fact rows (20 px, 26 apart),
         // centred in the panel as one block.
@@ -1955,7 +1954,7 @@ void App::receivedOptions(net::ReceiveLog::Row row, const std::string &address)
     std::string error;
     if (!readCia(row.path, info, error)) {
         if (!error.empty()) {
-            ui::message("Cannot install", error, ui::Tone::Error, row.name);
+            ui::message("无法安装", error, ui::Tone::Error, row.name);
         }
         return;
     }
@@ -1980,10 +1979,10 @@ HistoryStatus App::installDirectly(const std::string &address, bool quiet,
     const std::string folder = storage::DataFolder;
     if (!fs::makeDirectories(folder)) {
         if (!quiet) {
-            ui::message("Not Installed", "Could not create " + folder + ".",
+            ui::message("未安装", "无法创建：" + folder + ".",
                         ui::Tone::Error);
         }
-        return failed("Could not create " + folder + ".");
+        return failed("无法创建：" + folder + ".");
     }
     installer::StreamInstall sink;
     net::Request request;
@@ -2035,26 +2034,26 @@ HistoryStatus App::installDirectly(const std::string &address, bool quiet,
         record(entry);
     };
     if (installed.outcome == installer::Outcome::Cancelled) {
-        recordResult(HistoryStatus::Cancelled, "Direct install stopped");
+        recordResult(HistoryStatus::Cancelled, "直接安装已停止");
         if (!quiet) {
-            ui::message("Install Stopped", "Nothing was changed.");
+            ui::message("安装已停止", "未作任何更改。");
         }
         return HistoryStatus::Cancelled;
     }
     if (installed.outcome != installer::Outcome::Installed) {
         recordResult(HistoryStatus::Failed,
-                     "Direct install failed: " + installed.message);
-        if (!quiet) {
-            ui::message("Install Failed", installed.message, ui::Tone::Error,
-                        name);
-        }
-        return failed(installed.message);
-    }
-    recordResult(HistoryStatus::Installed, "Installed directly, nothing saved");
+ "直接安装失败：" + installed.message);
+ if (!quiet) {
+ ui::message("安装失败", installed.message, ui::Tone::Error,
+ name);
+ }
+ return failed(installed.message);
+ }
+ recordResult(HistoryStatus::Installed, "已直接安装，未保存文件");
 
-    std::string seedNote;
-    if (info.seed == cia::Seed::Needed) {
-        tasks::busy("Installing", "Getting the seed " + name + " needs...",
+ std::string seedNote;
+ if (info.seed == cia::Seed::Needed) {
+ tasks::busy("正在安装", "正在获取 " + name + " 所需的 seed……",
                     [&](tasks::Busy &busy) {
                         installer::installSeed(info.titleId, seedNote,
                                                &busy.cancel);
@@ -2070,8 +2069,8 @@ HistoryStatus App::installDirectly(const std::string &address, bool quiet,
                            (kind == cia::Kind::Application ||
                             kind == cia::Kind::Demo);
     ui::Dialog dialog;
-    dialog.header = "Installation Complete";
-    dialog.title = name + " has been installed.";
+    dialog.header = "安装完成";
+    dialog.title = name + " 已安装。";
     dialog.tone = ui::Tone::Success;
     dialog.icon = info.hasSmdh ? ui::showIcon(info.smdh.icon) : nullptr;
     dialog.body.push_back({name, ui::color::Text, 0.5f, 1});
@@ -2082,14 +2081,14 @@ HistoryStatus App::installDirectly(const std::string &address, bool quiet,
     if (!seedNote.empty()) {
         dialog.body.push_back({seedNote, ui::color::Muted, 0.44f, 2});
     }
-    dialog.buttons = canLaunch ? std::vector<std::string>{"Close", "Launch"}
-                               : std::vector<std::string>{"Close"};
+    dialog.buttons = canLaunch ? std::vector<std::string>{"关闭", "启动"}
+                               : std::vector<std::string>{"关闭"};
     dialog.initial = canLaunch ? 1 : 0;
     dialog.cancelButton = 0;
     if (ui::choose(dialog) == 1 && canLaunch) {
         std::string error;
         if (!installer::launch(launchId, error)) {
-            ui::message("Could Not Launch", error, ui::Tone::Error);
+            ui::message("无法启动", error, ui::Tone::Error);
         }
     }
     return HistoryStatus::Installed;

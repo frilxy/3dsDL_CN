@@ -82,9 +82,9 @@ const highlight = HighlightStyle.define([
 
 // The search panel's words, cased like the page's buttons.
 const phrases = EditorState.phrases.of({
-  next: 'Next', previous: 'Previous', all: 'All', 'match case': 'Match Case',
-  regexp: 'Regex', 'by word': 'Whole Word', replace: 'Replace', 'replace all': 'Replace All',
-  close: 'Close',
+  next: '下一个匹配项', previous: '上一个匹配项', all: '全部', 'match case': '区分大小写',
+  regexp: '正则表达式', 'by word': '全词匹配', replace: '替换', 'replace all': '全部替换',
+  close: '关闭',
 });
 
 // Opens text in parent. name picks the language; change runs after each

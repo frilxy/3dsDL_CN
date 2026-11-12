@@ -38,7 +38,7 @@ std::string escapeHtml(const std::string &value)
     return out;
 }
 
-const char *const PageStart = R"PAGE(<!doctype html><html lang="en"><head><meta charset="utf-8">
+const char *const PageStart = R"PAGE(<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#e9e1a8">
 <link rel="icon" type="image/png" href="data:image/png;base64,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"><title>3dsDL</title><style>
@@ -408,51 +408,51 @@ dialog.sheet{margin:auto 0 0;width:100vw;max-width:100vw;border-radius:20px 20px
 <div class="app">
 <aside class="side" id="side">
 <div class="brand"><a class="logo" href="https://ankush.one/3dsDL/" target="_blank" rel="noopener"><img class="logoimg" alt=""><b>3dsDL</b></a>
-<nav class="ext" id="ext"><a href="https://ankush.one/3dsDL/" target="_blank" rel="noopener">Website</a><a href="https://github.com/ankushKun/3dsDL" target="_blank" rel="noopener">GitHub</a></nav>
-<div class="pill" data-state="connecting" role="status" aria-live="polite"><i class="dot"></i><span>Connecting...</span></div></div>
-<nav class="nav" aria-label="Receive"><a href="#links" data-view="links"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.4 2.3 3.5 5 3.5 8s-1.1 5.7-3.5 8c-2.4-2.3-3.5-5-3.5-8s1.1-5.7 3.5-8z"/></svg><span>Send Links</span></a><a href="#transfers" data-view="transfers"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span>Transfers</span><b class="badge" id="tbadge" hidden></b></a></nav>
-<section class="group places"><h3>SD Card</h3><nav class="nav" id="places"><a href="#files:%2F" data-place="/" data-drop="/"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 3.5v3M12 3.5v3"/></svg><span>SD Card</span></a></nav></section>
-<section class="group places" id="favgroup" hidden><h3>Favourites</h3><nav class="nav" id="favs"></nav></section>
-<div class="storage" id="storage" hidden><div><b>SD card</b><span id="free"></span></div><div class="meter" id="meter"><i></i></div><span id="used"></span></div>
+<nav class="ext" id="ext"><a href="https://ankush.one/3dsDL/" target="_blank" rel="noopener">官方网站</a><a href="https://github.com/ankushKun/3dsDL" target="_blank" rel="noopener">GitHub</a></nav>
+<div class="pill" data-state="connecting" role="status" aria-live="polite"><i class="dot"></i><span>正在连接…</span></div></div>
+<nav class="nav" aria-label="接收"><a href="#links" data-view="links"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.4 2.3 3.5 5 3.5 8s-1.1 5.7-3.5 8c-2.4-2.3-3.5-5-3.5-8s1.1-5.7 3.5-8z"/></svg><span>发送链接</span></a><a href="#transfers" data-view="transfers"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span>传输任务</span><b class="badge" id="tbadge" hidden></b></a></nav>
+<section class="group places"><h3>SD 卡</h3><nav class="nav" id="places"><a href="#files:%2F" data-place="/" data-drop="/"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 3.5v3M12 3.5v3"/></svg><span>SD 卡</span></a></nav></section>
+<section class="group places" id="favgroup" hidden><h3>收藏</h3><nav class="nav" id="favs"></nav></section>
+<div class="storage" id="storage" hidden><div><b>SD 卡</b><span id="free"></span></div><div class="meter" id="meter"><i></i></div><span id="used"></span></div>
 </aside>
 <div class="scrim" id="scrim"></div>
 <div class="content">
-<header class="mhead"><button class="btn icon" id="menubtn" aria-label="Places"></button><a class="logo" href="#links"><img class="logoimg" alt=""><b>3dsDL</b></a><div class="pill" data-state="connecting" role="status"><i class="dot"></i><span>Connecting...</span></div></header>
-<div class="banner" id="offline" hidden><span class="spin"></span><span>Can't reach the 3DS. Keep 3dsDL open on Receive; this page reconnects by itself.</span></div>
+<header class="mhead"><button class="btn icon" id="menubtn" aria-label="常用位置"></button><a class="logo" href="#links"><img class="logoimg" alt=""><b>3dsDL</b></a><div class="pill" data-state="connecting" role="status"><i class="dot"></i><span>正在连接…</span></div></header>
+<div class="banner" id="offline" hidden><span class="spin"></span><span>无法连接到 3DS。请让 3dsDL 保持在“接收”界面，本页面会自动重连。</span></div>
 <section class="view" id="links">
-<header class="bar"><h1>Send Links</h1></header>
+<header class="bar"><h1>发送链接</h1></header>
 <div class="pad">
 )PAGE";
 
 const char *const PageEnd = R"PAGE(<form method="post" action="/send" class="well" id="sendform">
-<textarea name="links" id="linkbox" aria-label="Links" placeholder="https://..." autofocus required></textarea>
-<div class="formrow"><span class="count" id="linkcount"></span><button class="btn primary" type="submit" id="sendbtn">Send</button></div></form>
-<section class="sent" id="sentbox" hidden><h2>Sent</h2><ul id="sent"></ul></section>
+<textarea name="links" id="linkbox" aria-label="链接" placeholder="https://..." autofocus required></textarea>
+<div class="formrow"><span class="count" id="linkcount"></span><button class="btn primary" type="submit" id="sendbtn">发送</button></div></form>
+<section class="sent" id="sentbox" hidden><h2>已发送</h2><ul id="sent"></ul></section>
 </div>
 </section>
 <section class="view" id="transfers" hidden>
-<header class="bar"><h1>Transfers</h1><span class="grow"></span><button class="btn small" id="upcancel" hidden>Stop All</button><button class="btn small" id="upclear" hidden>Clear Finished</button></header>
-<div class="pad"><ul class="ups" id="uplist"></ul><p class="none" id="upnone">No transfers</p>
-<label class="check" style="margin-top:16px"><input type="checkbox" id="offer" checked>Offer to install CIAs on the 3DS once they arrive</label></div>
+<header class="bar"><h1>传输任务</h1><span class="grow"></span><button class="btn small" id="upcancel" hidden>全部停止</button><button class="btn small" id="upclear" hidden>清除已完成任务</button></header>
+<div class="pad"><ul class="ups" id="uplist"></ul><p class="none" id="upnone">暂无传输任务</p>
+<label class="check" style="margin-top:16px"><input type="checkbox" id="offer" checked>CIA 上传完成后，在 3DS 上提示安装</label></div>
 </section>
 <section class="view" id="files" hidden>
-<header class="bar"><div class="seg tool nav2"><button type="button" id="back" aria-label="Back"></button><button type="button" id="fwd" aria-label="Forward"></button></div>
-<h1 id="title">SD Card</h1><span class="grow"></span>
-<div class="seg tool views" role="group" aria-label="View"><button type="button" id="asgrid" aria-label="Icons"></button><button type="button" id="aslist" aria-label="List"></button></div>
+<header class="bar"><div class="seg tool nav2"><button type="button" id="back" aria-label="返回"></button><button type="button" id="fwd" aria-label="前进"></button></div>
+<h1 id="title">SD 卡</h1><span class="grow"></span>
+<div class="seg tool views" role="group" aria-label="视图"><button type="button" id="asgrid" aria-label="图标"></button><button type="button" id="aslist" aria-label="列表"></button></div>
 <button class="btn tool" id="sortbtn" aria-haspopup="menu"></button>
-<label class="search tool"><input type="search" id="filter" autocomplete="off" aria-label="Search this folder"></label>
-<button class="btn icon tool" id="mkdir" aria-label="New Folder" title="New Folder"></button>
-<label class="btn primary tool" id="upbtn" title="Upload files (U)"><input type="file" id="pick" multiple hidden></label><span class="brk"></span><input type="file" id="pickdir" webkitdirectory multiple hidden></header>
+<label class="search tool"><input type="search" id="filter" autocomplete="off" aria-label="搜索此文件夹"></label>
+<button class="btn icon tool" id="mkdir" aria-label="新建文件夹" title="新建文件夹"></button>
+<label class="btn primary tool" id="upbtn" title="上传文件（U）"><input type="file" id="pick" multiple hidden></label><span class="brk"></span><input type="file" id="pickdir" webkitdirectory multiple hidden></header>
 <div class="ccard" id="ccard" hidden></div>
 <div class="gate" id="gate" hidden></div>
 <div class="body" id="browser" hidden>
-<section class="pane" id="pane" aria-label="Files"><div class="loadline" id="loadline"></div>
-<div class="lhead" id="lhead" hidden><input type="checkbox" id="all" aria-label="Select all"><button type="button" data-sort="name">Name</button><button type="button" class="c-kd" data-sort="kind">Kind</button><button type="button" class="c-sz" data-sort="size">Size</button><button type="button" class="c-dt" data-sort="time">Changed</button></div>
-<div class="items grid" id="items" role="listbox" aria-multiselectable="true" aria-label="Files"></div>
+<section class="pane" id="pane" aria-label="文件"><div class="loadline" id="loadline"></div>
+<div class="lhead" id="lhead" hidden><input type="checkbox" id="all" aria-label="全选"><button type="button" data-sort="name">名称</button><button type="button" class="c-kd" data-sort="kind">类型</button><button type="button" class="c-sz" data-sort="size">大小</button><button type="button" class="c-dt" data-sort="time">修改时间</button></div>
+<div class="items grid" id="items" role="listbox" aria-multiselectable="true" aria-label="文件"></div>
 <div class="dropzone" id="dropzone"><span></span><b></b></div></section>
 <aside class="insp" id="insp"><div class="panel" id="detail"></div><div class="tmini" hidden></div></aside>
 </div>
-<footer class="pathbar" id="pathbar" hidden><nav class="crumbs" id="crumbs" aria-label="Path"></nav><span id="count"></span></footer>
+<footer class="pathbar" id="pathbar" hidden><nav class="crumbs" id="crumbs" aria-label="路径"></nav><span id="count"></span></footer>
 </section>
 </div>
 </div>
@@ -462,13 +462,13 @@ const char *const PageEnd = R"PAGE(<form method="post" action="/send" class="wel
 <dialog id="dlg"><div class="dbody"><h2 id="dt"></h2><div class="warnbox" id="dw" hidden><span class="dwi"></span><span></span></div><p id="dp"></p><div id="dx"></div>
 <input type="text" id="di" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><p class="err" id="de" hidden></p></div><div class="row2" id="db"></div></dialog>
 <dialog id="picker" class="picker"><div class="dbody"><h2 id="ptitle"></h2><div class="cols" id="pcols"></div><nav class="crumbs" id="pcrumbs"></nav></div>
-<div class="row2"><button type="button" class="btn left" id="pmkdir"></button><button type="button" class="btn" id="pcancel">Cancel</button><button type="button" class="btn" id="pcopy">Copy</button><button type="button" class="btn" id="pmove">Move</button></div></dialog>
+<div class="row2"><button type="button" class="btn left" id="pmkdir"></button><button type="button" class="btn" id="pcancel">取消</button><button type="button" class="btn" id="pcopy">复制</button><button type="button" class="btn" id="pmove">移动</button></div></dialog>
 <dialog id="sheet" class="sheet"></dialog>
-<dialog id="viewer" class="viewer"><button class="close" id="vclose" aria-label="Close"></button><div class="stage"><span class="spin" id="vspin"></span><img id="vimg" alt=""><button class="nav prev" id="vprev" aria-label="Previous"></button><button class="nav next" id="vnext" aria-label="Next"></button></div>
-<div class="vbar"><span id="vname"></span><a class="btn small" id="vdl" download>Download</a></div></dialog>
-<dialog id="editor" class="editor"><button class="close" id="eclose" aria-label="Close"></button><div class="dbody"><h2><span id="ename"></span><i class="dirty" title="Not saved"></i></h2>
+<dialog id="viewer" class="viewer"><button class="close" id="vclose" aria-label="关闭"></button><div class="stage"><span class="spin" id="vspin"></span><img id="vimg" alt=""><button class="nav prev" id="vprev" aria-label="上一张"></button><button class="nav next" id="vnext" aria-label="下一张"></button></div>
+<div class="vbar"><span id="vname"></span><a class="btn small" id="vdl" download>下载</a></div></dialog>
+<dialog id="editor" class="editor"><button class="close" id="eclose" aria-label="关闭"></button><div class="dbody"><h2><span id="ename"></span><i class="dirty" title="未保存"></i></h2>
 <textarea id="etext" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea><div id="ecode" hidden></div><p class="err" id="eerr" hidden></p></div>
-<div class="row2"><span class="muted" id="einfo"></span><span><button class="btn" id="ecancel">Close</button> <button class="btn primary" id="esave">Save</button></span></div></dialog>
+<div class="row2"><span class="muted" id="einfo"></span><span><button class="btn" id="ecancel">关闭</button> <button class="btn primary" id="esave">保存</button></span></div></dialog>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -526,8 +526,8 @@ const CUBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4-
 for (const img of $$('.logoimg')) img.src = document.querySelector('link[rel=icon]').href;
 for (const a of $$('#ext a')) a.insertAdjacentHTML('beforeend', svg('out'));
 for (const [id, name] of [['back', 'left'], ['fwd', 'right'], ['asgrid', 'grid'], ['aslist', 'list'], ['mkdir', 'folderplus'], ['menubtn', 'panel'], ['vclose', 'x'], ['eclose', 'x'], ['vprev', 'left'], ['vnext', 'right']]) $('#' + id).innerHTML = svg(name);
-$('#upbtn').insertAdjacentHTML('afterbegin', svg('upload') + '<span class="word">Upload</span>');
-$('#pmkdir').innerHTML = svg('folderplus') + 'New Folder';
+$('#upbtn').insertAdjacentHTML('afterbegin', svg('upload') + '<span class="word">上传</span>');
+$('#pmkdir').innerHTML = svg('folderplus') + '新建文件夹';
 $('.search').insertAdjacentHTML('afterbegin', svg('search'));
 $('.dwi').outerHTML = svg('warn');
 $('#dropzone span').innerHTML = svg('upload');
@@ -538,11 +538,11 @@ const join = (dir, name) => dir === '/' ? '/' + name : dir + '/' + name;
 const parent = p => p.slice(0, p.lastIndexOf('/')) || '/';
 const base = p => p.slice(p.lastIndexOf('/') + 1);
 const ext = n => { const i = n.lastIndexOf('.'); return i > 0 ? n.slice(i + 1).toLowerCase() : ''; };
-const folderName = p => p === '/' ? 'SD Card' : base(p);
+const folderName = p => p === '/' ? 'SD 卡' : base(p);
 // True when path is folder itself or anything inside it.
 const inside = (path, folder) => path === folder || path.startsWith(folder === '/' ? '/' : folder + '/');
-const plural = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
-const what = paths => paths.length === 1 ? base(paths[0]) : paths.length + ' items';
+const plural = (n, one) => n + ' ' + one;
+const what = paths => paths.length === 1 ? base(paths[0]) : paths.length + ' 项';
 const byName = (a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'});
 function size(b) {
   if (b < 0) return '';
@@ -561,25 +561,25 @@ function when(t) {
 // seconds, then in fives, then in minutes.
 function duration(s) {
   if (!isFinite(s) || s < 0) return '';
-  if (s < 10) return Math.max(1, Math.round(s)) + ' s';
-  if (Math.ceil(s / 5) * 5 < 60) return Math.ceil(s / 5) * 5 + ' s';
+  if (s < 10) return Math.max(1, Math.round(s)) + ' 秒';
+  if (Math.ceil(s / 5) * 5 < 60) return Math.ceil(s / 5) * 5 + ' 秒';
   const m = Math.max(1, Math.round(s / 60));
   return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + m % 60 + ' min' : '');
 }
 const FAMILY = {cia: 'cia', zcia: 'cia', '3dsx': 'app', zip: 'zip', '7z': 'zip', rar: 'zip', tar: 'zip', gz: 'zip', tgz: 'zip', xz: 'zip', bz2: 'zip', zst: 'zip',
   txt: 'txt', ini: 'txt', cfg: 'txt', json: 'txt', xml: 'txt', log: 'txt', md: 'txt', yml: 'txt', yaml: 'txt', lua: 'txt', nds: 'rom', '3ds': 'rom', cci: 'rom',
   firm: 'rom', tik: 'rom', smdh: 'rom', mp3: 'media', ogg: 'media', wav: 'media', flac: 'media', m4a: 'media', bcstm: 'media', mp4: 'media', pdf: 'media'};
-const KINDS = {cia: 'CIA', zcia: 'CIA', '3dsx': 'Homebrew', nds: 'DS game', '3ds': '3DS game', cci: '3DS game', firm: 'Firmware', tik: 'Ticket', smdh: 'Icon',
-  mp4: 'Video', pdf: 'PDF', zip: 'Archive', '7z': 'Archive', rar: 'Archive', tar: 'Archive', gz: 'Archive', tgz: 'Archive', xz: 'Archive', bz2: 'Archive', zst: 'Archive'};
+const KINDS = {cia: 'CIA', zcia: 'CIA', '3dsx': '自制软件', nds: 'DS 游戏', '3ds': '3DS 游戏', cci: '3DS 游戏', firm: '固件', tik: 'ticket', smdh: '图标',
+ mp4: '视频', pdf: 'PDF', zip: '压缩包', '7z': '压缩包', rar: '压缩包', tar: '压缩包', gz: '压缩包', tgz: '压缩包', xz: '压缩包', bz2: '压缩包', zst: '压缩包'};
 const TEXT = new Set(['txt', 'ini', 'cfg', 'json', 'xml', 'log', 'md', 'yml', 'yaml', 'lua', 'csv', 'conf', 'sh', 'py', 'js', 'html', 'htm', 'css', 'opt']);
 const PICTURES = new Set(['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp']);
 const MEDIA = new Set(['mp3', 'ogg', 'wav', 'mp4', 'pdf']);
 const TITLED = new Set(['cia', 'zcia', '3dsx', 'smdh', '3ds', 'cci', 'nds']);
 const CIAS = new Set(['cia', 'zcia']);
 function kindOf(e) {
-  if (e.dir) return 'Folder';
+  if (e.dir) return '文件夹';
   const x = ext(e.name);
-  return KINDS[x] || (PICTURES.has(x) ? 'Picture' : TEXT.has(x) ? 'Text' : FAMILY[x] === 'media' ? 'Audio' : x ? x.toUpperCase() + ' file' : 'File');
+  return KINDS[x] || (PICTURES.has(x) ? '图片' : TEXT.has(x) ? '文本' : FAMILY[x] === 'media' ? '音频' : x ? x.toUpperCase() + ' 文件' : '文件');
 }
 // The picture for an entry, scaled by the --s of wherever it goes.
 function glyph(e) {
@@ -595,11 +595,11 @@ function risk(paths) {
   for (const p of paths) {
     const l = p.toLowerCase();
     if (l === '/boot.firm' || inside(l, '/luma') || inside(l, '/boot9strap'))
-      return 'This is part of what starts custom firmware. Changing it can stop the 3DS from starting.';
+      return '这是启动自定义固件所需的文件或目录。修改后可能导致 3DS 无法启动。';
     if (inside(l, '/nintendo 3ds'))
-      return 'This folder holds installed software, saves and extra data. Changing it can break games.';
+      return '此文件夹存放已安装的软件、存档和额外数据。修改后可能导致游戏无法运行。';
     if (l === '/boot.3dsx' || inside(l, '/3ds/3dsdl'))
-      return 'The Homebrew Launcher or 3dsDL itself uses this.';
+      return '自制软件启动器或 3dsDL 本身需要使用此文件或目录。';
   }
   return '';
 }
@@ -640,7 +640,7 @@ async function call(method, url, body, options = {}) {
     const timer = setTimeout(() => stop.abort(), options.timeout || 20000);
     request.signal = stop.signal;
     try { response = await fetch(url, request); } catch (e) {
-      if (n >= tries) { offline(true); throw new Error('Lost the connection to the 3DS.'); }
+      if (n >= tries) { offline(true); throw new Error('与 3DS 的连接已断开。'); }
       await sleep(750 * n);
     } finally { clearTimeout(timer); }
   }
@@ -649,7 +649,11 @@ async function call(method, url, body, options = {}) {
   let json = {};
   try { json = await response.json(); } catch (e) {}
   if (response.status === 403 && json.access) { gate(json.access); throw quiet(); }
-  if (!response.ok) throw new Error(json.error || 'The 3DS answered ' + response.status + '.');
+  if (!response.ok) {
+    const error = new Error(json.error || '3DS 返回状态码 ' + response.status + '。');
+    error.status = response.status;
+    throw error;
+  }
   return json;
 }
 const api = (method, url, body, priority = 0, options) => run(() => call(method, url, body, options), priority);
@@ -713,7 +717,7 @@ function ask(title, text, o = {}) {
     input.value = o.input || '';
     err.hidden = true;
     row.textContent = '';
-    const labels = o.buttons || ['Cancel', 'OK'], main = labels.length - 1;
+    const labels = o.buttons || ['取消', '确定'], main = labels.length - 1;
     let done = false;
     const finish = value => { if (done) return; done = true; d.close(); resolve(value); };
     const press = async n => {
@@ -750,9 +754,9 @@ function ask(title, text, o = {}) {
 
 // --- What the console is doing -------------------------------------------------
 const S = {state: 'connecting', text: '', access: 'none', you: '', seq: -1, expect: [], offline: false, timer: 0, files: true};
-const SAYS = {ready: '3DS ready', asking: 'Asking on the 3DS', choosing: 'Waiting for you on the 3DS', installing: 'Installing on the 3DS',
-  downloading: 'Downloading on the 3DS', busy: 'The 3DS is busy', offline: "Can't reach the 3DS", connecting: 'Connecting...'};
-const HEADS = {choosing: 'Over to you on the 3DS', asking: 'The 3DS is asking a question', installing: 'Installing on the 3DS', downloading: 'Downloading on the 3DS', busy: 'The 3DS is busy'};
+const SAYS = {ready: '3DS 已就绪', asking: '请在 3DS 上确认', choosing: '等待你在 3DS 上操作', installing: '正在 3DS 上安装',
+  downloading: '正在 3DS 上下载', busy: '3DS 正忙', offline: "无法连接到 3DS", connecting: '正在连接…'};
+const HEADS = {choosing: '请在 3DS 上继续操作', asking: '请在 3DS 上确认提示', installing: '正在 3DS 上安装', downloading: '正在 3DS 上下载', busy: '3DS 正忙'};
 // What this page itself is doing on the console, such as copying, said in
 // the status pill like an upload.
 const W = {text: ''};
@@ -776,13 +780,13 @@ function showStatus() {
     }
   } else c.dataset.key = '';
   c.hidden = !show;
-  for (const span of $$('#sent li.wait span')) span.textContent = S.state === 'ready' ? 'Sent to the 3DS.' : (S.text || SAYS[S.state]);
+  for (const span of $$('#sent li.wait span')) span.textContent = S.state === 'ready' ? '已发送到 3DS。' : (S.text || SAYS[S.state]);
 }
 function onStatus(j) {
   const before = S.access;
   Object.assign(S, {you: j.you, access: j.access, state: j.state, text: j.text, files: j.files});
   if (S.seq >= 0 && j.resultSeq !== S.seq) {
-    const text = j.result || (j.resultOk ? 'Done on the 3DS.' : 'Not done on the 3DS.');
+    const text = j.result || (j.resultOk ? '已在 3DS 上完成。' : '未在 3DS 上完成。');
     toast(text, j.resultOk ? 'good' : 'bad');
     const li = S.expect.shift();
     if (li) {
@@ -814,7 +818,7 @@ function offline(on) {
   $('#offline').hidden = !on;
   showStatus();
   if (on) { clearTimeout(S.timer); S.timer = setTimeout(poll, 1500); }
-  else if (browsing()) { toast('Connected to the 3DS again.', 'good'); load(F.cwd, true); }
+  else if (browsing()) { toast('已重新连接到 3DS。', 'good'); load(F.cwd, true); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 
@@ -891,7 +895,7 @@ function storage() {
   const used = (F.total - F.free) / F.total;
   $('#meter').firstChild.style.width = (used * 100).toFixed(1) + '%';
   $('#meter').classList.toggle('full', used > .92);
-  $('#used').textContent = size(F.total - F.free) + ' of ' + size(F.total) + ' used';
+  $('#used').textContent = '已用 ' + size(F.total - F.free) + '，共 ' + size(F.total);
 }
 
 // --- Links ------------------------------------------------------------------------
@@ -900,7 +904,7 @@ function linkName(l) { try { return decodeURIComponent(base(new URL(l).pathname)
 $('#sendform').noValidate = true;
 $('#linkbox').addEventListener('input', () => {
   const n = linksIn($('#linkbox').value).length;
-  $('#linkcount').textContent = n ? plural(n, 'link') : '';
+  $('#linkcount').textContent = n ? plural(n, '个链接') : '';
 });
 $('#sendform').addEventListener('submit', async e => {
   e.preventDefault();
@@ -909,12 +913,12 @@ $('#sendform').addEventListener('submit', async e => {
     box.classList.remove('shake');
     void box.offsetWidth;
     box.classList.add('shake');
-    toast('There are no http or https links in that.', 'bad');
+    toast('输入内容中没有 HTTP 或 HTTPS 链接。', 'bad');
     return;
   }
   // remote::MaxSentLinks
   if (links.length > 20) {
-    toast('Send at most 20 links at once.', 'bad');
+    toast('每次最多发送 20 个链接。', 'bad');
     return;
   }
   b.classList.add('busy');
@@ -922,15 +926,15 @@ $('#sendform').addEventListener('submit', async e => {
     const j = await api('POST', '/send', {links: box.value});
     const li = document.createElement('li');
     li.className = 'wait';
-    li.innerHTML = svg('link') + '<div><b></b><span>Sent to the 3DS.</span></div>';
-    li.querySelector('b').textContent = plural(j.count, 'link') + ': ' + links.slice(0, 2).map(linkName).join(', ') + (links.length > 2 ? ' and ' + (links.length - 2) + ' more' : '');
+    li.innerHTML = svg('link') + '<div><b></b><span>已发送到 3DS。</span></div>';
+    li.querySelector('b').textContent = plural(j.count, '个链接') + '：' + links.slice(0, 2).map(linkName).join('、') + (links.length > 2 ? '，另有 ' + (links.length - 2) + ' 个' : '');
     $('#sent').prepend(li);
     $('#sentbox').hidden = false;
     S.expect.push(li);
     box.value = '';
     box.dispatchEvent(new Event('input'));
     S.state = 'choosing';
-    S.text = 'Waiting for you to choose Download on the 3DS.';
+    S.text = '等待你在 3DS 上选择“下载”。';
     showStatus();
     poll();
   } catch (err) { fail(err); } finally { b.classList.remove('busy'); }
@@ -955,14 +959,14 @@ function gate(state) {
   g.hidden = false;
   const card = (cls, icon, title, rest) => '<div class="gatecard' + cls + '"><div class="art"><span>' + svg(icon) + '</span></div><h2>' + title + '</h2>' + rest + '</div>';
   if (state === 'pending') {
-    g.innerHTML = card('', 'lock', 'Choose Allow on the 3DS', '<dl class="facts"' + (S.you ? '' : ' hidden') + '><dt>Address</dt><dd class="mono" id="gateyou">' + esc(S.you) + '</dd></dl>');
+    g.innerHTML = card('', 'lock', '请在 3DS 上选择“允许”', '<dl class="facts"' + (S.you ? '' : ' hidden') + '><dt>地址</dt><dd class="mono" id="gateyou">' + esc(S.you) + '</dd></dl>');
     poll();
   } else if (state === 'denied') {
-    g.innerHTML = card(' no', 'lock', 'Not allowed', '<p>To ask again, leave Receive on the 3DS and open it again.</p>');
+    g.innerHTML = card(' no', 'lock', '未获允许', '<p>如需重新请求，请在 3DS 上退出“接收”界面后再进入。</p>');
   } else if (state === 'off') {
-    g.innerHTML = card(' no', 'lock', 'Files are not shared', '');
+    g.innerHTML = card(' no', 'lock', '文件共享未开启', '');
   } else {
-    g.innerHTML = card('', 'console', 'Connecting to the 3DS', '');
+    g.innerHTML = card('', 'console', '正在连接到 3DS', '');
   }
 }
 function ungate() {
@@ -1057,7 +1061,7 @@ const entryOf = path => { const node = F.nodes.get(path); return node ? node.ent
 function titles() {
   const name = folderName(F.cwd);
   $('#title').textContent = name;
-  $('#filter').placeholder = 'Search ' + name;
+  $('#filter').placeholder = '搜索 ' + name;
   $('#back').disabled = N.at <= 0;
   $('#fwd').disabled = N.at >= N.stack.length - 1;
 }
@@ -1073,7 +1077,7 @@ function render(animate) {
   F.order = list.map(e => join(F.cwd, e.name));
   if (watcher) watcher.disconnect();
   watcher = 'IntersectionObserver' in window ? new IntersectionObserver(seen, {root: matchMedia('(max-width: 759px)').matches ? null : $('#pane'), rootMargin: '120px'}) : null;
-  if (!list.length) box.innerHTML = '<div class="empty">' + svg(F.entries.length ? 'search' : 'folder') + (F.entries.length ? 'Nothing matches' : 'This folder is empty') + '</div>';
+  if (!list.length) box.innerHTML = '<div class="empty">' + svg(F.entries.length ? 'search' : 'folder') + (F.entries.length ? '没有匹配项' : '此文件夹为空') + '</div>';
   list.forEach((e, n) => {
     const path = join(F.cwd, e.name), node = document.createElement('div');
     node.className = 'item' + (animate ? ' anim' : '') + (F.fresh.has(path) ? ' fresh' : '');
@@ -1083,9 +1087,9 @@ function render(animate) {
     node.dataset.path = path;
     if (e.dir) node.dataset.drop = path;
     node.draggable = fine.matches;
-    node.innerHTML = '<input type="checkbox" class="pick" tabindex="-1" aria-label="Select ' + esc(e.name) + '"><span class="main">' + glyph(e) + '<span class="nm">' + highlight(e.name) +
+    node.innerHTML = '<input type="checkbox" class="pick" tabindex="-1" aria-label="选择 ' + esc(e.name) + '"><span class="main">' + glyph(e) + '<span class="nm">' + highlight(e.name) +
       '</span></span><span class="kd">' + esc(kindOf(e)) + '</span><span class="sz">' + (e.dir ? '' : esc(size(e.size))) + '</span><span class="dt">' + esc(when(e.time)) +
-      '</span><span class="mt">' + esc(e.dir ? 'Folder' : size(e.size)) + '</span>';
+      '</span><span class="mt">' + esc(e.dir ? '文件夹' : size(e.size)) + '</span>';
     node.entry = e;
     box.append(node);
     F.nodes.set(path, node);
@@ -1142,7 +1146,7 @@ function paint() {
   all.checked = n > 0 && n >= F.order.length;
   all.indeterminate = n > 0 && n < F.order.length;
   const total = F.entries.length, listed = F.order.length;
-  $('#count').textContent = (listed === total ? plural(total, 'item') : listed + ' of ' + plural(total, 'item')) + (n ? ', ' + n + ' selected' : '');
+  $('#count').textContent = (listed === total ? plural(total, '项') : listed + '/' + plural(total, '项')) + (n ? '，已选 ' + n + ' 项' : '');
   crumbs();
   detail();
   selbar();
@@ -1152,7 +1156,7 @@ function crumbs() {
   let html = '', p = '';
   const parts = F.cwd.split('/').filter(Boolean);
   const link = (label, to) => '<a href="#files:' + enc(to) + '" data-drop="' + esc(to) + '">' + esc(label) + '</a>';
-  html = link('SD Card', '/');
+  html = link('SD 卡', '/');
   for (const part of parts) { p += '/' + part; html += sep + link(part, p); }
   if (F.sel.size === 1) html += sep + '<span>' + esc(base([...F.sel][0])) + '</span>';
   nav.innerHTML = html;
@@ -1198,27 +1202,27 @@ function openItem(path) {
 function actionsFor(paths) {
   const list = [], add = (label, icon, fn, more = {}) => list.push({label, icon, fn, ...more});
   if (!paths.length) {
-    add('Upload Files', 'upload', () => $('#pick').click(), {main: true});
-    if (!iOS) add('Upload Folder', 'folder', () => $('#pickdir').click());
-    add('New Folder', 'folderplus', mkdir);
-    if (F.clip) add(F.clip.cut ? 'Move Here' : 'Paste Here', 'paste', paste);
+    add('上传文件', 'upload', () => $('#pick').click(), {main: true});
+    if (!iOS) add('上传文件夹', 'folder', () => $('#pickdir').click());
+    add('新建文件夹', 'folderplus', mkdir);
+    if (F.clip) add(F.clip.cut ? '移动到此处' : '粘贴到此处', 'paste', paste);
     return list;
   }
   const one = paths.length === 1, p = paths[0], e = entryOf(p) || {name: base(p), dir: false, size: 0}, x = ext(e.name);
   const cias = paths.filter(q => CIAS.has(ext(q)) && !(entryOf(q) || {}).dir);
-  if (one && e.dir) add('Open', 'folder', () => go(p), {main: true});
+  if (one && e.dir) add('打开', 'folder', () => go(p), {main: true});
   else if (one) {
-    if (CIAS.has(x)) add('Install on 3DS', 'install', () => install(paths), {main: true});
-    else if (PICTURES.has(x)) add('View', 'eye', () => view(p), {main: true});
-    else if (TEXT.has(x) && e.size <= 1048576) add('Edit', 'edit', () => edit(p), {main: true});
-    else if (MEDIA.has(x)) add('Open', 'eye', () => window.open(fileUrl(p), '_blank'), {main: true});
-    add('Download', 'download', () => download(p, e), {main: !list.length, id: 'download'});
-  } else if (cias.length) add(cias.length === paths.length ? 'Install on 3DS' : 'Install ' + plural(cias.length, 'CIA'), 'install', () => install(cias), {main: true});
-  if (one) add('Rename', 'rename', () => rename(p));
-  add('Move To...', 'move', () => pickFolder(paths, false), {id: 'move'});
-  add('Copy To...', 'copy', () => pickFolder(paths, true), {id: 'copyto'});
-  if (one) add('Copy Path', 'link', () => copyText(p));
-  add('Delete', 'trash', () => remove(paths), {red: true, id: 'delete'});
+    if (CIAS.has(x)) add('在 3DS 上安装', 'install', () => install(paths), {main: true});
+    else if (PICTURES.has(x)) add('查看', 'eye', () => view(p), {main: true});
+    else if (TEXT.has(x) && e.size <= 1048576) add('编辑', 'edit', () => edit(p), {main: true});
+    else if (MEDIA.has(x)) add('打开', 'eye', () => window.open(fileUrl(p), '_blank'), {main: true});
+    add('下载', 'download', () => download(p, e), {main: !list.length, id: 'download'});
+  } else if (cias.length) add(cias.length === paths.length ? '在 3DS 上安装' : '安装 ' + plural(cias.length, '个 CIA'), 'install', () => install(cias), {main: true});
+  if (one) add('重命名', 'rename', () => rename(p));
+  add('移动到…', 'move', () => pickFolder(paths, false), {id: 'move'});
+  add('复制到…', 'copy', () => pickFolder(paths, true), {id: 'copyto'});
+  if (one) add('复制路径', 'link', () => copyText(p));
+  add('删除', 'trash', () => remove(paths), {red: true, id: 'delete'});
   return list;
 }
 // The details of the selection, or of the folder: in the column on the
@@ -1234,18 +1238,18 @@ function fillPanel(box, paths, close) {
   let facts = [];
   if (!paths.length) {
     pv.innerHTML = glyph({dir: true}) + '<h2>' + esc(folderName(F.cwd)) + '</h2>';
-    facts = [['Items', String(F.entries.length)]];
+    facts = [['项目数', String(F.entries.length)]];
   } else if (one) {
     pv.innerHTML = glyph(e) + '<h2>' + esc(e.name) + '</h2><span class="sub">' + esc(kindOf(e)) + '</span>';
-    facts = e.dir ? [] : [['Size', size(e.size), e.size >= 1024 ? e.size.toLocaleString() + ' bytes' : '']];
-    if (e.time) facts.push(['Changed', when(e.time)]);
+    facts = e.dir ? [] : [['大小', size(e.size), e.size >= 1024 ? e.size.toLocaleString() + ' bytes' : '']];
+    if (e.time) facts.push(['修改时间', when(e.time)]);
   } else {
-    pv.innerHTML = '<div class="stack">' + es.slice(0, 3).reverse().map(glyph).join('') + '</div><h2>' + plural(es.length, 'item') + '</h2>';
+    pv.innerHTML = '<div class="stack">' + es.slice(0, 3).reverse().map(glyph).join('') + '</div><h2>' + plural(es.length, '项') + '</h2>';
     const files = es.filter(x => !x.dir), folders = es.length - files.length;
-    if (files.length) facts.push(['Files', files.length + ', ' + size(files.reduce((n, x) => n + x.size, 0))]);
-    if (folders) facts.push(['Folders', String(folders)]);
+    if (files.length) facts.push(['文件', files.length + ', ' + size(files.reduce((n, x) => n + x.size, 0))]);
+    if (folders) facts.push(['文件夹数', String(folders)]);
     const kinds = new Set(es.map(kindOf));
-    if (kinds.size === 1) facts.push(['Kind', [...kinds][0]]);
+    if (kinds.size === 1) facts.push(['类型', [...kinds][0]]);
   }
   box.append(pv);
   const dl = document.createElement('dl');
@@ -1282,14 +1286,14 @@ async function titleFacts(path, e, box, dl, key) {
   if (box.dataset.key !== key) return;
   for (const s of dl.querySelectorAll('.skel')) s.remove();
   if (!m) return;
-  const rows = [['Title', m.name], ['Publisher', m.publisher], ['Product', m.product], ['Title ID', m.titleId, '', true], ['Version', m.versionText], ['Note', m.note]].filter(r => r[1]);
+  const rows = [['软件名称', m.name], ['发行商', m.publisher], ['产品代码', m.product], ['软件 ID', m.titleId, '', true], ['版本', m.versionText], ['备注', m.note]].filter(r => r[1]);
   dl.insertAdjacentHTML('afterbegin', rows.map(([k, v, t, mono]) => '<dt>' + esc(k) + '</dt><dd' + (mono ? ' class="mono"' : '') + '>' + esc(v) + '</dd>').join(''));
   if (m.name) box.querySelector('.sub').textContent = m.name + (m.publisher ? ', ' + m.publisher : '');
 }
 function detail() { if (wide.matches && browsing()) fillPanel($('#detail'), [...F.sel]); }
 function info(paths) {
   const d = $('#sheet');
-  d.innerHTML = '<button class="close" aria-label="Close">' + svg('x') + '</button><div class="panel"></div>';
+  d.innerHTML = '<button class="close" aria-label="关闭">' + svg('x') + '</button><div class="panel"></div>';
   d.querySelector('.close').onclick = () => d.close();
   d.onclick = ev => { if (ev.target === d) d.close(); };
   fillPanel(d.querySelector('.panel'), paths, () => d.close());
@@ -1301,7 +1305,7 @@ function selbar() {
   const bar = $('#selbar'), paths = [...F.sel];
   bar.hidden = !paths.length || !browsing();
   if (bar.hidden) return;
-  bar.innerHTML = '<b>' + paths.length + ' selected</b><span class="acts2"></span>';
+  bar.innerHTML = '<b>已选 ' + paths.length + ' 项</b><span class="acts2"></span>';
   const row = bar.lastChild, acts = actionsFor(paths), button = (a, iconOnly, into = row) => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -1316,8 +1320,8 @@ function selbar() {
   const main = acts.find(a => a.main && a.id !== 'download');
   if (main) button(main, false);
   for (const id of ['move', 'copyto', 'download', 'delete']) { const a = acts.find(x => x.id === id); if (a) button(a, true); }
-  button({label: 'Details', icon: 'info', fn: () => info(paths)}, true, bar).classList.add('plain');
-  button({label: 'Clear selection', icon: 'x', fn: () => setSel([])}, true, bar).classList.add('plain');
+  button({label: '详细信息', icon: 'info', fn: () => info(paths)}, true, bar).classList.add('plain');
+  button({label: '取消选择', icon: 'x', fn: () => setSel([])}, true, bar).classList.add('plain');
 }
 wide.addEventListener('change', () => { $('#detail').dataset.key = ''; paint(); progress(); });
 
@@ -1438,7 +1442,7 @@ addEventListener('keydown', e => {
 });
 
 // --- The toolbar -------------------------------------------------------------------
-const SORTS = {name: 'Name', kind: 'Kind', size: 'Size', time: 'Date'};
+const SORTS = {name: '名称', kind: '类型', size: '大小', time: '日期'};
 function sortBy(by) {
   F.sort = {by, desc: F.sort.by === by ? !F.sort.desc : false};
   store.set('sortby', F.sort);
@@ -1447,7 +1451,7 @@ function sortBy(by) {
 function showHidden(on) { F.hidden = on; store.set('hidden', on); load(F.cwd, true); }
 function setView(v) { F.view = v; store.set('view', v); render(true); }
 $('#sortbtn').onclick = e => popup(e.currentTarget, Object.keys(SORTS).map(by => ({label: SORTS[by], checked: F.sort.by === by, fn: () => sortBy(by)}))
-  .concat('-', {label: 'Show Hidden Files', checked: F.hidden, fn: () => showHidden(!F.hidden)}));
+  .concat('-', {label: '显示隐藏文件', checked: F.hidden, fn: () => showHidden(!F.hidden)}));
 $('#lhead').addEventListener('click', e => { const b = e.target.closest('[data-sort]'); if (b) sortBy(b.dataset.sort); });
 $('#all').onchange = e => setSel(e.target.checked ? F.order : []);
 $('#asgrid').onclick = () => setView('grid');
@@ -1457,7 +1461,7 @@ $('#mkdir').onclick = () => mkdir();
 
 // --- Doing things with files ----------------------------------------------------------
 function download(path, e) {
-  if (e.size > 64 * 1048576) toast('Downloading ' + e.name + '. The 3DS answers nothing else until it finishes.');
+  if (e.size > 64 * 1048576) toast('正在下载 ' + e.name + '。完成前，3DS 暂时无法响应其他请求。');
   const a = document.createElement('a');
   a.href = fileUrl(path, true);
   a.download = e.name;
@@ -1466,7 +1470,7 @@ function download(path, e) {
   a.remove();
 }
 function copyText(text) {
-  const done = () => toast('Copied ' + text, 'good');
+  const done = () => toast('已复制 ' + text, 'good');
   const fallback = () => {
     const t = document.createElement('textarea');
     t.value = text;
@@ -1481,7 +1485,7 @@ function copyText(text) {
   else fallback();
 }
 async function rename(path) {
-  const r = await ask('Rename', null, {input: base(path), select: true, buttons: ['Cancel', 'Rename'], warn: risk([path]), action: async name => {
+  const r = await ask('重命名', null, {input: base(path), select: true, buttons: ['取消', '重命名'], warn: risk([path]), action: async name => {
     name = name.trim();
     if (!name || name === base(path)) return false;
     await api('POST', '/api/move', {from: path, to: join(parent(path), name)});
@@ -1490,14 +1494,14 @@ async function rename(path) {
   if (typeof r !== 'string') return;
   F.pick = join(parent(path), r);
   F.fresh.add(F.pick);
-  toast('Renamed to ' + r, 'good');
+  toast('已重命名为 ' + r, 'good');
   load(F.cwd, true);
 }
 async function mkdir(into = F.cwd) {
   let made = '';
-  const r = await ask('New Folder', null, {input: '', buttons: ['Cancel', 'Create'], action: async name => {
+  const r = await ask('新建文件夹', null, {input: '', buttons: ['取消', '创建'], action: async name => {
     name = name.trim();
-    if (!name) throw new Error('Type a name for the folder.');
+    if (!name) throw new Error('请输入文件夹名称。');
     made = join(into, name);
     await api('POST', '/api/folder', {path: made}, 0, {retry: true});
   }});
@@ -1506,12 +1510,12 @@ async function mkdir(into = F.cwd) {
   return made;
 }
 async function remove(paths) {
-  const ok = await ask('Delete ' + (paths.length > 1 ? paths.length + ' items' : '"' + base(paths[0]) + '"') + '?', 'Deleted files and folders cannot be brought back.',
-    {buttons: ['Cancel', 'Delete'], danger: true, warn: risk(paths), action: async () => { for (const p of paths) await api('POST', '/api/delete', {path: p}, 0, {retry: true}); }});
+  const ok = await ask(paths.length > 1 ? '删除 ' + paths.length + ' 项？' : '删除“' + base(paths[0]) + '”？', '删除的文件和文件夹无法恢复。',
+    {buttons: ['取消', '删除'], danger: true, warn: risk(paths), action: async () => { for (const p of paths) await api('POST', '/api/delete', {path: p}, 0, {retry: true}); }});
   if (ok !== true) return;
   for (const p of paths) { const node = F.nodes.get(p); if (node) node.classList.add('gone'); }
   setSel([]);
-  toast('Deleted ' + what(paths), 'good');
+  toast('已删除 ' + what(paths), 'good');
   setTimeout(() => load(F.cwd, true), 280);
 }
 async function install(paths) {
@@ -1521,9 +1525,9 @@ async function install(paths) {
     await api('POST', '/api/install', {paths: cias.join('\n')});
     S.expect.push(null);
     S.state = 'choosing';
-    S.text = 'Waiting for you to choose Install on the 3DS.';
+    S.text = '等待你在 3DS 上选择“安装”。';
     showStatus();
-    toast('Sent to the 3DS. Choose Install on the console.');
+    toast('已发送到 3DS。请在主机上选择“安装”。');
     poll();
   } catch (e) { fail(e); }
 }
@@ -1531,7 +1535,7 @@ async function install(paths) {
 // after the folder they came from is left.
 function clip(paths, cut) {
   F.clip = {cut, paths, entries: new Map(paths.map(p => [p, entryOf(p)]))};
-  toast((cut ? 'Cut ' : 'Copied ') + what(paths));
+  toast((cut ? '已剪切 ' : '已复制 ') + what(paths));
   $('#detail').dataset.key = '';
   detail();
 }
@@ -1546,7 +1550,7 @@ async function paste() {
 const P = {paths: [], cols: [], dest: '/'};
 async function pickFolder(paths, copying) {
   Object.assign(P, {paths, cols: [], dest: F.cwd});
-  $('#ptitle').textContent = (copying ? 'Copy ' : 'Move ') + what(paths);
+  $('#ptitle').textContent = (copying ? '复制 ' : '移动 ') + what(paths);
   $('#pmove').className = 'btn' + (copying ? '' : ' primary');
   $('#pcopy').className = 'btn' + (copying ? ' primary' : '');
   $('#pcols').textContent = '';
@@ -1574,7 +1578,7 @@ async function column(i, folder, chosen) {
   } catch (e) { if (!e.quiet) col.innerHTML = '<span class="err">' + esc(e.message) + '</span>'; return; }
   if (!col.isConnected) return;
   col.textContent = '';
-  if (!names.length) col.innerHTML = '<span class="none">No folders</span>';
+  if (!names.length) col.innerHTML = '<span class="none">没有文件夹</span>';
   for (const name of names) {
     const path = join(folder, name), b = document.createElement('button');
     b.type = 'button';
@@ -1595,7 +1599,7 @@ async function column(i, folder, chosen) {
 function aim(path) {
   P.dest = path;
   const parts = path.split('/').filter(Boolean), sep = svg('right');
-  $('#pcrumbs').innerHTML = '<span>SD Card</span>' + parts.map(p => sep + '<span>' + esc(p) + '</span>').join('');
+  $('#pcrumbs').innerHTML = '<span>SD 卡</span>' + parts.map(p => sep + '<span>' + esc(p) + '</span>').join('');
   const into = P.paths.some(p => inside(path, p));
   $('#pmove').disabled = into || P.paths.every(p => parent(p) === path);
   $('#pcopy').disabled = into;
@@ -1615,13 +1619,12 @@ $('#pmkdir').onclick = async () => {
 // free name, Replace puts them in place and merges folders. Copying into
 // the folder something is in keeps both. True when it got through.
 async function transfer(paths, dest, copying, known = new Map()) {
-  const verb = copying ? 'Copy' : 'Move';
   const work = paths.filter(p => copying || parent(p) !== dest);
-  if (!work.length) { toast('Already in ' + folderName(dest) + '.'); return false; }
+  if (!work.length) { toast('已在 ' + folderName(dest) + ' 中。'); return false; }
   const bad = work.find(p => inside(dest, p));
-  if (bad) { toast(base(bad) + ' cannot go inside itself.', 'bad'); return false; }
+  if (bad) { toast('不能将 ' + base(bad) + ' 放入其自身。', 'bad'); return false; }
   const warn = risk(copying ? [dest] : work.concat(dest));
-  if (warn && await ask(verb + ' ' + what(work) + ' to ' + folderName(dest) + '?', null, {warn, buttons: ['Cancel', verb]}) !== 1) return false;
+  if (warn && await ask((copying ? '复制 ' : '移动 ') + what(work) + '到 ' + folderName(dest) + '？', null, {warn, buttons: ['取消', copying ? '复制' : '移动']}) !== 1) return false;
   let there;
   try { there = await api('GET', '/api/list?hidden=1&path=' + enc(dest)); } catch (e) { fail(e); return false; }
   const here = new Map(there.entries.map(e => [e.name.toLowerCase(), e]));
@@ -1633,14 +1636,14 @@ async function transfer(paths, dest, copying, known = new Map()) {
     answer = ['', 'skip', 'keep', 'replace'][c];
   }
   const todo = work.filter(p => answer !== 'skip' || !clash.includes(p));
-  if (!todo.length) { toast('Nothing to ' + verb.toLowerCase() + '.'); return false; }
+  if (!todo.length) { toast('没有可' + (copying ? '复制' : '移动') + '的项目。'); return false; }
   const landed = [], problems = [];
   for (const [i, p] of todo.entries()) {
-    W.text = (copying ? 'Copying ' : 'Moving ') + (todo.length > 1 ? (i + 1) + ' of ' + todo.length : base(p));
+    W.text = (copying ? '正在复制 ' : '正在移动 ') + (todo.length > 1 ? (i + 1) + '/' + todo.length : base(p));
     showStatus();
     const how = clash.includes(p) ? answer : parent(p) === dest ? 'keep' : '';
     try {
-      const j = await api('POST', '/api/' + verb.toLowerCase(), {from: p, to: join(dest, base(p)), clash: how}, 0, {timeout: copying ? 4 * 3600e3 : 120e3});
+      const j = await api('POST', copying ? '/api/copy' : '/api/move', {from: p, to: join(dest, base(p)), clash: how}, 0, {timeout: copying ? 4 * 3600e3 : 120e3});
       landed.push(j.path);
     } catch (e) {
       if (e.quiet) break;
@@ -1650,8 +1653,8 @@ async function transfer(paths, dest, copying, known = new Map()) {
   }
   W.text = '';
   showStatus();
-  if (landed.length) toast((copying ? 'Copied ' : 'Moved ') + what(landed) + ' to ' + folderName(dest), 'good');
-  if (problems.length) ask('Not everything was ' + (copying ? 'copied' : 'moved'), problems.join('\n'), {buttons: ['OK']});
+  if (landed.length) toast((copying ? '已复制 ' : '已移动 ') + what(landed) + '到 ' + folderName(dest), 'good');
+  if (problems.length) ask(copying ? '部分项目未能复制' : '部分项目未能移动', problems.join('\n'), {buttons: ['确定']});
   if (dest === F.cwd) { for (const p of landed) F.fresh.add(p); F.sel = new Set(landed); }
   else if (!copying) for (const p of todo) { const node = F.nodes.get(p); if (node && landed.length) node.classList.add('gone'); }
   setTimeout(() => load(F.cwd, true), dest === F.cwd ? 0 : 280);
@@ -1662,16 +1665,16 @@ async function transfer(paths, dest, copying, known = new Map()) {
 function askClash(clash, total, dest, copying, here, source) {
   const box = document.createElement('div');
   box.className = 'clash';
-  const line = (label, e, newer) => '<div><i>' + label + '</i><span>' + esc([e.dir ? 'Folder' : size(e.size), when(e.time)].filter(Boolean).join(', ')) + '</span>' + (newer ? '<span class="newer">Newer</span>' : '') + '</div>';
+  const line = (label, e, newer) => '<div><i>' + label + '</i><span>' + esc([e.dir ? '文件夹' : size(e.size), when(e.time)].filter(Boolean).join(', ')) + '</span>' + (newer ? '<span class="newer">较新</span>' : '') + '</div>';
   for (const p of clash.slice(0, 4)) {
     const old = here.get(base(p).toLowerCase()), mine = source(p) || {name: base(p), dir: old.dir, size: -1, time: 0};
     const row = document.createElement('div');
-    row.innerHTML = glyph(mine) + '<b>' + esc(base(p)) + '</b>' + line('Here', old, old.time > mine.time && mine.time > 0) + line(copying ? 'Copying' : 'Moving', mine, mine.time > old.time && old.time > 0);
+    row.innerHTML = glyph(mine) + '<b>' + esc(base(p)) + '</b>' + line('现有项目', old, old.time > mine.time && mine.time > 0) + line(copying ? '待复制项目' : '待移动项目', mine, mine.time > old.time && old.time > 0);
     box.append(row);
   }
-  if (clash.length > 4) box.insertAdjacentHTML('beforeend', '<span class="more">And ' + (clash.length - 4) + ' more</span>');
-  const title = total === 1 ? base(clash[0]) + ' is already in ' + folderName(dest) : clash.length + ' of ' + total + ' items are already in ' + folderName(dest);
-  return ask(title, null, {body: box, buttons: ['Cancel', 'Skip', 'Keep Both', 'Replace'], danger: true, left: true, warn: ''});
+  if (clash.length > 4) box.insertAdjacentHTML('beforeend', '<span class="more">另有 ' + (clash.length - 4) + ' 项</span>');
+  const title = total === 1 ? '“' + base(clash[0]) + '”已存在于 ' + folderName(dest) : clash.length + '/' + total + ' 项已存在于 ' + folderName(dest);
+  return ask(title, null, {body: box, buttons: ['取消', '跳过', '两者都保留', '替换'], danger: true, left: true, warn: ''});
 }
 
 // --- Dragging -----------------------------------------------------------------------
@@ -1698,7 +1701,7 @@ function canTake(dest, copying) { return dragging.length && !dragging.some(p => 
 function hover(el, upload) {
   if (dropOn !== el) { if (dropOn) dropOn.classList.remove('drop'); dropOn = el; if (el && el.id !== 'pane') el.classList.add('drop'); }
   $('#pane').classList.toggle('dropping', !!upload);
-  if (upload) $('#dropzone b').textContent = 'Drop to upload to ' + folderName(upload);
+  if (upload) $('#dropzone b').textContent = '松开以上传到 ' + folderName(upload);
 }
 const canUpload = () => browsing() && !document.querySelector('dialog[open]');
 addEventListener('dragover', e => {
@@ -1755,7 +1758,7 @@ function showPicture() {
   $('#vspin').hidden = false;
   img.onload = img.onerror = () => { img.classList.remove('loading'); $('#vspin').hidden = true; };
   img.src = fileUrl(path);
-  $('#vname').textContent = base(path) + (V.list.length > 1 ? ', ' + (V.at + 1) + ' of ' + V.list.length : '');
+  $('#vname').textContent = base(path) + (V.list.length > 1 ? '，第 ' + (V.at + 1) + '/' + V.list.length + ' 张' : '');
   $('#vdl').href = fileUrl(path, true);
   $('#vprev').hidden = $('#vnext').hidden = V.list.length < 2;
 }
@@ -1790,7 +1793,7 @@ async function edit(path) {
   let text;
   try {
     const r = await run(() => call('GET', fileUrl(path), undefined, {raw: true}));
-    if (!r.ok) throw new Error('Could not open ' + base(path) + '.');
+    if (!r.ok) throw new Error('无法打开 ' + base(path) + '。');
     text = await r.text();
   } catch (e) { return fail(e); }
   // A console busy with an upload may take a while; the text box does then.
@@ -1814,7 +1817,7 @@ const editorText = () => E.code ? E.code.text() : $('#etext').value;
 function editInfo() {
   const t = editorText();
   $('#editor').classList.toggle('changed', t !== E.saved);
-  $('#einfo').textContent = plural(E.code ? E.code.lines() : t.split('\n').length, 'line') + ', ' + size(new Blob([t]).size) + (t !== E.saved ? ', not saved' : '');
+  $('#einfo').textContent = plural(E.code ? E.code.lines() : t.split('\n').length, '行') + '，' + size(new Blob([t]).size) + (t !== E.saved ? '，未保存' : '');
 }
 $('#etext').addEventListener('input', editInfo);
 async function save() {
@@ -1824,12 +1827,12 @@ async function save() {
     await api('PUT', '/api/file?replace=1&path=' + enc(E.path), text, 0, {retry: true});
     E.saved = text;
     editInfo();
-    toast('Saved ' + base(E.path), 'good');
+    toast('已保存 ' + base(E.path), 'good');
     load(F.cwd, true);
-  } catch (e) { $('#eerr').textContent = e.message || 'Not saved.'; $('#eerr').hidden = false; } finally { b.classList.remove('busy'); }
+  } catch (e) { $('#eerr').textContent = e.message || '保存失败。'; $('#eerr').hidden = false; } finally { b.classList.remove('busy'); }
 }
 async function closeEditor() {
-  if (editorText() !== E.saved && await ask('Close without saving?', 'The changes to ' + base(E.path) + ' will be lost.', {buttons: ['Keep Editing', 'Close'], danger: true}) !== 1) return;
+  if (editorText() !== E.saved && await ask('不保存就关闭？', '对 ' + base(E.path) + ' 的修改将丢失。', {buttons: ['继续编辑', '关闭'], danger: true}) !== 1) return;
   $('#editor').close();
 }
 $('#esave').onclick = save;
@@ -1850,7 +1853,7 @@ async function plan(files, into = F.cwd) {
   const dirs = new Map();
   for (const f of files) dirs.set(parent(f.path), null);
   let checked = 0;
-  if (dirs.size > 3) toast('Checking ' + dirs.size + ' folders on the 3DS...');
+  if (dirs.size > 3) toast('正在检查 3DS 上的 ' + dirs.size + ' 个文件夹…');
   for (const d of dirs.keys()) {
     try {
       const j = await api('GET', '/api/list?times=0&path=' + enc(d));
@@ -1858,22 +1861,22 @@ async function plan(files, into = F.cwd) {
     } catch (e) {
       if (e.quiet) return;
       // A folder that is not there yet is made when its files go up.
-      if (S.offline || !/does not exist/.test(e.message)) return ask('Cannot upload', 'Could not check ' + d + ' on the 3DS: ' + e.message, {buttons: ['OK']});
+      if (S.offline || e.status !== 404) return ask('无法上传', '无法检查 3DS 上的文件夹 ' + d + '：' + e.message, {buttons: ['确定']});
       dirs.set(d, new Map());
     }
-    if (++checked % 20 === 0) toast('Checked ' + checked + ' of ' + dirs.size + ' folders...');
+    if (++checked % 20 === 0) toast('已检查 ' + checked + '/' + dirs.size + ' 个文件夹…');
   }
   const there = f => dirs.get(parent(f.path)), card = f => there(f).get(base(f.path));
   const blocked = files.find(f => card(f) && card(f).dir);
-  if (blocked) return ask('Cannot upload', 'A folder already has the name ' + blocked.path + '.', {buttons: ['OK']});
+  if (blocked) return ask('无法上传', '目标位置已存在同名文件夹：' + blocked.path + '。', {buttons: ['确定']});
   const clash = files.filter(f => card(f));
   let skip = new Set();
   if (clash.length) {
     const names = clash.slice(0, 5).map(f => base(f.path)).join('\n') + (clash.length > 5 ? '\nAnd ' + (clash.length - 5) + ' more' : '');
     const stop = {done: false};
-    const c = await ask(clash.length === 1 ? 'Replace this file?' : 'Replace ' + clash.length + ' files?',
+    const c = await ask(clash.length === 1 ? '替换此文件？' : '替换这 ' + clash.length + ' 个文件？',
       names,
-      {buttons: ['Cancel', 'Skip', 'Replace All', 'Replace Changed'], left: true, warn: risk(clash.map(f => f.path)), action: () => changed(clash, there, stop)});
+      {buttons: ['取消', '跳过', '全部替换', '仅替换内容不同的文件'], left: true, warn: risk(clash.map(f => f.path)), action: () => changed(clash, there, stop)});
     stop.done = true;
     if (c === null || c < 1) return;
     if (c === 1) skip = new Set(clash);
@@ -1881,11 +1884,11 @@ async function plan(files, into = F.cwd) {
     else for (const f of clash) if (c.has(f)) f.replace = true; else skip.add(f);
   }
   files = files.filter(f => !skip.has(f));
-  if (!files.length) return toast(clash.length ? 'Nothing to send: the SD card already has all of them.' : 'Nothing to send.');
+  if (!files.length) return toast(clash.length ? '无需发送：SD 卡上已存在所有文件。' : '没有可发送的文件。');
   const need = files.reduce((n, f) => n + f.file.size, 0);
-  if (F.free >= 0 && need > F.free) return ask('Not enough space', 'These need ' + size(need) + ' and the SD card has ' + size(F.free) + ' free.', {buttons: ['OK']});
+  if (F.free >= 0 && need > F.free) return ask('空间不足', '所选文件需要 ' + size(need) + '，SD 卡当前可用空间为 ' + size(F.free) + '。', {buttons: ['确定']});
   const big = files.find(f => f.file.size > 4294967295);
-  if (big) return ask('Too big for the SD card', base(big.path) + " is 4 GiB or more, which the SD card's FAT32 cannot hold.", {buttons: ['OK']});
+  if (big) return ask('文件超出 SD 卡大小限制', base(big.path) + ' 达到或超过 4 GiB，FAT32 格式的 SD 卡无法存储。', {buttons: ['确定']});
   // The console lists what arrives: each file says which drop it is part
   // of, and a folder dropped whole goes there as one row.
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6), top = into === '/' ? '/' : into + '/', folders = new Map();
@@ -1902,7 +1905,7 @@ async function plan(files, into = F.cwd) {
   });
   for (const f of files) {
     const li = document.createElement('li');
-    li.innerHTML = svg('upload') + '<div><b></b><span class="s">Waiting</span></div><div></div><div class="track"><div class="fill"></div></div>';
+    li.innerHTML = svg('upload') + '<div><b></b><span class="s">等待中</span></div><div></div><div class="track"><div class="fill"></div></div>';
     li.querySelector('b').textContent = f.path;
     Object.assign(f, {li, state: 'wait', loaded: 0});
     $('#uplist').prepend(li);
@@ -1946,12 +1949,12 @@ async function changed(clash, there, stop) {
         Promise.all(part.map(f => crcOf(f.file)))]);
       if (stop.done) throw quiet();
       const answered = part.filter(f => base(f.path) in j.hashes);
-      if (!answered.length) throw new Error('The 3DS did not check ' + base(part[0].path) + '.');
+      if (!answered.length) throw new Error('3DS 未能校验文件 ' + base(part[0].path) + '。');
       answered.forEach(f => { const h = j.hashes[base(f.path)]; if (!h || h !== mine[part.indexOf(f)]) out.add(f); });
       left = left.slice(answered.length);
       done += answered.length;
       const eta = done > 50 ? duration((performance.now() - t0) / 1e3 / done * (total - done)) : '';
-      $('#dp').textContent = 'Comparing with the SD card: ' + done + ' of ' + total + ' files' + (eta ? ', ' + eta + ' left.' : '...');
+      $('#dp').textContent = '正在与 SD 卡比较：' + done + '/' + total + ' 个文件' + (eta ? '，剩余 ' + eta : '…');
     }
   }
   return out;
@@ -1962,11 +1965,11 @@ function buttons(f) {
   const b = document.createElement('button');
   b.className = 'btn small';
   if (f.state === 'wait' || f.state === 'up') {
-    b.textContent = 'Cancel';
-    b.onclick = () => { if (f.xhr) f.xhr.abort(); else { f.state = 'off'; status(f, 'Cancelled', 'err'); buttons(f); progress(); } };
+    b.textContent = '取消';
+    b.onclick = () => { if (f.xhr) f.xhr.abort(); else { f.state = 'off'; status(f, '已取消', 'err'); buttons(f); progress(); } };
   } else if (f.state === 'failed' || f.state === 'off') {
-    b.innerHTML = svg('retry') + 'Retry';
-    b.onclick = () => { f.state = 'wait'; f.loaded = 0; status(f, 'Waiting'); f.li.className = ''; f.li.querySelector('.fill').style.width = '0'; buttons(f); run(() => send(f), 1, 'upload'); progress(); };
+    b.innerHTML = svg('retry') + '重试';
+    b.onclick = () => { f.state = 'wait'; f.loaded = 0; status(f, '等待中'); f.li.className = ''; f.li.querySelector('.fill').style.width = '0'; buttons(f); run(() => send(f), 1, 'upload'); progress(); };
   } else return;
   box.append(b);
 }
@@ -1993,14 +1996,14 @@ function progress() {
   const total = live.reduce((n, f) => n + f.file.size, 0), done = live.reduce((n, f) => n + (f.state === 'done' ? f.file.size : f.loaded), 0);
   const rate = U.ms > 1000 ? U.sent / (U.ms / 1000) : 0;
   const pct = total ? Math.floor(100 * done / total) : 0;
-  U.pill = 'Sending to the 3DS, ' + pct + '%';
+  U.pill = '正在发送到 3DS，' + pct + '%';
   const rows = left.slice(0, 3).map(f => {
     const now = f.state === 'up', share = f.file.size ? 100 * f.loaded / f.file.size : 0;
     return '<div class="row' + (now ? ' active' : '') + '"><div class="line"><b>' + esc(base(f.path)) + '</b><span>' + esc(size(f.file.size)) + '</span></div><div class="track"><div class="fill" style="width:' + share.toFixed(1) +
-      '%"></div></div><div class="line"><span>' + (now && rate ? esc(size(rate)) + '/s' : now ? 'Starting' : 'Waiting') + '</span><span>' + (now && rate ? esc(duration((f.file.size - f.loaded) / rate)) + ' left' : '') + '</span></div></div>';
+      '%"></div></div><div class="line"><span>' + (now && rate ? esc(size(rate)) + '/s' : now ? '正在开始' : '等待中') + '</span><span>' + (now && rate ? esc(duration((f.file.size - f.loaded) / rate)) + ' 后剩余' : '') + '</span></div></div>';
   }).join('');
-  const html = '<header><h2><a href="#transfers">Transfers</a></h2><button class="btn small" type="button">Stop All</button></header>' + rows +
-    (left.length > 3 ? '<span class="muted">And ' + (left.length - 3) + ' more</span>' : '');
+  const html = '<header><h2><a href="#transfers">传输任务</a></h2><button class="btn small" type="button">全部停止</button></header>' + rows +
+    (left.length > 3 ? '<span class="muted">另有 ' + (left.length - 3) + ' 项</span>' : '');
   for (const m of minis) {
     m.hidden = !onFiles() || (m.parentNode.id === 'insp') !== wide.matches;
     m.innerHTML = html;
@@ -2013,12 +2016,12 @@ async function send(f) {
   f.state = 'up';
   U.current = f;
   f.li.classList.add('active');
-  status(f, 'Starting...');
+  status(f, '正在开始…');
   buttons(f);
   progress();
   const dir = parent(f.path);
   if (dir !== F.cwd && !U.made.has(dir)) {
-    try { await call('POST', '/api/folder', {path: dir}, {retry: true}); U.made.add(dir); } catch (e) { return finish(f, 'failed', e.message || 'Not allowed', 'err'); }
+    try { await call('POST', '/api/folder', {path: dir}, {retry: true}); U.made.add(dir); } catch (e) { return finish(f, 'failed', e.message || '未获允许', 'err'); }
   }
   await new Promise(resolve => {
     const x = new XMLHttpRequest(), fill = f.li.querySelector('.fill');
@@ -2038,7 +2041,7 @@ async function send(f) {
       f.loaded = e.loaded;
       const s = (now - t0) / 1e3;
       fill.style.width = (e.total ? 100 * e.loaded / e.total : 100) + '%';
-      status(f, size(e.loaded) + ' of ' + size(e.total) + (s > 1 ? ', ' + size(e.loaded / s) + '/s' : ''));
+      status(f, size(e.loaded) + '/' + size(e.total) + (s > 1 ? '，' + size(e.loaded / s) + '/秒' : ''));
       progress();
     };
     const end = (state, text, kind) => { f.xhr = null; finish(f, state, text, kind); resolve(); };
@@ -2058,10 +2061,10 @@ async function send(f) {
           F.fresh.add(join(F.cwd, top));
           load(F.cwd, true, 0);
         }
-        end('done', 'Done, ' + size(f.file.size) + (s > 1 ? ' at ' + size(f.file.size / s) + '/s' : ''), 'ok');
+        end('done', '已完成，' + size(f.file.size) + (s > 1 ? '，速度 ' + size(f.file.size / s) + '/秒' : ''), 'ok');
       } else {
         if (x.status === 403 && j.access) gate(j.access);
-        end('failed', j.error || 'Failed (' + x.status + ')', 'err');
+        end('failed', j.error || '失败（状态码 ' + x.status + '）', 'err');
       }
     };
     x.onerror = () => {
@@ -2073,15 +2076,15 @@ async function send(f) {
         f.state = 'wait';
         f.replace = true;
         f.loaded = 0;
-        status(f, 'Trying again...');
+        status(f, '正在重试…');
         resolve();
         sleep(1500 * f.tries).then(() => run(() => send(f), 1, 'upload'));
         return;
       }
       offline(true);
-      end('failed', 'The connection to the 3DS was lost.', 'err');
+      end('failed', '与 3DS 的连接已断开。', 'err');
     };
-    x.onabort = () => end('off', 'Cancelled', 'err');
+    x.onabort = () => end('off', '已取消', 'err');
     x.send(f.file);
   });
 }
@@ -2100,7 +2103,7 @@ function finish(f, state, text, kind) {
   }
 }
 function stopAll() {
-  for (const f of U.items) if (f.state === 'wait') { f.state = 'off'; status(f, 'Cancelled', 'err'); f.li.classList.add('no'); buttons(f); }
+  for (const f of U.items) if (f.state === 'wait') { f.state = 'off'; status(f, '已取消', 'err'); f.li.classList.add('no'); buttons(f); }
   if (U.current && U.current.xhr) U.current.xhr.abort();
   progress();
 }

@@ -95,7 +95,7 @@ bool listenOn(unsigned short port, int &socketFd, unsigned short &bound,
 {
     socketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (socketFd < 0) {
-        error = "Could not open a network socket.";
+        error = "无法打开网络套接字。";
         return false;
     }
     const int on = 1;
@@ -107,7 +107,7 @@ bool listenOn(unsigned short port, int &socketFd, unsigned short &bound,
     if (bind(socketFd, reinterpret_cast<sockaddr *>(&address),
              sizeof(address)) != 0 ||
         listen(socketFd, 4) != 0) {
-        error = "Port " + std::to_string(port) + " is in use.";
+        error = "端口 " + std::to_string(port) + "已被占用。";
         closeSocket(socketFd);
         return false;
     }
@@ -259,7 +259,7 @@ void sendEditor(int client, const FileSharing &sharing,
 {
     std::string script;
     if (sharing.editorScript.empty() || !fs::readFile(sharing.editorScript, script)) {
-        sendAll(client, remote::httpResponse(404, "text/plain", "Not found\n"));
+        sendAll(client, remote::httpResponse(404, "text/plain", "未找到内容。\n"));
         return;
     }
     char tag[16];
@@ -409,22 +409,22 @@ void transferEntry(int client, const FileSharing &sharing, const std::string &lo
 {
     const std::string name = fileops::name(local);
     if (isRoot(sharing, local) || isRoot(sharing, destination)) {
-        sendAll(client, remote::jsonError(400, moving ? "The SD card itself cannot move."
-                                                      : "The SD card itself cannot be copied."));
+        sendAll(client, remote::jsonError(400, moving ? "不能移动 SD 卡本身。"
+                                                      : "不能复制 SD 卡本身。"));
         return;
     }
     if (!fileops::exists(local)) {
-        sendAll(client, remote::jsonError(404, name + " is not there any more."));
+        sendAll(client, remote::jsonError(404, name + "已不存在。"));
         return;
     }
     const std::string folder = folderOf(destination);
     if (!fs::directoryExists(folder)) {
-        sendAll(client, remote::jsonError(404, "That folder does not exist."));
+        sendAll(client, remote::jsonError(404, "该文件夹不存在。"));
         return;
     }
     const bool isFolder = fileops::isFolder(local);
     if (isFolder && fileops::isInside(destination, local)) {
-        sendAll(client, remote::jsonError(409, name + " cannot go inside itself."));
+        sendAll(client, remote::jsonError(409, name + "不能放入自身内部。"));
         return;
     }
     // FAT ignores case, so the same entry may be named either way.
@@ -444,8 +444,8 @@ void transferEntry(int client, const FileSharing &sharing, const std::string &lo
                                                  return fileops::exists(path);
                                              });
             if (destination.empty()) {
-                sendAll(client, remote::jsonError(409, "No free name was found for " +
-                                                           name + "."));
+                sendAll(client, remote::jsonError(409, "无法为 " +
+                                                           name + " 找到可用的新名称。"));
                 return;
             }
         } else if (clash == "replace" && !itself) {
@@ -461,7 +461,7 @@ void transferEntry(int client, const FileSharing &sharing, const std::string &lo
             }
         } else {
             sendAll(client, remote::jsonError(409, fileops::name(destination) +
-                                                       " is already there."));
+                                                       "已存在。"));
             return;
         }
     }
@@ -470,10 +470,10 @@ void transferEntry(int client, const FileSharing &sharing, const std::string &lo
         bytes = fileops::measure(local).bytes;
         const int64_t free = sharing.freeSpace ? sharing.freeSpace() : -1;
         if (free >= 0 && bytes > static_cast<uint64_t>(free)) {
-            sendAll(client, remote::jsonError(507, "Copying needs " + units::bytes(bytes) +
-                                                       " and " +
+            sendAll(client, remote::jsonError(507, "复制需要 " + units::bytes(bytes) +
+                                                       "，当前可用空间为 " +
                                                        units::bytes(static_cast<uint64_t>(free)) +
-                                                       " is free."));
+                                                       "。"));
             return;
         }
     }
@@ -495,7 +495,7 @@ void transferEntry(int client, const FileSharing &sharing, const std::string &lo
     if (result.status != fileops::Status::Ok) {
         sendAll(client, remote::jsonError(result.status == fileops::Status::Cancelled ? 503 : 409,
                                           result.status == fileops::Status::Cancelled
-                                              ? "Stopped on the 3DS."
+                                              ? "已在 3DS 上停止。"
                                               : result.message));
         return;
     }
@@ -507,7 +507,7 @@ bool readBody(int client, std::string &data, size_t bodyStart,
               remote::HttpRequest &request, Clock::time_point deadline)
 {
     if (request.contentLength > 64 * 1024) {
-        sendAll(client, remote::jsonError(413, "That request is too large."));
+        sendAll(client, remote::jsonError(413, "请求过大。"));
         return false;
     }
     const size_t end = bodyStart + static_cast<size_t>(request.contentLength);
@@ -531,7 +531,7 @@ void listFolder(int client, const FileSharing &sharing,
     std::vector<fs::Entry> entries =
         fs::listEntries(local, &ok, hidden, false);
     if (!ok) {
-        sendAll(client, remote::jsonError(404, "That folder does not exist."));
+        sendAll(client, remote::jsonError(404, "该文件夹不存在。"));
         return;
     }
     times = times && entries.size() <= TimedEntries;
@@ -672,7 +672,7 @@ bool readTitle(const std::string &local, Title &title, std::string &error)
         return true;
     }
     if (!filetype::hasTitleMeta(kind)) {
-        error = "This kind of file has no title.";
+        error = "此类文件没有软件信息。";
         return false;
     }
     titlemeta::Meta meta;
@@ -701,7 +701,7 @@ void sendTitle(int client, const FileSharing &sharing, const std::string &local,
     if (iconOnly) {
         const std::string bmp = remote::iconBmp(title.icon);
         if (bmp.empty()) {
-            sendAll(client, remote::jsonError(404, "It has no icon."));
+            sendAll(client, remote::jsonError(404, "没有图标。"));
             return;
         }
         // The page asks with the file's time in the address, so a changed
@@ -778,7 +778,7 @@ void sendFile(int client, const FileSharing &sharing, const std::string &from,
                      ? nullptr
                      : std::fopen(local.c_str(), "rb");
     if (file == nullptr) {
-        sendAll(client, remote::jsonError(404, "That file does not exist."));
+        sendAll(client, remote::jsonError(404, "该文件不存在。"));
         return;
     }
     const std::string name = fileops::name(local);
@@ -878,12 +878,12 @@ void receiveFile(int client, const FileSharing &sharing,
     const bool replace = remote::formValue(request.query, "replace") == "1";
     if (request.headers.count("transfer-encoding") != 0 ||
         request.headers.count("content-length") == 0) {
-        sendAll(client, remote::jsonError(411, "Send the file with its size."));
+        sendAll(client, remote::jsonError(411, "请发送包含文件大小的信息。"));
         return;
     }
     if (!fs::directoryExists(folder)) {
-        sendAll(client, remote::jsonError(404, "The folder for " + name +
-                                                   " does not exist."));
+        sendAll(client, remote::jsonError(404, "用于存放 " + name +
+                                                   " 的目标文件夹不存在。"));
         return;
     }
     // Whether local is taken is found out at the end, by the rename that
@@ -894,8 +894,8 @@ void receiveFile(int client, const FileSharing &sharing,
         const int64_t free = sharing.freeSpace();
         if (free >= 0 && total > static_cast<uint64_t>(free)) {
             sendAll(client, remote::jsonError(
-                                507, "The SD card does not have room for " +
-                                         name + "."));
+                                507, "SD 卡空间不足，无法存放 " +
+                                         name + "。"));
             return;
         }
     }
@@ -906,8 +906,8 @@ void receiveFile(int client, const FileSharing &sharing,
                              ".3dsdl-upload.part";
     FILE *file = std::fopen(part.c_str(), "wb");
     if (file == nullptr) {
-        sendAll(client, remote::jsonError(500, "Could not create " + name +
-                                                   " on the SD card."));
+        sendAll(client, remote::jsonError(500, "无法在 SD 卡上创建 " + name +
+                                                   "。"));
         return;
     }
     std::setvbuf(file, nullptr, _IONBF, 0);
@@ -916,8 +916,8 @@ void receiveFile(int client, const FileSharing &sharing,
     if (total > 0 && ftruncate(fileno(file), static_cast<off_t>(total)) != 0) {
         std::fclose(file);
         fs::removeFile(part);
-        sendAll(client, remote::jsonError(507, "The SD card does not have room for " +
-                                                   name + "."));
+        sendAll(client, remote::jsonError(507, "SD 卡空间不足，无法存放 " +
+                                                   name + "。"));
         return;
     }
 
@@ -983,14 +983,14 @@ void receiveFile(int client, const FileSharing &sharing,
 
     bool ok = written && connected;
     int status = 500;
-    std::string problem = "Could not write " + name + " to the SD card.";
+    std::string problem = "无法将 " + name + " 写入 SD 卡。";
     bool placed = false;
     if (ok && replace && total <= OverwriteBytes) {
         const Overwrite result = overwrite(part, local, total, buffer);
         placed = result == Overwrite::Done;
         if (result == Overwrite::Failed) {
             ok = false;
-            problem = "Could not replace " + name + ".";
+            problem = "无法替换 " + name + "。";
         }
     } else if (ok && replace) {
         fs::removeFile(local); // when it is there
@@ -1000,10 +1000,10 @@ void receiveFile(int client, const FileSharing &sharing,
         // Only now is it worth searching the folder to say why.
         if (fileops::isFolder(local)) {
             status = 409;
-            problem = "A folder is already called " + name + ".";
+            problem = "已有名为 " + name + " 的文件夹。";
         } else if (fileops::exists(local)) {
             status = 409;
-            problem = name + " already exists.";
+            problem = name + " 已存在。";
         }
     }
     if (!ok || placed) {
@@ -1034,7 +1034,7 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
         return false;
     }
     if (sharing.root.empty()) {
-        sendAll(client, remote::jsonError(404, "Files are not shared."));
+        sendAll(client, remote::jsonError(404, "尚未共享文件。"));
         return false;
     }
     const std::string device = deviceOf(request);
@@ -1047,8 +1047,8 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
                     403, "application/json",
                     std::string("{\"error\":") +
                         remote::jsonString(
-                            pending ? "Choose Allow on the 3DS to see its files."
-                                    : "The 3DS did not allow this device.") +
+                            pending ? "请在 3DS 上选择“允许”以查看文件。"
+                                    : "3DS 未允许此设备访问。") +
                         ",\"access\":\"" + (pending ? "pending" : "denied") +
                         "\"}"));
         return false;
@@ -1062,7 +1062,7 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
             return true;
         }
         sendAll(client,
-                remote::jsonError(400, "That is not a path on the SD card."));
+                remote::jsonError(400, "这不是 SD 卡上的有效路径。"));
         return false;
     };
 
@@ -1093,14 +1093,14 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
             sendFile(client, sharing, from, device, local,
                      remote::formValue(request.query, "download") == "1");
         } else if (isRoot(sharing, local)) {
-            sendAll(client, remote::jsonError(400, "Name the file to upload."));
+            sendAll(client, remote::jsonError(400, "请指定要上传的文件名。"));
         } else {
             receiveFile(client, sharing, from, request, data, bodyStart, local);
         }
         return false;
     }
     if (method != "POST") {
-        sendAll(client, remote::jsonError(404, "There is nothing here."));
+        sendAll(client, remote::jsonError(404, "此处没有内容。"));
         return false;
     }
     if (!readBody(client, data, bodyStart, request, deadline)) {
@@ -1114,10 +1114,10 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
         }
         const bool existed = fileops::exists(local);
         if (existed && !fileops::isFolder(local)) {
-            sendAll(client, remote::jsonError(409, "A file is already called " +
-                                                       fileops::name(local) + "."));
+            sendAll(client, remote::jsonError(409, "已有文件名为 " +
+                                                       fileops::name(local) + "。"));
         } else if (!fs::makeDirectories(local)) {
-            sendAll(client, remote::jsonError(500, "Could not create the folder."));
+            sendAll(client, remote::jsonError(500, "无法创建文件夹。"));
         } else {
             if (!existed) {
                 changed(sharing, local);
@@ -1152,7 +1152,7 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
             return false;
         }
         if (isRoot(sharing, local)) {
-            sendAll(client, remote::jsonError(400, "The SD card itself cannot be deleted."));
+            sendAll(client, remote::jsonError(400, "不能删除 SD 卡本身。"));
             return false;
         }
         if (!fileops::exists(local)) {
@@ -1197,7 +1197,7 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
             start = end + 1;
         }
         if (out.install.empty()) {
-            sendAll(client, remote::jsonError(400, "There are no CIAs to install."));
+            sendAll(client, remote::jsonError(400, "没有可安装的 CIA 文件。"));
             return false;
         }
         out.from = from;
@@ -1205,7 +1205,7 @@ bool serveApi(int client, const FileSharing &sharing, const std::string &from,
         sendJson(client, "{\"count\":" + std::to_string(out.install.size()) + "}");
         return true;
     }
-    sendAll(client, remote::jsonError(404, "There is nothing here."));
+    sendAll(client, remote::jsonError(404, "此处没有内容。"));
     return false;
 }
 
@@ -1362,7 +1362,7 @@ bool Receiver::serveWeb(int client, const std::string &from, Received &out)
     if (state != remote::Parse::Done) {
         if (state == remote::Parse::Bad) {
             sendAll(client, remote::httpResponse(400, "text/plain",
-                                                 "Bad request\n"));
+                                                 "请求无效。\n"));
         }
         closeClient(client);
         return false;
@@ -1392,10 +1392,10 @@ bool Receiver::serveWeb(int client, const std::string &from, Received &out)
         const std::string sent = remote::formValue(request.query, "sent");
         const std::string message =
             sent.empty() ? ""
-            : sent == "0" ? "No links were found in what you sent."
-            : sent == "1" ? "Sent 1 link. It is downloading on the 3DS."
-                          : "Sent " + sent +
-                                " links. They are downloading on the 3DS.";
+            : sent == "0" ? "发送的内容中没有找到链接。"
+            : sent == "1" ? "已发送 1 个链接，正在 3DS 上下载。"
+                          : "已发送" + sent +
+                                "个链接，正在 3DS 上下载。";
         sendAll(client, remote::httpResponse(200, html,
                                              remote::page(message, sent != "0")));
     } else if (request.path == "/editor.js" && request.method == "GET") {
@@ -1412,7 +1412,7 @@ bool Receiver::serveWeb(int client, const std::string &from, Received &out)
         // A device the console turned down sends nothing more until
         // Receive closes.
         if (sharing_.refuseLinks && sharing_.refuseLinks(from)) {
-            sendAll(client, remote::jsonError(403, "The 3DS did not allow this device."));
+            sendAll(client, remote::jsonError(403, "3DS 未允许此设备访问。"));
             closeClient(client);
             return false;
         }
@@ -1444,9 +1444,9 @@ bool Receiver::serveWeb(int client, const std::string &from, Received &out)
         sendAll(client, response);
     } else if (request.method != "GET" && request.method != "POST") {
         sendAll(client, remote::httpResponse(405, "text/plain",
-                                             "Method not allowed\n"));
+                                             "不允许使用此请求方法。\n"));
     } else {
-        sendAll(client, remote::httpResponse(404, "text/plain", "Not found\n"));
+        sendAll(client, remote::httpResponse(404, "text/plain", "未找到内容。\n"));
     }
     closeClient(client);
     return got;

@@ -48,7 +48,7 @@ python3 scripts/zh/extract.py --gap=4 --dirs <上游目录> <已汉化目录> > 
 
 ## 版本号
 
-`zh/VERSION_SUFFIX` 里是 `cn`，`apply.py` 把 `VERSION` 写成 `0.9.0-cn`：
+`zh/VERSION_SUFFIX` 里是 `cn-font`（自带字库的版本带这个后缀），`apply.py` 把 `VERSION` 写成 `0.9.1-cn-font`：
 **上游版本 + 语种后缀，不带序号**。上游升到 0.9.1 就是 `0.9.1-cn`，不需要手改。
 
 `scripts/version.sh` 认这个不带数字的 `cn` 标签，按预发布的最高序号 14 编码成 CIA 版本。
@@ -70,3 +70,11 @@ python3 scripts/zh/extract.py --gap=4 --dirs <上游目录> <已汉化目录> > 
 ```
 
 CI 的 `zh.yml` 会自动做这一步。
+
+## 内置字库
+
+`romfs/hanfont.bcfnt` 是神游国行主机的系统共享字库（`cbf_zh-Hans-CN`），
+取自 [dnasdw/SharedFontTool](https://github.com/dnasdw/SharedFontTool) 的分发件。
+
+`ui.cpp` 在 romfs 挂载后用它 `C2D_FontLoad`，度量与绘制都改走这份字库，所以
+主机字库没有的汉字也能显示。加载失败时回退系统字库，不会白屏。

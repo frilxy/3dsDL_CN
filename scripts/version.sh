@@ -42,12 +42,19 @@ cia_version() {
     fi
     local step=15 kind=release
     if [[ -n "${label}" ]]; then
-        if [[ ! "${label}" =~ (^|\.)([1-9][0-9]?)$ ]] || (( BASH_REMATCH[2] > 14 )); then
+        # The Chinese releases carry "cn", or "cn-font" for the build that
+        # brings its own font; neither has a step of its own, so they take
+        # the highest one a pre-release may use.
+        if [[ "${label}" == "cn" || "${label}" == "cn-font" ]]; then
+            step=14
+            kind=prerelease
+        elif [[ ! "${label}" =~ (^|\.)([1-9][0-9]?)$ ]] || (( BASH_REMATCH[2] > 14 )); then
             echo "A pre-release must end in a number from 1 to 14, like beta.1 or rc.3, found '${label}'." >&2
             return 1
+        else
+            step="${BASH_REMATCH[2]}"
+            kind=prerelease
         fi
-        step="${BASH_REMATCH[2]}"
-        kind=prerelease
     fi
     local number=$(( major * 16384 + minor * 256 + patch * 16 + step ))
     echo "$(( number >> 10 )) $(( (number >> 4) & 63 )) $(( number & 15 )) ${kind}"
