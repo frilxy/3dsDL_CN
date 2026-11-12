@@ -1,5 +1,7 @@
 #include "ui.hpp"
 
+#include "hanfont.h"
+
 #include "crash.hpp"
 #include "image.hpp"
 #include "logging.hpp"
@@ -58,6 +60,9 @@ constexpr float MaxSqueeze = 0.88f;
 C3D_Tex atlasTexture;
 bool atlasReady = false;
 bool atlasTried = false; // romfs is mounted after ui::init, so load lazily
+C3D_Tex hanTexture;
+bool hanTried = false;  // the glyph atlas is loaded the same lazy way
+bool hanReady = false;
 Tex3DS_SubTexture atlasSub[64];
 size_t atlasSubNext = 0;
 
@@ -127,6 +132,10 @@ void loadFontMetrics()
 
 float advance(uint32_t codePoint)
 {
+    if (const hanfont::Glyph *glyph = hanfont::find(codePoint)) {
+        // The atlas is drawn at 30 pixels to the line, as the system font is.
+        return glyph->advance * (30.0f / hanfont::Em);
+    }
     if (codePoint < 128 && asciiReady) {
         return asciiAdvance[codePoint];
     }
@@ -228,9 +237,16 @@ std::string withEllipsis(const std::string &value, float scale,
 }
 
 // drawText with the glyphs narrowed to squeeze of their width.
+void drawBuiltIn(const std::string &value, float x, float y, float scale,
+                 float squeeze, u32 textColor, u32 flags);
+
 void drawSqueezed(const std::string &value, float x, float y, float scale,
                   float squeeze, u32 textColor, u32 flags)
 {
+    if (hanTriedLoad()) {
+        drawBuiltIn(value, x, y, scale, squeeze, textColor, flags);
+        return;
+    }
     C2D_Text textObject;
     C2D_TextParse(&textObject, textBuffer, value.c_str());
     C2D_TextOptimize(&textObject);
@@ -682,6 +698,44 @@ void loadAtlas()
         atlasReady = true;
     }
     stbi_image_free(pixels);
+}
+
+// The baked glyphs from tools/make_hanfont.py: white, with the glyph's
+// coverage as alpha, so a tint colours it.
+void loadHanFont()
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    stbi_uc *pixels = stbi_load("romfs:/hanfont.png", &width, &height,
+                                &channels, 4);
+    if (pixels == nullptr) {
+        return;
+    }
+    if (width == hanfont::AtlasWidth && height == hanfont::AtlasHeight &&
+        makeTexture(hanTexture, static_cast<u16>(width),
+                    static_cast<u16>(height), GPU_LA8)) {
+        uint16_t *texels = static_cast<uint16_t *>(hanTexture.data);
+        for (uint32_t y = 0; y < static_cast<uint32_t>(height); ++y) {
+            for (uint32_t x = 0; x < static_cast<uint32_t>(width); ++x) {
+                texels[image::tiledIndex(x, y, static_cast<u16>(width))] =
+                    static_cast<uint16_t>(
+                        0xff00 | pixels[(y * width + x) * 4 + 3]);
+            }
+        }
+        C3D_TexFlush(&hanTexture);
+        hanReady = true;
+    }
+    stbi_image_free(pixels);
+}
+
+bool hanTriedLoad()
+{
+    if (!hanTried) {
+        hanTried = true;
+        loadHanFont();
+    }
+    return hanReady;
 }
 
 bool atlasTriedLoad()
@@ -1412,9 +1466,68 @@ std::vector<std::string> wrap(const std::string &value, float scale,
     return lines;
 }
 
+// One glyph from the baked atlas, as a tinted quad.
+void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
+               u32 color)
+{
+    const float width = static_cast<float>(hanfont::AtlasWidth);
+    const float height = static_cast<float>(hanfont::AtlasHeight);
+    const float cell = static_cast<float>(hanfont::Cell);
+    const float u0 = glyph.column * cell / width;
+    const float u1 = (glyph.column + 1) * cell / width;
+    const float v0 = 1.0f - glyph.row * cell / height;
+    const float v1 = 1.0f - (glyph.row + 1) * cell / height;
+    Tex3DS_SubTexture sub = {static_cast<u16>(cell), static_cast<u16>(cell),
+                             u0, v0, u1, v1};
+    const C2D_Image image = {&hanTexture, &sub};
+    C2D_DrawParams params = {{x, y, size, size}, {0, 0}, Depth, 0};
+    C2D_ImageTint tint;
+    tint.corners[C2D_TopLeft] = {color, 1.0f};
+    tint.corners[C2D_TopRight] = {color, 1.0f};
+    tint.corners[C2D_BotLeft] = {color, 1.0f};
+    tint.corners[C2D_BotRight] = {color, 1.0f};
+    C2D_DrawImage(image, &params, &tint);
+    useVertexColor();
+}
+
+// Text from the baked atlas, which carries every character the catalog uses
+// so Chinese shows on a console whose shared font has none. squeeze narrows
+// the glyphs, as the system font path does.
+void drawBuiltIn(const std::string &value, float x, float y, float scale,
+                 float squeeze, u32 textColor, u32 flags)
+{
+    const float k = (30.0f / hanfont::Em) * scale * TextBoost * squeeze;
+    const float size = hanfont::Cell * k;
+    if ((flags & C2D_AlignCenter) != 0) {
+        x -= textWidth(value, scale) / 2;
+    } else if ((flags & C2D_AlignRight) != 0) {
+        x -= textWidth(value, scale);
+    }
+    const float top = y - hanfont::Em * k * 0.82f;
+    float pen = x;
+    for (size_t index = 0; index < value.size();) {
+        uint32_t codePoint = 0;
+        size_t length = text::utf8SequenceLength(value, index, &codePoint);
+        if (length == 0) {
+            length = 1;
+            codePoint = 0xfffd;
+        }
+        const hanfont::Glyph *glyph = hanfont::find(codePoint);
+        if (glyph != nullptr) {
+            drawGlyph(*glyph, pen, top, size, textColor);
+            pen += glyph->advance * k;
+        }
+        index += length;
+    }
+}
+
 void drawText(const std::string &value, float x, float y, float scale,
               u32 textColor, u32 flags)
 {
+    if (hanTriedLoad()) {
+        drawBuiltIn(value, x, y, scale, 1.0f, textColor, flags);
+        return;
+    }
     C2D_Text textObject;
     C2D_TextParse(&textObject, textBuffer, value.c_str());
     C2D_TextOptimize(&textObject);
