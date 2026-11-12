@@ -36,10 +36,11 @@ EM = 26            # ideograph size in pixels
 CELL = 30
 BASELINE = 24      # from the cell's top, in pixels
 LINE_FEED = 30     # the line the screens are laid out for
-SHEET = 1024       # the console wants power-of-two textures
+SHEET = 512        # the console wants power-of-two textures
 STRIDE = CELL + 1  # libctru advances a cell plus one pixel
 COLS = SHEET // STRIDE
 ROWS = SHEET // STRIDE
+PER_SHEET = COLS * ROWS
 
 PLAIN_ASCII = range(0x20, 0x7F)
 
@@ -73,14 +74,15 @@ def main():
     font_path = sys.argv[1] if len(sys.argv) > 1 else "tools/fonts/NotoSansCJKsc-Regular.otf"
     font = ImageFont.truetype(font_path, EM)
     chars = wanted()
-    if len(chars) + 1 > COLS * ROWS:
-        sys.exit(f"{len(chars)} glyphs do not fit in {COLS}x{ROWS} cells")
+    sheets = (len(chars) + 1 + PER_SHEET - 1) // PER_SHEET
+    if sheets > 4:
+        sys.exit(f"{len(chars)} glyphs need {sheets} sheets")
 
     # Coverage as a mask, in the grey+alpha layout the app's own icon atlas
     # uploads through, so the tiling below matches what the GPU has already
     # been shown to accept. Index 0 stays blank, which is what the character
     # map points at for anything the font does not carry.
-    row_texels = [[0] * SHEET for _ in range(SHEET)]
+    row_texels = [[0] * SHEET for _ in range(SHEET * sheets)]
 
     canvas = Image.new("L", (CELL, CELL), 0)
     draw = ImageDraw.Draw(canvas)
@@ -88,7 +90,10 @@ def main():
     widths = [(0, 0, 0)]   # glyph 0: blank, no advance
 
     for index, char in enumerate(chars, start=1):
-        col, line = index % COLS, index // COLS
+        cell = index % PER_SHEET
+        sheet_of = index // PER_SHEET
+        col, line = cell % COLS, cell // COLS
+        line += sheet_of * ROWS
         x0, y0 = col * STRIDE, line * STRIDE
         canvas.paste(0, (0, 0, CELL, CELL))
         # anchor 'ls' puts the glyph's left edge at x and its baseline at y, so
@@ -105,18 +110,20 @@ def main():
 
     # Tiled copy of the sheet: two bytes a texel, the coverage in the byte the
     # GPU reads as alpha.
-    sheet = bytearray(SHEET * SHEET * 2)
-    for ty in range(SHEET // 8):
-        for tx in range(SHEET // 8):
-            tile = []
-            for y in range(8):
-                row = row_texels[ty * 8 + y]
-                for x in range(8):
-                    tile.append(row[tx * 8 + x])
-            base = (ty * (SHEET // 8) + tx) * 64 * 2
-            for n, value in enumerate(swizzle_tile(tile)):
-                sheet[base + n * 2] = value
-                sheet[base + n * 2 + 1] = 0xFF
+    tile_bytes = SHEET * SHEET * 2
+    sheet = bytearray(tile_bytes * sheets)
+    for s in range(sheets):
+        for ty in range(SHEET // 8):
+            for tx in range(SHEET // 8):
+                tile = []
+                for y in range(8):
+                    row = row_texels[s * SHEET + ty * 8 + y]
+                    for x in range(8):
+                        tile.append(row[tx * 8 + x])
+                base = s * tile_bytes + (ty * (SHEET // 8) + tx) * 64 * 2
+                for n, value in enumerate(swizzle_tile(tile)):
+                    sheet[base + n * 2] = value
+                    sheet[base + n * 2 + 1] = 0xFF
 
     # One character map over every range the glyphs use, so a lookup is a
     # subtraction rather than a scan of 730 entries per character drawn.
@@ -170,7 +177,7 @@ def main():
     out[tglp_off + 0x0A] = BASELINE        # baseline position
     out[tglp_off + 0x0B] = CELL            # max character width
     struct.pack_into("<I", out, tglp_off + 0x0C, SHEET * SHEET * 2)  # sheet bytes
-    struct.pack_into("<H", out, tglp_off + 0x10, 1)              # sheets
+    struct.pack_into("<H", out, tglp_off + 0x10, sheets)         # sheets
     struct.pack_into("<H", out, tglp_off + 0x12, 5)              # LA8
     struct.pack_into("<H", out, tglp_off + 0x14, COLS)           # glyphs a row
     struct.pack_into("<H", out, tglp_off + 0x16, ROWS)           # glyph rows
