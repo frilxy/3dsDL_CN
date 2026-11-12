@@ -56,7 +56,17 @@ constexpr const char *Ellipsis = "...";
 constexpr float TextBoost = 1.4f;
 // How big one atlas pixel is next to the system font the layout was tuned
 // for: the atlas em, scaled to the line the screens assume.
-constexpr float AtlasFit = 0.62f;
+// Filled in from the system font the screens were laid out for, so the atlas
+// glyphs take the same box the system font's would.
+float atlasFit = 0.0f;
+float fit()
+{
+    if (atlasFit == 0.0f) {
+        const u16 cell = fontGetGlyphInfo(fontGetSystemFont())->cellHeight;
+        atlasFit = (cell > 0 ? cell : 30) / static_cast<float>(hanfont::Em);
+    }
+    return atlasFit;
+}
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
@@ -142,7 +152,7 @@ void loadFontMetrics()
 float advance(uint32_t codePoint)
 {
     if (const hanfont::Glyph *glyph = hanfont::find(codePoint)) {
-        return glyph->advance * AtlasFit;
+        return glyph->advance * fit();
     }
     if (codePoint < 128 && asciiReady) {
         return asciiAdvance[codePoint];
@@ -1502,14 +1512,14 @@ void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
 void drawFromAtlas(const std::string &value, float x, float y, float scale,
                  float squeeze, u32 textColor, u32 flags)
 {
-    const float k = AtlasFit * scale * TextBoost * squeeze;
+    const float k = fit() * scale * TextBoost * squeeze;
     const float size = hanfont::Cell * k;
     if ((flags & C2D_AlignCenter) != 0) {
         x -= textWidth(value, scale) / 2;
     } else if ((flags & C2D_AlignRight) != 0) {
         x -= textWidth(value, scale);
     }
-    const float top = y;
+    const float top = y - hanfont::Em * k * 0.5f;
     // Keep the atlas quads out of a batch holding citro2d's own draws, so the
     // two never share texture state.
     C2D_Flush();
