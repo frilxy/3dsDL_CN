@@ -87,16 +87,19 @@ jobs:
       - name: Name the files after the version
         run: |
           set -eu
+          # The release is named after the version alone; the suffix only
+          # tells the two packages apart.
           version="${GITHUB_REF_NAME#v}"
+          base="${version%-cn}"
           cd dist
           for kind in cia 3dsx smdh; do
-            mv "3dsDL.${kind}" "3dsDL-${version}.${kind}"
-            mv "3dsDL-font.${kind}" "3dsDL-${version}-font.${kind}"
+            mv "3dsDL.${kind}" "3dsDL-${base}.${kind}"
+            mv "3dsDL-font.${kind}" "3dsDL-${base}-font.${kind}"
           done
-          sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
-            > "3dsDL-${version}.sha256"
-          sha256sum "3dsDL-${version}-font.cia" "3dsDL-${version}-font.3dsx" \
-            > "3dsDL-${version}-font.sha256"
+          sha256sum "3dsDL-${base}.cia" "3dsDL-${base}.3dsx" \
+            > "3dsDL-${base}.sha256"
+          sha256sum "3dsDL-${base}-font.cia" "3dsDL-${base}-font.3dsx" \
+            > "3dsDL-${base}-font.sha256"
 
       - name: Make the QR codes FBI scans
         # Each CIA's own download link, so the console installs it straight
@@ -105,13 +108,13 @@ jobs:
           set -eu
           version="${GITHUB_REF_NAME#v}"
           python3 -m pip install --quiet --disable-pip-version-check segno
-          python3 - "${version}" <<'PY'
+          python3 - "${version%-cn}" <<'PY'
           import os, sys, segno
-          version = sys.argv[1]
+          base = sys.argv[1]
           tag = os.environ["GITHUB_REF_NAME"]
           repo = os.environ["GITHUB_REPOSITORY"]
-          names = [(f"3dsDL-{version}-font", "带字库版"),
-                   (f"3dsDL-{version}", "不带字库版")]
+          names = [(f"3dsDL-{base}-font", "带字库版"),
+                   (f"3dsDL-{base}", "不带字库版")]
           header = []
           for name, label in names:
               url = (f"https://github.com/{repo}/releases/download/{tag}/"
@@ -135,5 +138,5 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
-            --title "3dsDL ${version} 简体中文版" \
+            --title "3dsDL ${version%-cn} 简体中文版" \
             --notes-file release-notes.md
