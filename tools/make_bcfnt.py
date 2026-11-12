@@ -31,8 +31,10 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 
 EM = 26            # ideograph size in pixels
-CELL = 28          # glyph box; one more than EM so descenders fit
-BASELINE = 22      # from the cell's top, in pixels
+# citro2d draws a font at 30 pixels to the line (30 / cellHeight), so a cell of
+# 30 keeps texels and screen pixels one to one and leaves the strokes clean.
+CELL = 30
+BASELINE = 24      # from the cell's top, in pixels
 LINE_FEED = 30     # the line the screens are laid out for
 SHEET = 1024       # the console wants power-of-two textures
 STRIDE = CELL + 1  # libctru advances a cell plus one pixel
