@@ -236,15 +236,19 @@ std::string withEllipsis(const std::string &value, float scale,
     return rtrimSpaces(value.substr(0, end)) + Ellipsis;
 }
 
+bool hanTriedLoad();
+void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
+               u32 color);
+
 // drawText with the glyphs narrowed to squeeze of their width.
-void drawBuiltIn(const std::string &value, float x, float y, float scale,
-                 float squeeze, u32 textColor, u32 flags);
+void drawFromAtlas(const std::string &value, float x, float y, float scale,
+                   float squeeze, u32 textColor, u32 flags);
 
 void drawSqueezed(const std::string &value, float x, float y, float scale,
                   float squeeze, u32 textColor, u32 flags)
 {
     if (hanTriedLoad()) {
-        drawBuiltIn(value, x, y, scale, squeeze, textColor, flags);
+        drawFromAtlas(value, x, y, scale, squeeze, textColor, flags);
         return;
     }
     C2D_Text textObject;
@@ -1493,7 +1497,7 @@ void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
 // Text from the baked atlas, which carries every character the catalog uses
 // so Chinese shows on a console whose shared font has none. squeeze narrows
 // the glyphs, as the system font path does.
-void drawBuiltIn(const std::string &value, float x, float y, float scale,
+void drawFromAtlas(const std::string &value, float x, float y, float scale,
                  float squeeze, u32 textColor, u32 flags)
 {
     const float k = (30.0f / hanfont::Em) * scale * TextBoost * squeeze;
@@ -1525,7 +1529,7 @@ void drawText(const std::string &value, float x, float y, float scale,
               u32 textColor, u32 flags)
 {
     if (hanTriedLoad()) {
-        drawBuiltIn(value, x, y, scale, 1.0f, textColor, flags);
+        drawFromAtlas(value, x, y, scale, 1.0f, textColor, flags);
         return;
     }
     C2D_Text textObject;
