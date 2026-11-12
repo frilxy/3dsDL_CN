@@ -104,7 +104,7 @@ def main():
             if value:
                 # A texel is 0xFF00 | coverage as the GPU reads it, which on
                 # this console lands as the coverage byte first.
-                at = tiled(x, y, SHEET) * 2
+                at = (y * SHEET + x) * 2
                 sheet[at] = value
                 sheet[at + 1] = 0xFF
 
