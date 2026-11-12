@@ -1507,7 +1507,7 @@ void drawFromAtlas(const std::string &value, float x, float y, float scale,
     } else if ((flags & C2D_AlignRight) != 0) {
         x -= textWidth(value, scale);
     }
-    const float top = y - hanfont::Em * k * 0.82f;
+    const float top = y - hanfont::Em * k * 0.35f;
     float pen = x;
     for (size_t index = 0; index < value.size();) {
         uint32_t codePoint = 0;
