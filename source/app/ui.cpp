@@ -54,6 +54,9 @@ constexpr const char *Ellipsis = "...";
 // the system applets (a tab label 9 px tall instead of 14). Every size is
 // scaled by this one factor, so measuring and drawing always agree.
 constexpr float TextBoost = 1.4f;
+// How big one atlas pixel is next to the system font the layout was tuned
+// for: the atlas em, scaled to the line the screens assume.
+constexpr float AtlasFit = 0.62f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
@@ -139,8 +142,7 @@ void loadFontMetrics()
 float advance(uint32_t codePoint)
 {
     if (const hanfont::Glyph *glyph = hanfont::find(codePoint)) {
-        // The atlas is drawn at 30 pixels to the line, as the system font is.
-        return glyph->advance * (30.0f / hanfont::Em);
+        return glyph->advance * AtlasFit;
     }
     if (codePoint < 128 && asciiReady) {
         return asciiAdvance[codePoint];
@@ -1500,14 +1502,14 @@ void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
 void drawFromAtlas(const std::string &value, float x, float y, float scale,
                  float squeeze, u32 textColor, u32 flags)
 {
-    const float k = (30.0f / hanfont::Em) * scale * TextBoost * squeeze;
+    const float k = AtlasFit * scale * TextBoost * squeeze;
     const float size = hanfont::Cell * k;
     if ((flags & C2D_AlignCenter) != 0) {
         x -= textWidth(value, scale) / 2;
     } else if ((flags & C2D_AlignRight) != 0) {
         x -= textWidth(value, scale);
     }
-    const float top = y - hanfont::Em * k * 0.35f;
+    const float top = y - hanfont::Em * k * 0.72f;
     float pen = x;
     for (size_t index = 0; index < value.size();) {
         uint32_t codePoint = 0;
