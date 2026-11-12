@@ -48,7 +48,7 @@ python3 scripts/zh/extract.py --gap=4 --dirs <上游目录> <已汉化目录> > 
 
 ## 版本号
 
-`zh/VERSION_SUFFIX` 里是 `cn-font`（自带字库的版本带这个后缀），`apply.py` 把 `VERSION` 写成 `0.9.1-cn-font`：
+`zh/VERSION_SUFFIX` 里是 `cnwithfont`（自带字库的版本带这个后缀），`apply.py` 把 `VERSION` 写成 `0.9.1-cnwithfont`：
 **上游版本 + 语种后缀，不带序号**。上游升到 0.9.1 就是 `0.9.1-cn`，不需要手改。
 
 `scripts/version.sh` 认这个不带数字的 `cn` 标签，按预发布的最高序号 14 编码成 CIA 版本。
@@ -86,5 +86,5 @@ CI 的 `zh.yml` 会自动做这一步。
 
 ## 一个发布，两个包
 
-打标签时工作流会构建两次：先带 `romfs/hanfont.bcfnt` 出 `-cn-font`（CIA 号高一步），
+打标签时工作流会构建两次：先带 `romfs/hanfont.bcfnt` 出 `-cnwithfont`（CIA 号高一步），
 再删掉字库出 `-cn`（用主机字库）。两个包进同一个 Release，按后缀区分。

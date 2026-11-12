@@ -35,7 +35,7 @@ jobs:
       - name: Build with the bundled font
         run: |
           set -eu
-          printf 'cn-font\n' > zh/VERSION_SUFFIX
+          printf 'cnwithfont\n' > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
