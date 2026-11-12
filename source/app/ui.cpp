@@ -19,6 +19,12 @@
 #include <ctime>
 
 namespace ui {
+// Drawn from the baked glyph atlas; defined below the layout helpers.
+void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
+               u32 color);
+void drawFromAtlas(const std::string &value, float x, float y, float scale,
+                   float squeeze, u32 textColor, u32 flags);
+
 namespace {
 
 constexpr float Pi = 3.14159265f;
@@ -237,12 +243,6 @@ std::string withEllipsis(const std::string &value, float scale,
 }
 
 bool hanTriedLoad();
-void drawGlyph(const hanfont::Glyph &glyph, float x, float y, float size,
-               u32 color);
-
-// drawText with the glyphs narrowed to squeeze of their width.
-void drawFromAtlas(const std::string &value, float x, float y, float scale,
-                   float squeeze, u32 textColor, u32 flags);
 
 void drawSqueezed(const std::string &value, float x, float y, float scale,
                   float squeeze, u32 textColor, u32 flags)
