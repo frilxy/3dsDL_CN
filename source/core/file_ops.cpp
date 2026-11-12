@@ -47,9 +47,9 @@ bool children(const std::string &folder, std::vector<std::string> &names)
 std::string failure(const std::string &what, const std::string &path)
 {
     const int code = errno;
-    std::string message = what + " " + name(path) + "。";
+    std::string message = what + " " + name(path) + ".";
     if (code == ENOSPC) {
-        message += "SD 卡已满。";
+        message += " The SD card is full.";
     } else if (code != 0) {
         message += std::string(" ") + std::strerror(code) + ".";
     }
@@ -63,13 +63,13 @@ Result copyFile(const std::string &source, const std::string &destination,
     std::FILE *input = std::fopen(source.c_str(), "rb");
     if (input == nullptr) {
         result.status = Status::Failed;
-        result.message = failure("无法打开", source);
+        result.message = failure("Could not open", source);
         return result;
     }
     std::FILE *output = std::fopen(destination.c_str(), "wb");
     if (output == nullptr) {
         result.status = Status::Failed;
-        result.message = failure("无法创建", destination);
+        result.message = failure("Could not create", destination);
         std::fclose(input);
         return result;
     }
@@ -86,13 +86,13 @@ Result copyFile(const std::string &source, const std::string &destination,
         if (read == 0) {
             if (std::ferror(input)) {
                 result.status = Status::Failed;
-                result.message = failure("无法读取", source);
+                result.message = failure("Could not read", source);
             }
             break;
         }
         if (std::fwrite(buffer.get(), 1, read, output) != read) {
             result.status = Status::Failed;
-            result.message = failure("无法写入", destination);
+            result.message = failure("Could not write", destination);
             break;
         }
         done += read;
@@ -102,7 +102,7 @@ Result copyFile(const std::string &source, const std::string &destination,
     std::fclose(input);
     if (std::fclose(output) != 0 && result.status == Status::Ok) {
         result.status = Status::Failed;
-        result.message = failure("无法完成写入", destination);
+        result.message = failure("Could not finish writing", destination);
     }
     if (result.status != Status::Ok) {
         std::remove(destination.c_str());
@@ -209,7 +209,7 @@ Result copy(const std::string &source, const std::string &destination,
     Result result;
     if (exists(destination)) {
         result.status = Status::Failed;
-        result.message = "已存在同名项目：" + name(destination) + "。";
+        result.message = name(destination) + " already exists.";
         return result;
     }
     if (!isFolder(source)) {
@@ -217,18 +217,18 @@ Result copy(const std::string &source, const std::string &destination,
     }
     if (isInside(destination, source)) {
         result.status = Status::Failed;
-        result.message = "不能将文件夹复制到自身内部。";
+        result.message = "A folder cannot be copied into itself.";
         return result;
     }
     if (mkdir(destination.c_str(), 0777) != 0) {
         result.status = Status::Failed;
-        result.message = failure("无法创建文件夹", destination);
+        result.message = failure("Could not create the folder", destination);
         return result;
     }
     std::vector<std::string> names;
     if (!children(source, names)) {
         result.status = Status::Failed;
-        result.message = failure("无法打开文件夹", source);
+        result.message = failure("Could not open the folder", source);
         return result;
     }
     for (const std::string &entry : names) {
@@ -257,7 +257,7 @@ Result remove(const std::string &path, Observer &observer, uint64_t &done,
         std::vector<std::string> names;
         if (!children(path, names)) {
             result.status = Status::Failed;
-            result.message = failure("无法打开文件夹", path);
+            result.message = failure("Could not open the folder", path);
             return result;
         }
         for (const std::string &entry : names) {
@@ -272,14 +272,14 @@ Result remove(const std::string &path, Observer &observer, uint64_t &done,
         }
         if (rmdir(path.c_str()) != 0) {
             result.status = Status::Failed;
-            result.message = failure("无法删除文件夹", path);
+            result.message = failure("Could not delete the folder", path);
         }
         return result;
     }
     observer.onProgress(done, total, name(path));
     if (std::remove(path.c_str()) != 0) {
         result.status = Status::Failed;
-        result.message = failure("无法删除", path);
+        result.message = failure("Could not delete", path);
         return result;
     }
     result.files = 1;
@@ -313,26 +313,26 @@ bool move(const std::string &source, const std::string &destination,
             spare = folder + ".3dsdl-rename-" + std::to_string(count);
         }
         if (std::rename(from.c_str(), spare.c_str()) != 0) {
-            error = failure("无法重命名", source);
+            error = failure("Could not rename", source);
             return false;
         }
         if (std::rename(spare.c_str(), target.c_str()) != 0) {
-            error = failure("无法重命名", source);
+            error = failure("Could not rename", source);
             std::rename(spare.c_str(), from.c_str());
             return false;
         }
         return true;
     }
     if (exists(destination)) {
-        error = "已存在同名项目：" + name(destination) + "。";
+        error = name(destination) + " already exists.";
         return false;
     }
     if (isFolder(source) && isInside(destination, source)) {
-        error = "不能将文件夹移动到自身内部。";
+        error = "A folder cannot be moved into itself.";
         return false;
     }
     if (std::rename(source.c_str(), destination.c_str()) != 0) {
-        error = failure("无法移动", source);
+        error = failure("Could not move", source);
         return false;
     }
     return true;
@@ -344,13 +344,13 @@ Result merge(const std::string &source, const std::string &destination,
     Result result;
     if (isInside(destination, source)) {
         result.status = Status::Failed;
-        result.message = "不能将文件夹合并到自身内部。";
+        result.message = "A folder cannot be merged into itself.";
         return result;
     }
     std::vector<std::string> names;
     if (!children(source, names)) {
         result.status = Status::Failed;
-        result.message = failure("无法打开文件夹", source);
+        result.message = failure("Could not open the folder", source);
         return result;
     }
     for (const std::string &entry : names) {
@@ -390,7 +390,7 @@ Result merge(const std::string &source, const std::string &destination,
     }
     if (moving && rmdir(source.c_str()) != 0) {
         result.status = Status::Failed;
-        result.message = failure("无法删除文件夹", source);
+        result.message = failure("Could not delete the folder", source);
     }
     return result;
 }
@@ -482,29 +482,29 @@ bool validName(const std::string &value, std::string &error)
 {
     const std::string trimmed = text::trim(value);
     if (trimmed.empty()) {
-        error = "名称不能为空。";
+        error = "The name is empty.";
         return false;
     }
     if (trimmed == "." || trimmed == "..") {
-        error = "不能使用“.”或“..”作为名称。";
+        error = "\".\" and \"..\" cannot be used as names.";
         return false;
     }
     if (trimmed.find_first_of("\\/:*?\"<>|") != std::string::npos) {
-        error = "名称不能包含 \\ / : * ? \" < > 或 |。";
+        error = "Names cannot contain \\ / : * ? \" < > or |.";
         return false;
     }
     for (const char character : trimmed) {
         if (static_cast<unsigned char>(character) < 0x20) {
-            error = "名称不能包含控制字符。";
+            error = "Names cannot contain control characters.";
             return false;
         }
     }
     if (trimmed.size() > 255) {
-        error = "名称过长。";
+        error = "The name is too long.";
         return false;
     }
     if (trimmed.back() == '.') {
-        error = "名称不能以点号结尾。";
+        error = "Names cannot end with a dot.";
         return false;
     }
     return true;

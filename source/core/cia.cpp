@@ -138,30 +138,31 @@ bool readInfo(const Reader &read, uint64_t fileSize, Info &info,
     Layout layout;
     if (!read(0, header, sizeof(header)) ||
         !parseLayout(header, sizeof(header), layout)) {
-        error = "这不是 CIA 文件。";
+        error = "This is not a CIA file.";
         return false;
     }
     if (fileSize > 0 && layout.metaOffset > fileSize) {
-        error = "CIA 文件不完整，可能尚未下载完成。";
+        error = "The CIA file is incomplete. It may not have finished "
+                "downloading.";
         return false;
     }
     info.contentSize = layout.contentSize;
 
     uint8_t type[4];
     if (!read(layout.tmdOffset, type, sizeof(type))) {
-        error = "无法读取 CIA 的软件元数据。";
+        error = "Could not read the CIA's title metadata.";
         return false;
     }
     const size_t signature = signatureBlockSize(be32(type));
     const size_t chunkOffset = signature + TmdHeaderSize +
                                ContentInfoRecordsSize;
     if (signature == 0 || chunkOffset + ContentChunkSize > layout.tmdSize) {
-        error = "CIA 的软件元数据已损坏。";
+        error = "The CIA's title metadata is damaged.";
         return false;
     }
     std::vector<uint8_t> tmd(chunkOffset + ContentChunkSize);
     if (!read(layout.tmdOffset, tmd.data(), tmd.size())) {
-        error = "无法读取 CIA 的软件元数据。";
+        error = "Could not read the CIA's title metadata.";
         return false;
     }
     const uint8_t *tmdHeader = tmd.data() + signature;
@@ -202,7 +203,7 @@ bool Stream::feed(uint64_t offset, const uint8_t *data, size_t size,
     // more than this before the content means something is wrong.
     constexpr uint64_t MaxPrefix = 1024 * 1024;
     if (offset != next_) {
-        error = "下载数据顺序异常。";
+        error = "The download arrived out of order.";
         return false;
     }
     next_ += size;
@@ -210,7 +211,7 @@ bool Stream::feed(uint64_t offset, const uint8_t *data, size_t size,
         prefix_.insert(prefix_.end(), data, data + size);
         if (!haveLayout_ && prefix_.size() >= 0x20) {
             if (!parseLayout(prefix_.data(), prefix_.size(), layout_)) {
-                error = "这不是 CIA 文件。";
+                error = "This is not a CIA file.";
                 return false;
             }
             haveLayout_ = true;
@@ -220,7 +221,7 @@ bool Stream::feed(uint64_t offset, const uint8_t *data, size_t size,
                                 ? layout_.contentOffset + NcchHeaderSize
                                 : layout_.tmdOffset + layout_.tmdSize;
             if (prefixNeeded_ > MaxPrefix) {
-                error = "此 CIA 的文件头异常过大。";
+                error = "This CIA's header is too large to be real.";
                 return false;
             }
         }
@@ -280,7 +281,7 @@ bool readCompressed(const Reader &file, uint64_t size, Info &info,
         return false;
     }
     if (!z3ds::holdsCia(reader.header())) {
-        error = "此压缩文件中不包含 CIA。";
+        error = "This compressed file does not hold a CIA.";
         return false;
     }
     smdh::Info upFront;
@@ -320,7 +321,7 @@ bool readInfo(const std::string &path, Info &info, std::string &error,
     std::FILE *file = std::fopen(path.c_str(), "rb");
     if (file == nullptr) {
         info = Info();
-        error = "无法打开文件。";
+        error = "Could not open the file.";
         return false;
     }
     // Reads go straight to the card, as a .zcia's are large ones.
@@ -451,21 +452,21 @@ const char *kindName(Kind value)
 {
     switch (value) {
     case Kind::Application:
-        return "游戏或应用";
+        return "Game or app";
     case Kind::Update:
-        return "更新";
+        return "Update";
     case Kind::Dlc:
-        return "追加内容（DLC）";
+        return "DLC";
     case Kind::Demo:
-        return "试玩版";
+        return "Demo";
     case Kind::DsiWare:
         return "DSiWare";
     case Kind::DownloadPlay:
-        return "下载游玩";
+        return "Download Play";
     case Kind::System:
         break;
     }
-    return "系统软件";
+    return "System title";
 }
 
 bool isSystemTitle(uint64_t titleId)

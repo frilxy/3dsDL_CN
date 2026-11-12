@@ -394,7 +394,7 @@ struct MenuItem {
 };
 int menu(const std::vector<MenuItem> &items,
          const std::function<void(int)> &drawTop,
-         const std::string &back = "返回");
+         const std::string &back = "Back");
 
 // One choice out of several, the current one drawn as chosen. Picking one
 // returns its index at once; Back returns -1.
@@ -443,7 +443,7 @@ struct ListSpec {
     std::vector<HeadingAction> headingActions;
     std::vector<ListItem> items;
     std::string emptyText;
-    std::string back = "返回";
+    std::string back = "Back";
     std::string action;    // right tab
     std::string actionKey; // its key cap
     u32 actionKeys = 0;    // keys that press it; reported as the result key

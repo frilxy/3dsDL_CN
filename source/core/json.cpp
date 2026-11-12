@@ -23,7 +23,7 @@ public:
         }
         skipSpace();
         if (position_ != text_.size()) {
-            error = "值后出现意外文本，" + at() + "。";
+            error = "Unexpected text after the value at " + at() + ".";
             return false;
         }
         return true;
@@ -35,12 +35,12 @@ private:
     size_t position_ = 0;
     std::string error_;
 
-    std::string at() const { return "偏移量 " + std::to_string(position_); }
+    std::string at() const { return "offset " + std::to_string(position_); }
 
     bool fail(const std::string &what)
     {
         if (error_.empty()) {
-            error_ = what + "（" + at() + "）。";
+            error_ = what + " at " + at() + ".";
         }
         return false;
     }
@@ -63,7 +63,7 @@ private:
     {
         for (size_t index = 0; word[index] != '\0'; ++index) {
             if (peek() != word[index]) {
-                return fail("未知单词");
+                return fail("Unknown word");
             }
             ++position_;
         }
@@ -73,7 +73,7 @@ private:
     bool value(Value &out, int depth)
     {
         if (depth > maxDepth_) {
-            return fail("嵌套层级过深");
+            return fail("Nested too deeply");
         }
         switch (peek()) {
         case '{':
@@ -111,7 +111,7 @@ private:
         while (true) {
             skipSpace();
             if (peek() != '"') {
-                return fail("应为字段名");
+                return fail("Expected a field name");
             }
             std::string key;
             if (!string(key)) {
@@ -119,7 +119,7 @@ private:
             }
             skipSpace();
             if (peek() != ':') {
-                return fail("应为“:”");
+                return fail("Expected ':'");
             }
             ++position_;
             skipSpace();
@@ -136,7 +136,7 @@ private:
                 ++position_;
                 return true;
             }
-            return fail("应为“,”或“}”");
+            return fail("Expected ',' or '}'");
         }
     }
 
@@ -164,14 +164,14 @@ private:
                 ++position_;
                 return true;
             }
-            return fail("应为“,”或“]”");
+            return fail("Expected ',' or ']'");
         }
     }
 
     bool hex4(uint32_t &out)
     {
         if (position_ + 4 > text_.size()) {
-            return fail("\\u 转义序列过短");
+            return fail("Short \\u escape");
         }
         out = 0;
         for (int index = 0; index < 4; ++index) {
@@ -184,7 +184,7 @@ private:
             } else if (c >= 'A' && c <= 'F') {
                 out |= static_cast<uint32_t>(c - 'A' + 10);
             } else {
-                return fail("\\u 转义序列无效");
+                return fail("Bad \\u escape");
             }
         }
         return true;
@@ -214,21 +214,21 @@ private:
         ++position_; // opening quote
         while (true) {
             if (atEnd()) {
-                return fail("字符串未结束");
+                return fail("Unterminated string");
             }
             const char c = text_[position_++];
             if (c == '"') {
                 return true;
             }
             if (static_cast<unsigned char>(c) < 0x20) {
-                return fail("字符串中包含控制字符");
+                return fail("Control character in a string");
             }
             if (c != '\\') {
                 out += c;
                 continue;
             }
             if (atEnd()) {
-                return fail("转义序列未结束");
+                return fail("Unterminated escape");
             }
             const char escape = text_[position_++];
             switch (escape) {
@@ -280,7 +280,7 @@ private:
                 break;
             }
             default:
-                return fail("未知转义序列");
+                return fail("Unknown escape");
             }
         }
     }
@@ -292,7 +292,7 @@ private:
             ++position_;
         }
         if (!(peek() >= '0' && peek() <= '9')) {
-            return fail("意外字符");
+            return fail("Unexpected character");
         }
         while ((peek() >= '0' && peek() <= '9') || peek() == '.' ||
                peek() == 'e' || peek() == 'E' || peek() == '+' ||
@@ -304,7 +304,7 @@ private:
         const double parsed = std::strtod(digits.c_str(), &end);
         if (end == nullptr || *end != '\0' || !std::isfinite(parsed)) {
             position_ = start;
-            return fail("数字格式无效");
+            return fail("Bad number");
         }
         out.type = Type::Number;
         out.number = parsed;

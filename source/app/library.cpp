@@ -141,7 +141,8 @@ bool titleIds(FS_MediaType media, std::vector<u64> &ids, std::string &error)
     // Without the SD card's title database AM still answers, with no
     // titles at all, rather than failing (faketik learnt this too).
     if (media == MEDIATYPE_SD && !sdDatabaseAvailable()) {
-        error = "主机当前无法读取 SD 卡上的软件列表，因此 3dsDL 无法判断哪些软件已安装。";
+        error = "The console cannot read the list of software on the SD "
+                "card right now, so 3dsDL cannot tell what is installed.";
         return false;
     }
     if (media == MEDIATYPE_SD && fault("sd-list-empty")) {
@@ -162,9 +163,9 @@ bool titleIds(FS_MediaType media, std::vector<u64> &ids, std::string &error)
     }
     if (R_FAILED(code)) {
         ids.clear();
-        error = std::string("无法读取安装在") +
-                (media == MEDIATYPE_NAND ? "系统存储中" : "SD 卡上") +
-                "的软件。" + installer::describe(code);
+        error = std::string("Could not read the software installed ") +
+                (media == MEDIATYPE_NAND ? "in system memory" : "on the SD card") +
+                ". " + installer::describe(code);
         return false;
     }
     return true;
@@ -187,7 +188,7 @@ bool ticketIds(std::vector<u64> &ids, std::string &error)
     }
     if (R_FAILED(code)) {
         ids.clear();
- error = "无法读取 ticket。" + installer::describe(code);
+        error = "Could not read the tickets. " + installer::describe(code);
         return false;
     }
     // A title can hold several tickets; deleting its ID removes them all, so
@@ -206,7 +207,7 @@ bool titlesOnSdCard(std::set<uint64_t> &out, std::string &error)
 {
     out.clear();
     if (fault("folder-scan-error")) {
-        error = "无法读取 sdmc:/Nintendo 3DS/（测试故障）。";
+        error = "Could not read sdmc:/Nintendo 3DS/ (test fault).";
         return false;
     }
     const std::string root = "sdmc:/Nintendo 3DS/";
@@ -223,7 +224,7 @@ bool titlesOnSdCard(std::set<uint64_t> &out, std::string &error)
             }
         }
         if (!ok) {
-            error = "无法读取 " + path + "。";
+            error = "Could not read " + path + ".";
         }
         return ok;
     };
@@ -264,7 +265,7 @@ bool titlesOnSdCard(std::set<uint64_t> &out, std::string &error)
                     const std::vector<fs::Entry> files =
                         fs::listEntries(content, &ok, true, false);
                     if (!ok) {
-                        error = "无法读取 " + content + "。";
+                        error = "Could not read " + content + ".";
                         return false;
                     }
                     for (const fs::Entry &file : files) {
@@ -563,7 +564,7 @@ void Loader::work()
         fail(error);
         return;
     }
-    step("额外数据");
+    step("extra data");
     if (fault("titles-abort")) {
         std::abort(); // to try crash.txt from a worker
     }
@@ -611,20 +612,20 @@ uint64_t runningTitle()
 bool deleteTitle(const titles::Title &title, bool withTicket, std::string &error)
 {
     if (!titles::isShown(title.id)) {
-        error = "不会移除系统软件。";
+        error = "System titles are never removed.";
         return false;
     }
     if (title.id == runningTitle()) {
-        error = "3dsDL 运行时无法删除自身。";
+        error = "3dsDL cannot delete itself while it is running.";
         return false;
     }
     if (title.place == titles::Place::GameCard) {
-        error = "无法删除游戏卡带中的软件。";
+        error = "Software on a game card cannot be deleted.";
         return false;
     }
     const ::Result code = AM_DeleteTitle(mediaOf(title), title.id);
     if (R_FAILED(code)) {
-        error = "无法删除。" + installer::describe(code);
+        error = "It could not be deleted. " + installer::describe(code);
         return false;
     }
     if (withTicket) {
@@ -719,8 +720,8 @@ bool checkUnusedTickets(std::vector<uint64_t> &unused, std::string &error)
         // above cannot be trusted, and nothing is deleted.
         if (installedAnywhere(id)) {
             unused.clear();
-            error = cia::titleIdText(id) + " 已安装却未出现在列表中，"
-                    "无法可靠读取已安装的软件。";
+            error = cia::titleIdText(id) + " is installed but was not listed, "
+                    "so the installed software could not be read reliably.";
             logTickets("check: stopped, " + cia::titleIdText(id) +
                        " is installed but was not listed");
             return false;
@@ -747,7 +748,7 @@ bool installTicketData(const std::string &data, std::string &error)
     Handle ticket = 0;
     ::Result code = AMNET_InstallTicketBegin(&ticket);
     if (R_FAILED(code)) {
- error = "无法开始安装 ticket。" + installer::describe(code);
+        error = "The ticket install could not start. " + installer::describe(code);
         return false;
     }
     u32 written = 0;
@@ -755,12 +756,12 @@ bool installTicketData(const std::string &data, std::string &error)
                         static_cast<u32>(data.size()), 0);
     if (R_FAILED(code)) {
         AMNET_InstallTicketAbort(ticket);
- error = "无法安装 ticket。" + installer::describe(code);
- return false;
- }
- code = AMNET_InstallTicketFinish(ticket);
- if (R_FAILED(code)) {
- error = "无法安装 ticket。" + installer::describe(code);
+        error = "The ticket could not be installed. " + installer::describe(code);
+        return false;
+    }
+    code = AMNET_InstallTicketFinish(ticket);
+    if (R_FAILED(code)) {
+        error = "The ticket could not be installed. " + installer::describe(code);
         return false;
     }
     return true;
@@ -797,11 +798,11 @@ bool deleteTicket(uint64_t titleId, std::string &error, bool *unsaved,
         *unsaved = false;
     }
     if (!titles::isShown(titleId)) {
- error = "不会移除系统 ticket。";
- return false;
- }
- if (titleId == runningTitle()) {
- error = "3dsDL 启动需要自己的 ticket。";
+        error = "System tickets are never removed.";
+        return false;
+    }
+    if (titleId == runningTitle()) {
+        error = "3dsDL needs its own ticket to start.";
         return false;
     }
     // Saved first, so a deleted ticket can always be put back. No copy, no
@@ -809,13 +810,13 @@ bool deleteTicket(uint64_t titleId, std::string &error, bool *unsaved,
     std::string backup = "nothing (test fault)";
     if (withoutBackup) {
         const TicketFacts facts = ticketFacts(titleId);
- backup = std::string("ticket ") +
- (facts.known ? std::to_string(facts.ticketId) : "未知") +
- "，版本 " + std::to_string(facts.version) +
- (facts.personal ? "，在此主机购买" : "，非在此购买");
- } else if (!fault("skip-backup") &&
- !exportTicket(titleId, DeletedTicketsFolder, backup, error)) {
- error = "ticket 已保留，因为无法先备份。" + error;
+        backup = std::string("ticket ") +
+                 (facts.known ? std::to_string(facts.ticketId) : "unknown") +
+                 ", version " + std::to_string(facts.version) +
+                 (facts.personal ? ", bought on this console" : ", not bought here");
+    } else if (!fault("skip-backup") &&
+               !exportTicket(titleId, DeletedTicketsFolder, backup, error)) {
+        error = "The ticket was kept, as it could not be saved first. " + error;
         logTickets("kept " + cia::titleIdText(titleId) + ": no backup");
         if (unsaved != nullptr) {
             *unsaved = true;
@@ -824,11 +825,11 @@ bool deleteTicket(uint64_t titleId, std::string &error, bool *unsaved,
     }
     const ::Result code = AM_DeleteTicket(titleId);
     if (R_FAILED(code)) {
- error = "无法删除 ticket。" + installer::describe(code);
- return false;
- }
- logTickets("deleted " + cia::titleIdText(titleId) +
- (withoutBackup ? "（无备份）：" : "，已备份为 ") + backup);
+        error = "The ticket could not be deleted. " + installer::describe(code);
+        return false;
+    }
+    logTickets("deleted " + cia::titleIdText(titleId) +
+               (withoutBackup ? " without a backup: " : ", saved as ") + backup);
     return true;
 }
 
@@ -868,7 +869,7 @@ bool deleteExtData(uint64_t extDataId, std::string &error)
 {
     const ::Result code = FSUSER_DeleteExtSaveData(extDataInfo(extDataId));
     if (R_FAILED(code)) {
-        error = "无法删除额外数据。" +
+        error = "The extra data could not be deleted. " +
                 installer::describe(code);
         return false;
     }
@@ -878,12 +879,12 @@ bool deleteExtData(uint64_t extDataId, std::string &error)
 bool deletePending(const PendingTitle &pending, std::string &error)
 {
     if (!titles::isShown(pending.id)) {
-        error = "不会移除系统安装项。";
+        error = "System installs are never removed.";
         return false;
     }
     const ::Result code = AM_DeletePendingTitle(pending.media, pending.id);
     if (R_FAILED(code)) {
-        error = "无法移除未完成的安装。" +
+        error = "The unfinished install could not be removed. " +
                 installer::describe(code);
         return false;
     }
@@ -897,18 +898,19 @@ bool installTicket(const std::string &path, uint64_t &titleId,
     if (!titlemeta::read(path, filetype::Kind::Ticket, meta, error) ||
         !meta.hasTitleId) {
         if (error.empty()) {
- error = "这不是 ticket 文件。";
+            error = "This is not a ticket file.";
         }
         return false;
     }
     titleId = meta.titleId;
     if (!titles::isShown(titleId)) {
- error = "此 ticket 属于系统软件，3dsDL 不会安装。";
- return false;
- }
- std::string data;
- if (!fs::readFile(path, data) || data.empty() || data.size() > 1024 * 1024) {
- error = "无法读取 ticket 文件。";
+        error = "This ticket is for a system title, which 3dsDL does not "
+                "install.";
+        return false;
+    }
+    std::string data;
+    if (!fs::readFile(path, data) || data.empty() || data.size() > 1024 * 1024) {
+        error = "The ticket file could not be read.";
         return false;
     }
     // FBI replaces a ticket that is already installed by deleting it first.
@@ -918,7 +920,8 @@ bool installTicket(const std::string &path, uint64_t &titleId,
     std::string why;
     const bool backedUp = exportTicket(titleId, ReplacedTicketsFolder, saved, why);
     if (!backedUp && hasTicket(titleId)) {
- error = "无法先备份现有 ticket，因此未作任何更改。" + why;
+        error = "The ticket there now could not be saved first, so nothing "
+                "was changed. " + why;
         return false;
     }
     AM_DeleteTicket(titleId);
@@ -940,7 +943,7 @@ bool exportTicket(uint64_t titleId, const std::string &folder,
     u32 count = 0;
     ::Result code = AMNET_GetTitleTicketIds(&count, ticketIds, 8, titleId, false);
     if (R_FAILED(code) || count == 0) {
- error = "主机未能导出此 ticket。" +
+        error = "The console did not give out this ticket. " +
                 (R_FAILED(code) ? installer::describe(code) : std::string());
         return false;
     }
@@ -950,7 +953,7 @@ bool exportTicket(uint64_t titleId, const std::string &folder,
                                      static_cast<u32>(buffer.size()), titleId,
                                      ticketIds[0]);
     if (R_FAILED(code) || size == 0 || size > buffer.size()) {
- error = "主机未能导出此 ticket。" +
+        error = "The console did not give out this ticket. " +
                 (R_FAILED(code) ? installer::describe(code) : std::string());
         return false;
     }
@@ -966,17 +969,18 @@ bool exportTicket(uint64_t titleId, const std::string &folder,
     std::string why;
     if (!titlemeta::read(reader, size, filetype::Kind::Ticket, meta, why) ||
         !meta.hasTitleId || meta.titleId != titleId) {
- error = "主机返回的内容并非此软件的 ticket。";
- return false;
- }
- if (!fs::makeDirectories(folder)) {
- error = "无法创建 " + folder + "。";
+        error = "The console gave back something that is not this title's "
+                "ticket.";
+        return false;
+    }
+    if (!fs::makeDirectories(folder)) {
+        error = "Could not create " + folder + ".";
         return false;
     }
     path = folder + cia::titleIdText(titleId) + ".tik";
     if (!fs::writeFile(path, std::string(reinterpret_cast<const char *>(buffer.data()),
                                          size))) {
-        error = "无法写入 " + path + "。";
+        error = "Could not write " + path + ".";
         return false;
     }
     return true;

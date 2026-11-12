@@ -24,7 +24,7 @@ constexpr size_t SocBufferSize = 0x100000;
 std::string failure(const char *operation, Result result)
 {
     char buffer[96];
-    std::snprintf(buffer, sizeof(buffer), "%s 失败（0x%08lX）。", operation,
+    std::snprintf(buffer, sizeof(buffer), "%s failed (0x%08lX).", operation,
                   static_cast<unsigned long>(result));
     return buffer;
 }
@@ -41,20 +41,20 @@ struct Services {
     {
         socBuffer = static_cast<u32 *>(memalign(0x1000, SocBufferSize));
         if (socBuffer == nullptr) {
-            error = "无法分配网络缓冲区。";
+            error = "Could not allocate the network buffer.";
             return false;
         }
 
         Result result = romfsInit();
         if (R_FAILED(result)) {
-            error = failure("正在打开应用文件", result);
+            error = failure("Opening the app's files", result);
             return false;
         }
         romfs = true;
 
         result = socInit(socBuffer, SocBufferSize);
         if (R_FAILED(result)) {
-            error = failure("正在启动网络服务", result);
+            error = failure("Starting the network service", result);
             return false;
         }
         soc = true;
@@ -65,7 +65,7 @@ struct Services {
         // whatever happened to be on the stack.
         result = sslcInit(0);
         if (R_FAILED(result)) {
-            error = failure("正在启动安全随机数源", result);
+            error = failure("Starting the secure random source", result);
             return false;
         }
         sslc = true;
@@ -83,7 +83,7 @@ struct Services {
 
         const CURLcode code = curl_global_init(CURL_GLOBAL_DEFAULT);
         if (code != CURLE_OK) {
-            error = std::string("启动 libcurl 失败：") +
+            error = std::string("Starting libcurl failed: ") +
                     curl_easy_strerror(code);
             return false;
         }
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
             App app;
             app.run();
         } else {
-            ui::message("启动失败", error, ui::Tone::Error);
+            ui::message("Startup failed", error, ui::Tone::Error);
             status = 1;
         }
     }

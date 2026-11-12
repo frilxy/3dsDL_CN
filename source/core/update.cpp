@@ -183,18 +183,18 @@ bool parseRelease(const std::string &text, Release &out, std::string &error)
     out = Release();
     json::Value root;
     if (!json::parse(text, root, error)) {
-        error = "无法读取版本发布信息。" + error;
+        error = "The release information could not be read. " + error;
         return false;
     }
     if (root.type != json::Type::Object) {
-        error = "返回的数据不是版本发布信息。";
+        error = "The release information was not a release.";
         return false;
     }
     out.tag = root["tag_name"].text();
     if (versionParts(out.tag).empty()) {
-        error = out.tag.empty() ? "此版本发布信息中没有版本号。"
-                                : "版本号“" + out.tag +
-                                      "”不是有效的版本号。";
+        error = out.tag.empty() ? "The release has no version."
+                                : "The release version \"" + out.tag +
+                                      "\" is not a version number.";
         return false;
     }
     out.version = out.tag;
@@ -256,21 +256,6 @@ const Asset *findAsset(const Release &release, const std::string &name)
             return &asset;
         }
     }
-    // This fork names its files after the version ("3dsDL-0.9.0-cn.2.cia"),
-    // so a file of the right kind is found by its extension as well.
-    const size_t dot = name.find_last_of('.');
-    if (dot == std::string::npos) {
-        return nullptr;
-    }
-    const std::string extension = lower(name.substr(dot));
-    for (const Asset &asset : release.assets) {
-        const std::string candidate = lower(asset.name);
-        if (candidate.size() > extension.size() &&
-            candidate.compare(candidate.size() - extension.size(),
-                              extension.size(), extension) == 0) {
-            return &asset;
-        }
-    }
     return nullptr;
 }
 
@@ -293,17 +278,7 @@ std::string checksumFor(const std::string &listing, const std::string &name)
             file.erase(0, 1);
         }
         if (file != name) {
-            // Same reason as findAsset: the fork's files carry a version
-            // before the extension, so the kind of file is enough.
-            const size_t dot = name.find_last_of('.');
-            const std::string extension =
-                dot == std::string::npos ? "" : lower(name.substr(dot));
-            const std::string candidate = lower(file);
-            if (extension.empty() || candidate.size() <= extension.size() ||
-                candidate.compare(candidate.size() - extension.size(),
-                                  extension.size(), extension) != 0) {
-                continue;
-            }
+            continue;
         }
         const std::string hash = lower(line.substr(0, 64));
         if (hash.find_first_not_of("0123456789abcdef") == std::string::npos) {

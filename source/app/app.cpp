@@ -51,32 +51,32 @@ struct Preset {
 };
 
 constexpr Preset Presets[] = {
-    {"SD 卡根目录", "sdmc:/"},
-    {"下载", "sdmc:/Downloads/"},
-    {"CIA 安装包", "sdmc:/cias/"},
-    {"自制软件", "sdmc:/3ds/"},
-    {"Luma3DS 启动载荷", "sdmc:/luma/payloads/"},
-    {"GodMode9 脚本", "sdmc:/gm9/scripts/"},
+    {"SD card root", "sdmc:/"},
+    {"Downloads", "sdmc:/Downloads/"},
+    {"CIA installers", "sdmc:/cias/"},
+    {"Homebrew apps", "sdmc:/3ds/"},
+    {"Luma3DS payloads", "sdmc:/luma/payloads/"},
+    {"GodMode9 scripts", "sdmc:/gm9/scripts/"},
 };
 
 std::string onOff(bool value)
 {
-    return value ? "开启" : "关闭";
+    return value ? "On" : "Off";
 }
 
 const char *ciaActionLabel(CiaAction action)
 {
     switch (action) {
     case CiaAction::Install:
-        return "安装";
+        return "Install";
     case CiaAction::InstallAndDelete:
-        return "安装后删除";
+        return "Install, Delete";
     case CiaAction::Keep:
-        return "保留文件";
+        return "Keep File";
     case CiaAction::Ask:
         break;
     }
-    return "询问";
+    return "Ask";
 }
 
 std::string entryName(const HistoryEntry &entry)
@@ -122,23 +122,24 @@ bool saveBeforeRemoving(const cia::Info &info, const smdh::Info &installed,
     const time_t seconds = static_cast<time_t>(platform::now());
     std::tm parts {};
     gmtime_r(&seconds, &parts); // the console clock is already local time
-    const std::string backup = saves::backupName(parts) + " 重新安装前";
+    const std::string backup = saves::backupName(parts) + " Before Reinstall";
     savedata::Progress progress;
     savedata::Result saved;
-    tasks::busy("安装", "正在备份存档：" + name + "...",
+    tasks::busy("install", "Backing up the save of " + name + "...",
                 [&]() { saved = savedata::backup(target, backup, progress); });
     if (saved.ok) {
-        note = "存档已优先备份，名称为：" + backup +
-               "，可在“软件管理 → 存档”中找到。";
+        note = "The save was backed up first, as " + backup +
+               " in Titles, Save Data.";
         return true;
     }
     ui::Dialog dialog;
-    dialog.header = "安装";
-    dialog.title = "无法备份以下软件的存档：" + name + "。替换可能导致存档丢失。";
+    dialog.header = "install";
+    dialog.title = "The save of " + name + " could not be backed up. "
+                   "Replacing may lose it.";
     dialog.tone = ui::Tone::Warning;
     dialog.icon = ui::showIcon(installed.icon);
     dialog.body.push_back({saved.message, ui::color::Text, 0.48f, 3});
-    dialog.buttons = {"仍然继续", "取消"};
+    dialog.buttons = {"Continue Anyway", "Cancel"};
     dialog.dangerous = 0;
     dialog.initial = 1;
     dialog.cancelButton = 1;
@@ -223,7 +224,7 @@ void App::run()
         case Action::EnterUrl: {
             std::string link;
             if (platform::keyboard(platform::KeyboardKind::Url,
-                                   "http:// 或 https:// 开头的文件直链",
+                                   "Direct http:// or https:// file link",
                                    "https://", link)) {
                 startDownload(link, settings_.destination);
             }
@@ -279,30 +280,30 @@ App::Action App::home()
         spec.controls.push_back(control);
     };
     // 30 tall, so the icons get their full 20 px.
-    add({16, 6, 140, 30}, "设置", ui::Icon::Gear, ui::color::IconGrey,
+    add({16, 6, 140, 30}, "Settings", ui::Icon::Gear, ui::color::IconGrey,
         false);
-    add({164, 6, 140, 30}, "下载队列", ui::Icon::Download, ui::color::IconGreen,
+    add({164, 6, 140, 30}, "Queue", ui::Icon::Download, ui::color::IconGreen,
         false);
     if (!queue_.empty()) {
         spec.controls.back().badge = std::to_string(queue_.size());
     }
     // Three across: getting links in on top, finding things below.
-    add({16, 42, 92, 78}, "扫码", ui::Icon::Scan, ui::color::IconBlue,
+    add({16, 42, 92, 78}, "Scan QR Code", ui::Icon::Scan, ui::color::IconBlue,
         true);
-    add({114, 42, 92, 78}, "输入网址", ui::Icon::Globe, ui::color::IconTeal,
+    add({114, 42, 92, 78}, "Enter URL", ui::Icon::Globe, ui::color::IconTeal,
         true);
-    add({212, 42, 92, 78}, "接收", ui::Icon::Chip, ui::color::IconPink,
+    add({212, 42, 92, 78}, "Receive", ui::Icon::Chip, ui::color::IconPink,
         true);
-    add({16, 127, 92, 76}, "下载记录", ui::Icon::History, ui::color::IconRed,
+    add({16, 127, 92, 76}, "History", ui::Icon::History, ui::color::IconRed,
         true);
-    add({114, 127, 92, 76}, "文件管理", ui::Icon::Folder, ui::color::IconOrange,
+    add({114, 127, 92, 76}, "Files", ui::Icon::Folder, ui::color::IconOrange,
         true);
-    add({212, 127, 92, 76}, "软件管理", ui::Icon::GameCard, ui::color::IconGold,
+    add({212, 127, 92, 76}, "Titles", ui::Icon::GameCard, ui::color::IconGold,
         true);
     spec.drawTop = [&]() {
         // The answer to the update check can arrive while this is open.
-        spec.controls[0].badge = updateAvailable_ ? "新版本" : "";
-        ui::nameScreen("主界面");
+        spec.controls[0].badge = updateAvailable_ ? "New" : "";
+        ui::nameScreen("Home");
         ui::drawTopBackground();
         ui::drawStatusBar();
         ui::drawDots(41);
@@ -352,8 +353,9 @@ App::Start App::startDownload(const std::string &address, std::string folder)
         return Start::Cancelled;
     }
     if (!url::isHttpUrl(link)) {
-        ui::message("不是下载链接",
-                    "3dsDL 只能下载 http:// 或 https:// 开头的直链。",
+        ui::message("Not a download link",
+                    "3dsDL can only download direct http:// or https:// "
+                    "links.",
                     ui::Tone::Error, link);
         return Start::Cancelled;
     }
@@ -366,17 +368,17 @@ App::Start App::startDownload(const std::string &address, std::string folder)
         return Start::Cancelled;
     }
     if (!fs::makeDirectories(folder)) {
-        ui::message("文件夹不可用", "无法创建：" + folder + ".",
+        ui::message("Folder unavailable", "Could not create " + folder + ".",
                     ui::Tone::Error);
         return Start::Done;
     }
 
     if (platform::wifiStatus() == platform::Wifi::Disconnected) {
         ui::Dialog dialog;
-        dialog.header = "下载";
-        dialog.title = "主机未连接到互联网。";
+        dialog.header = "Download";
+        dialog.title = "The system is not connected to the internet.";
         dialog.tone = ui::Tone::Warning;
-        dialog.buttons = {"仍然尝试", "取消"};
+        dialog.buttons = {"Try Anyway", "Cancel"};
         dialog.initial = 1;
         dialog.cancelButton = 1;
         if (ui::choose(dialog) != 0) {
@@ -402,7 +404,7 @@ App::Start App::startDownload(const std::string &address, std::string folder)
             if (result.resumable) {
                 HistoryEntry entry =
                     newEntry(link, folder, HistoryStatus::Failed);
-                entry.message = "3dsDL 关闭时任务中断。";
+                entry.message = "Interrupted when 3dsDL closed.";
                 entry.name = result.filename;
                 entry.resumable = true;
                 entry.bytes = result.bytes;
@@ -432,17 +434,17 @@ App::Start App::startDownload(const std::string &address, std::string folder)
         record(entry);
 
         ui::Dialog dialog;
-        dialog.header = "下载";
-        dialog.title = "无法完成下载。";
+        dialog.header = "Download";
+        dialog.title = "The download could not be completed.";
         dialog.tone = ui::Tone::Error;
         dialog.body.push_back({result.message, ui::color::Text, 0.5f, 4});
         if (result.resumable) {
             dialog.body.push_back({units::bytes(result.bytes) +
-                                       " 已下载并保留，可重试。",
+                                       " arrived and is kept for Retry.",
                                    ui::color::Success, 0.46f, 2});
         }
         if (result.certificateProblem) {
-            dialog.body.push_back({"主机时钟显示：" +
+            dialog.body.push_back({"The console's clock says " +
                                        units::dateTime(platform::now()) + ".",
                                    ui::color::Warning, 0.46f, 1});
         }
@@ -457,7 +459,7 @@ App::Start App::startDownload(const std::string &address, std::string folder)
                                          : result.filename;
         if (result.noSpace && installer::available() &&
             filetype::fromName(fileName) == filetype::Kind::Cia) {
-            dialog.buttons = {"直接安装", "关闭"};
+            dialog.buttons = {"Install Directly", "Close"};
             dialog.cancelButton = 1;
             if (ui::choose(dialog) == 0) {
                 installDirectly(link);
@@ -465,10 +467,10 @@ App::Start App::startDownload(const std::string &address, std::string folder)
             return Start::Done;
         }
         if (result.certificateProblem) {
-            dialog.buttons = {"检查时钟", "重试", "关闭"};
+            dialog.buttons = {"Check Clock", "Retry", "Close"};
             dialog.cancelButton = 2;
         } else {
-            dialog.buttons = {"重试", "关闭"};
+            dialog.buttons = {"Retry", "Close"};
             dialog.cancelButton = 1;
         }
         const int retryButton = result.certificateProblem ? 1 : 0;
@@ -509,27 +511,27 @@ App::Confirm App::confirmDownload(const std::string &address,
         // Download is the big button the ring starts on, so A downloads;
         // the folder is on the top screen.
         ui::ScreenSpec spec;
-        spec.back = "取消";
+        spec.back = "Cancel";
         // Plain and large, like Install on the install prompt.
         ui::Control download;
         download.rect = {26, 38, 268, 40};
-        download.label = "下载";
+        download.label = "Download";
         spec.controls.push_back(download);
         ui::Control queue;
         queue.rect = {46, 90, 228, 34};
-        queue.label = "加入下载队列";
+        queue.label = "Add to Queue";
         queue.icon = ui::Icon::Download;
         queue.iconColor = ui::color::IconGreen;
         queue.scale = ui::type::Body + 0.06f;
         spec.controls.push_back(queue);
         ui::Control change = queue;
         change.rect = {46, 136, 228, 34};
-        change.label = "更改文件夹";
+        change.label = "Change Folder";
         change.icon = ui::Icon::Folder;
         change.iconColor = ui::color::IconOrange;
         spec.controls.push_back(change);
         spec.drawTop = [&]() {
-            ui::drawTopChrome("下载", ui::Icon::Download,
+            ui::drawTopChrome("Download", ui::Icon::Download,
                               ui::color::IconGreen);
             ui::drawPanel();
             const float left = ui::TopPanel.x + 18;
@@ -540,22 +542,22 @@ App::Confirm App::confirmDownload(const std::string &address,
                                                             : name,
                             left + 40, ui::TopPanel.y + 10, 0.62f,
                             ui::color::InkStrong, 300);
-            ui::drawText("来自 " + url::host(address), left + 40,
+            ui::drawText("from " + url::host(address), left + 40,
                          ui::TopPanel.y + 36, ui::type::Small,
                          ui::color::InkSoft);
             float y = ui::drawWrapped(address, left, ui::TopPanel.y + 58,
                                       ui::type::Tiny, ui::color::InkSoft,
                                       ui::TopPanel.w - 36, 2) + 4;
-            y = ui::drawTagRow(left, y, 74, "保存到", folder);
+            y = ui::drawTagRow(left, y, 74, "Save to", folder);
             if (partial > 0) {
-                ui::drawTagRow(left, y, 74, "续传",
-                               units::bytes(partial) + " 已存在",
+                ui::drawTagRow(left, y, 74, "Resume",
+                               units::bytes(partial) + " is already here",
                                ui::color::Good);
             } else if (secure) {
-                ui::drawTagRow(left, y, 74, "HTTPS", "已加密",
+                ui::drawTagRow(left, y, 74, "HTTPS", "Encrypted",
                                ui::color::Good);
             } else {
-                ui::drawTagRow(left, y, 74, "HTTP", "未加密",
+                ui::drawTagRow(left, y, 74, "HTTP", "Not encrypted",
                                ui::color::rgb(0xD2603A));
             }
         };
@@ -589,16 +591,16 @@ void App::finishDownload(const std::string &address, const std::string &folder,
             naming::unusedPath(folder, result.filename, fs::fileExists));
 
         ui::Dialog dialog;
-        dialog.header = "下载";
-        dialog.title = "已存在同名文件。";
+        dialog.header = "Download";
+        dialog.title = "A file with this name already exists.";
         dialog.tone = ui::Tone::Warning;
-        dialog.body.push_back({result.filename + " 已存在于 " + folder +
+        dialog.body.push_back({result.filename + " is already in " + folder +
                                    ".",
                                ui::color::Text, 0.56f, 2});
-        dialog.body.push_back({"选择“两者都保留”会将新文件保存为：" + suggestion +
+        dialog.body.push_back({"Keep Both saves the new file as " + suggestion +
                                    ".",
                                ui::color::Muted, 0.46f, 3});
-        dialog.buttons = {"两者都保留", "替换", "取消"};
+        dialog.buttons = {"Keep Both", "Replace", "Cancel"};
         dialog.dangerous = 1;
         dialog.cancelButton = 2;
 
@@ -607,7 +609,7 @@ void App::finishDownload(const std::string &address, const std::string &folder,
             fs::removeFile(result.partPath);
             HistoryEntry entry =
                 newEntry(address, folder, HistoryStatus::Cancelled);
-            entry.message = "已保留现有的 " + result.filename + ".";
+            entry.message = "Kept the existing " + result.filename + ".";
             record(entry);
             return;
         }
@@ -627,8 +629,8 @@ void App::finishDownload(const std::string &address, const std::string &folder,
         speed = units::rate(static_cast<double>(result.transferred) /
                             result.seconds);
         if (result.connections > 1) {
-            speed += "，使用 " + std::to_string(result.connections) +
-                     " 个连接";
+            speed += " over " + std::to_string(result.connections) +
+                     " connections";
         }
     }
 
@@ -636,19 +638,19 @@ void App::finishDownload(const std::string &address, const std::string &folder,
     entry.path = saved.path;
     entry.name = result.filename;
     entry.message = !saved.ok       ? saved.message
-                  : speed.empty() ? "已保存"
-                                  : "保存速度：" + speed;
+                  : speed.empty() ? "Saved"
+                                  : "Saved at " + speed;
     record(entry);
 
     if (!saved.ok) {
-        ui::message("无法保存文件", saved.message,
+        ui::message("Could not save the file", saved.message,
                     ui::Tone::Error);
         return;
     }
 
     const std::string summary = saved.usedFallbackName
         ? saved.message
-        : "已保存为 " + saved.path + " (" + units::bytes(result.bytes) +
+        : "Saved as " + saved.path + " (" + units::bytes(result.bytes) +
               (speed.empty() ? "" : ", " + speed) + ").";
     if (cia::isCiaFile(saved.path)) {
         offerInstall(saved.path, address, summary);
@@ -660,7 +662,7 @@ void App::finishDownload(const std::string &address, const std::string &folder,
         offerExtraction(saved.path, folder, summary);
         return;
     }
-    ui::message("下载完成", summary, ui::Tone::Success);
+    ui::message("Download complete", summary, ui::Tone::Success);
 }
 
 void App::offerExtraction(const std::string &path, const std::string &folder,
@@ -675,14 +677,14 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         if (error.empty()) {
             // Stopped: the download still finished.
             if (!summary.empty()) {
-                ui::message("下载完成", summary, ui::Tone::Success);
+                ui::message("Download complete", summary, ui::Tone::Success);
             }
             return;
         }
-        ui::message(summary.empty() ? "无法解压" : "下载完成",
+        ui::message(summary.empty() ? "Cannot extract" : "Download complete",
                     summary.empty() ? error : summary,
                     summary.empty() ? ui::Tone::Error : ui::Tone::Success,
-                    summary.empty() ? "" : "未解压：" + error);
+                    summary.empty() ? "" : "It was not extracted: " + error);
         return;
     }
     const archives::Listing &listing = known != nullptr ? *known : read;
@@ -694,28 +696,28 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         folder + naming::safeFilename(naming::archiveStem(basename(path))) + "/";
     std::string holds = listing.format;
     if (listing.complete) {
-        holds += ", " + plural(listing.fileCount, "文件") + ", " +
+        holds += ", " + plural(listing.fileCount, "file") + ", " +
                  units::bytes(listing.totalSize);
     } else {
         holds += ", " + units::bytes(listing.archiveSize);
     }
     const std::string places =
-        single          ? "目标位置：" + folder + listing.top +
+        single          ? "Into: " + folder + listing.top +
                               (listing.topIsFolder ? "/" : "")
-        : sent != nullptr ? "目标位置：" + folder
-                          : "当前位置：" + folder + "\n新建文件夹：" + ownFolder;
+        : sent != nullptr ? "Into: " + folder
+                          : "Here: " + folder + "\nNew Folder: " + ownFolder;
 
     ui::Dialog dialog;
-    dialog.header = "解压";
+    dialog.header = "extract";
     dialog.title = title;
     dialog.tone = ui::Tone::Success;
     dialog.body.push_back({summary, ui::color::Muted, 0.44f, 3});
     dialog.body.push_back({holds + "\n" + places, ui::color::Text, 0.46f, 5});
     if (single || sent != nullptr) {
-        dialog.buttons = {"解压", "暂不处理"};
+        dialog.buttons = {"Extract", "Not Now"};
         dialog.cancelButton = 1;
     } else {
-        dialog.buttons = {"当前位置", "新建文件夹", "暂不处理"};
+        dialog.buttons = {"Here", "New Folder", "Not Now"};
         dialog.cancelButton = 2;
     }
     if (sent != nullptr && !sent->agreed) {
@@ -741,20 +743,21 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         }
         if (same != SameApp::Yes) {
             logging::warn("extract.refused",
-                          {{"文件", basename(path)},
+                          {{"file", basename(path)},
                            {"why", same == SameApp::No       ? "folder"
                                    : same == SameApp::NoRoom ? "space"
                                                              : "stopped"}});
         }
         if (same == SameApp::No) {
-            ui::message("未解压",
-                        "发送的压缩包只能添加到 /3ds/ 下存有同一应用的文件夹中。",
+            ui::message("Not Extracted",
+                        "A sent archive only adds to a folder in /3ds/ that "
+                        "holds the same app.",
                         ui::Tone::Warning, summary);
             return;
         }
         if (same == SameApp::NoRoom) {
-            ui::message("可用空间不足",
-                        "SD 卡空间不足，无法检查压缩包。",
+            ui::message("Not enough free space",
+                        "The SD card is too full to check the archive.",
                         ui::Tone::Error, summary);
             return;
         }
@@ -771,12 +774,12 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
             : listing.archiveSize;
     const int64_t available = platform::sdFreeBytes();
     if (available >= 0 && static_cast<uint64_t>(available) < needed) {
-        ui::message("可用空间不足",
-                    "解压需要 " +
-                        std::string(listing.complete ? "" : "至少 ") +
-                        units::bytes(needed) + "，但仅有 " +
+        ui::message("Not enough free space",
+                    "Extracting needs " +
+                        std::string(listing.complete ? "" : "at least ") +
+                        units::bytes(needed) + ", but only " +
                         units::bytes(static_cast<uint64_t>(available)) +
-                        " 可用。",
+                        " is free.",
                     ui::Tone::Error);
         return;
     }
@@ -798,7 +801,7 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
             };
             bool checked = false;
             if (!tasks::busy(
-                    "压缩包", "正在检查 " + target + "...",
+                    "Archive", "Checking " + target + "...",
                     [&](tasks::Busy &busy) {
                         busy.total = listing.fileCount;
                         Checking observer(busy);
@@ -849,16 +852,16 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
             }
         } else if (!clashes.empty()) {
             ui::Dialog question;
-            question.header = "解压";
+            question.header = "extract";
             question.title = clashes.size() == 1
-                                 ? "已有 1 个文件。是否替换？"
-                                 : plural(clashes.size(), "文件") +
-                                       " 已存在。是否替换？";
+                                 ? "1 file already exists. Replace it?"
+                                 : plural(clashes.size(), "file") +
+                                       " already exist. Replace them?";
             question.tone = ui::Tone::Warning;
-            question.body.push_back({"例如 " + clashes.front() +
-                                         "，位于 " + target,
+            question.body.push_back({"For example " + clashes.front() +
+                                         " in " + target,
                                      ui::color::Text, 0.46f, 3});
-            question.buttons = {"覆盖", "跳过这些文件", "取消"};
+            question.buttons = {"Overwrite", "Skip Them", "Cancel"};
             question.dangerous = 0;
             question.initial = 1;
             question.cancelButton = 2;
@@ -893,34 +896,34 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         return;
     }
     const std::string extracted =
-        plural(result.extracted, "文件") + " 已解压到 " + landed +
-        (seconds > 0 ? "，用时 " + units::duration(seconds) : "") + "。";
+        plural(result.extracted, "file") + " extracted into " + landed +
+        (seconds > 0 ? " in " + units::duration(seconds) : "") + ".";
     if (result.cancelled) {
-        ui::message("解压已停止", extracted, ui::Tone::Warning);
+        ui::message("Extraction stopped", extracted, ui::Tone::Warning);
         return;
     }
     if (!result.ok) {
-        ui::message("解压失败", result.message, ui::Tone::Error,
+        ui::message("Extraction failed", result.message, ui::Tone::Error,
                     extracted);
         return;
     }
 
     std::string notes;
     if (!result.skippedExisting.empty()) {
-        notes += plural(result.skippedExisting.size(), "现有文件") +
-                 " 未作更改。";
+        notes += plural(result.skippedExisting.size(), "existing file") +
+                 " left alone. ";
     }
     if (result.skippedUnsafe > 0) {
-        notes += plural(result.skippedUnsafe, "项目") +
-                 " 因路径会超出目标文件夹而被跳过。";
+        notes += plural(result.skippedUnsafe, "entry") +
+                 " skipped because the path would leave the folder. ";
     }
     if (result.skippedUnsupported > 0) {
-        notes += plural(result.skippedUnsupported, "项目") +
-                 " 已跳过（已加密、链接或未知压缩方式）。";
+        notes += plural(result.skippedUnsupported, "entry") +
+                 " skipped (encrypted, a link or unknown compression). ";
     }
     if (result.skippedPlaced > 0) {
-        notes += plural(result.skippedPlaced, "文件") +
-                 " 未从发送的压缩包中提取。";
+        notes += plural(result.skippedPlaced, "file") +
+                 " left out of a sent archive. ";
     }
     for (const auto &app : beside) {
         const std::string newer = target + app.second;
@@ -928,8 +931,8 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
             continue;
         }
         notes += replaceSent(newer, target + app.first, sent->host, sent->sender)
-                     ? basename(app.first) + " 已更新。"
-                     : basename(app.second) + " 已保留在以下项目旁：" +
+                     ? basename(app.first) + " updated. "
+                     : basename(app.second) + " kept beside " +
                            basename(app.first) + ". ";
     }
 
@@ -940,14 +943,14 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
     const bool offerReplace = sent == nullptr && !listing.complete &&
                               !result.skippedExisting.empty();
     ui::Dialog done;
-    done.header = "完成";
-    done.title = "压缩包已解压。";
+    done.header = "done";
+    done.title = "The archive has been extracted.";
     done.tone = ui::Tone::Success;
     done.body.push_back({extracted, ui::color::Text, 0.5f, 3});
     done.body.push_back({notes, ui::color::Muted, 0.44f, 4});
-    done.buttons = {"完成", "删除压缩包"};
+    done.buttons = {"Done", "Delete Archive"};
     if (offerReplace) {
-        done.buttons.insert(done.buttons.begin() + 1, "替换这些文件");
+        done.buttons.insert(done.buttons.begin() + 1, "Replace Them");
     }
     const int deleteButton = static_cast<int>(done.buttons.size()) - 1;
     done.dangerous = deleteButton;
@@ -957,7 +960,7 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         if (fs::removeFile(path)) {
             sdChanged(path);
         } else {
-            ui::message("无法删除压缩包", path,
+            ui::message("Could not delete the archive", path,
                         ui::Tone::Error);
         }
         return;
@@ -975,14 +978,14 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
         return;
     }
     const std::string count =
-        plural(replaced.extracted, "文件") + " 已在以下位置替换：" + landed + ".";
+        plural(replaced.extracted, "file") + " replaced in " + landed + ".";
     if (replaced.cancelled) {
-        ui::message("替换已停止", count, ui::Tone::Warning);
+        ui::message("Replacing stopped", count, ui::Tone::Warning);
     } else if (!replaced.ok) {
-        ui::message("替换失败", replaced.message, ui::Tone::Error,
+        ui::message("Replacing failed", replaced.message, ui::Tone::Error,
                     count);
     } else {
-        ui::message("文件已替换", count, ui::Tone::Success);
+        ui::message("Files replaced", count, ui::Tone::Success);
     }
 }
 
@@ -995,7 +998,7 @@ bool App::readCia(const std::string &path, cia::Info &info, std::string &error)
         return quick;
     }
     bool ok = false;
-    if (!tasks::busy("CIA 安装程序", "正在读取 " + basename(path) + "...",
+    if (!tasks::busy("CIA Installer", "Reading " + basename(path) + "...",
                      [&](tasks::Busy &busy) {
                          ok = cia::readInfo(path, info, error, false,
                                             &busy.cancel);
@@ -1014,46 +1017,46 @@ void App::offerInstall(const std::string &path, const std::string &address,
     std::string error;
     if (!readCia(path, info, error)) {
         if (error.empty()) {
-            ui::message("下载完成", summary, ui::Tone::Success);
+            ui::message("Download complete", summary, ui::Tone::Success);
         } else {
-            ui::message("下载完成", summary, ui::Tone::Success,
-                        "该文件似乎是 CIA，但无法安装：" + error);
+            ui::message("Download complete", summary, ui::Tone::Success,
+                        "It looks like a CIA but cannot be installed: " + error);
         }
         return;
     }
     if (!installer::available()) {
-        ui::message("下载完成", summary, ui::Tone::Success,
+        ui::message("Download complete", summary, ui::Tone::Success,
                     installer::unavailableReason());
         return;
     }
 
     CiaAction action = settings_.afterCiaDownload;
     if (action == CiaAction::Keep) {
-        ui::message("下载完成", summary, ui::Tone::Success);
+        ui::message("Download complete", summary, ui::Tone::Success);
         return;
     }
     if (action == CiaAction::Ask) {
         ui::ScreenSpec spec;
-        spec.back = "保留文件";
+        spec.back = "Keep File";
         ui::Control install;
         // The top screen already says what this is and whether it is
         // installed, so the buttons stand alone, centred.
         install.rect = {26, 59, 268, 38};
-        install.label = "安装";
+        install.label = "Install";
         spec.controls.push_back(install);
         ui::Control both = install;
         both.rect = {26, 110, 268, 38};
-        both.label = "安装后删除文件";
+        both.label = "Install and Delete File";
         both.scale = ui::type::Body + 0.06f;
         spec.controls.push_back(both);
         spec.drawTop = [&]() {
-            screens::drawCiaTop(info, "下载完成", ui::Icon::Download,
+            screens::drawCiaTop(info, "Download Complete", ui::Icon::Download,
                                 ui::color::IconGreen);
         };
         int focus = 0;
         const ui::ScreenResult result = ui::runScreen(spec, focus);
         if (result.choice != 0 && result.choice != 1) {
-            ui::message("文件已保留", summary, ui::Tone::Success);
+            ui::message("File Kept", summary, ui::Tone::Success);
             return;
         }
         action = result.choice == 0 ? CiaAction::Install
@@ -1078,38 +1081,38 @@ bool App::replaceRunning(const std::string &path, const cia::Info &info,
     const bool same = installed == info.version;
 
     ui::Dialog dialog;
-    dialog.header = "安装";
-    dialog.title = same ? "是否再次安装 " + name + " " + fileText + "？"
-                        : "是否将正在运行的 " + name + " " + installedText +
-                              " 替换为较旧的 " + fileText + "?";
+    dialog.header = "install";
+    dialog.title = same ? "Install " + name + " " + fileText + " again?"
+                        : "Replace the running " + name + " " + installedText +
+                              " with the older " + fileText + "?";
     dialog.tone = ui::Tone::Warning;
     dialog.icon = ui::showIcon(info.smdh.icon);
-    dialog.body.push_back({name + " 安装完成后将重新启动。", ui::color::Text,
+    dialog.body.push_back({name + " starts again once it is in.", ui::color::Text,
                            0.48f, 2});
-    dialog.buttons = {same ? "重新安装" : "替换", "取消"};
+    dialog.buttons = {same ? "Reinstall" : "Replace", "Cancel"};
     dialog.initial = 1;
     dialog.cancelButton = 1;
     if (ui::choose(dialog) != 0) {
         if (same && kept != nullptr) {
             *kept = true;
             if (why != nullptr) {
-                *why = name + " " + installedText + " 已安装，并已保留。";
+                *why = name + " " + installedText + " is already installed, and it was kept.";
             }
             return false;
         }
-        return stopped("已在 3DS 上选择取消。");
+        return stopped("Cancel was chosen on the 3DS.");
     }
     const int64_t needed = installer::requiredSpace(path, info);
     const int64_t free = platform::sdFreeBytes();
     if (needed > 0 && free >= 0 && needed > free) {
-        ui::message("空间不足",
-                    name + " 需要 " + units::bytes(static_cast<uint64_t>(needed)) +
-                        " 的 SD 卡空间，而目前仅有 " +
-                        units::bytes(static_cast<uint64_t>(free)) + " 可用。",
+        ui::message("Not enough space",
+                    name + " needs " + units::bytes(static_cast<uint64_t>(needed)) +
+                        " on the SD card and " +
+                        units::bytes(static_cast<uint64_t>(free)) + " is free.",
                     ui::Tone::Error);
-        return stopped("需要 " + units::bytes(static_cast<uint64_t>(needed)) +
-                       " 的 SD 卡空间，而目前仅有 " +
-                       units::bytes(static_cast<uint64_t>(free)) + " 可用。");
+        return stopped("It needs " + units::bytes(static_cast<uint64_t>(needed)) +
+                       " on the SD card and " +
+                       units::bytes(static_cast<uint64_t>(free)) + " is free.");
     }
 
     // AM refuses an older version, or the same one, over the installed one,
@@ -1122,11 +1125,11 @@ bool App::replaceRunning(const std::string &path, const cia::Info &info,
         installer::forgetImport(info.titleId);
         const std::string reason =
             result.versionRefused
-                ? "主机在安装着 " + installedText +
-                      " 时无法安装此版本。请通过自制软件启动器（Homebrew Launcher）启动 " + name +
-                      "，然后从那里安装。"
+                ? "The console will not take this version while " + installedText +
+                      " is installed. Start " + name +
+                      " from the Homebrew Launcher and install it from there."
                 : result.message;
-        ui::message("安装失败", reason, ui::Tone::Error, name);
+        ui::message("Install failed", reason, ui::Tone::Error, name);
         return stopped(reason);
     }
     std::string error;
@@ -1134,18 +1137,19 @@ bool App::replaceRunning(const std::string &path, const cia::Info &info,
         installer::forgetImport(info.titleId);
         logging::warn("install.replace", {{"title", cia::titleIdText(info.titleId)},
                                           {"step", "remove"}, {"message", error}});
-        const std::string reason = "正在运行的 " + name + " 无法移除。" +
-                                   error + " 未作任何更改。";
-        ui::message("未安装", reason, ui::Tone::Error);
+        const std::string reason = "The running " + name + " could not be removed. " +
+                                   error + " Nothing was changed.";
+        ui::message("Not Installed", reason, ui::Tone::Error);
         return stopped(reason);
     }
     if (!installer::commitImport(info.titleId, error)) {
         logging::error("install.replace", {{"title", cia::titleIdText(info.titleId)},
                                            {"step", "commit"}, {"message", error}});
-        const std::string reason = name + " 已移除，而 " + fileText +
-                                   " 未能安装。" + error +
-                                   " 请重新安装 " + name + " 的 CIA，可使用 FBI 或自制软件启动器（Homebrew Launcher）。";
-        ui::message("未安装", reason, ui::Tone::Error);
+        const std::string reason = name + " was removed, and " + fileText +
+                                   " did not go in. " + error +
+                                   " Install a " + name + " CIA again with FBI or "
+                                   "from the Homebrew Launcher.";
+        ui::message("Not Installed", reason, ui::Tone::Error);
         return stopped(reason);
     }
     logging::info("install.replace", {{"title", cia::titleIdText(info.titleId)},
@@ -1154,11 +1158,11 @@ bool App::replaceRunning(const std::string &path, const cia::Info &info,
         sdChanged(path);
     }
     ui::Dialog done;
-    done.header = "安装";
-    done.title = name + " " + fileText + " 已安装。";
+    done.header = "install";
+    done.title = name + " " + fileText + " is installed.";
     done.tone = ui::Tone::Success;
     done.icon = ui::showIcon(info.smdh.icon);
-    done.buttons = {"重新启动"};
+    done.buttons = {"Restart"};
     ui::choose(done);
     // Closing with the chainloader set starts the version just put in.
     aptSetChainloaderToSelf();
@@ -1182,30 +1186,32 @@ bool App::installCia(const std::string &path, const cia::Info &info,
     };
     const std::string name = ciaName(info);
     if (!installer::available()) {
-        ui::message("无法安装", installer::unavailableReason(),
+        ui::message("Cannot install", installer::unavailableReason(),
                     ui::Tone::Error);
         return stopped(installer::unavailableReason());
     }
     if (cia::isSystemTitle(info.titleId)) {
-        ui::message("未安装",
-                    "3dsDL 不安装系统软件。损坏的系统软件可能导致主机无法启动。",
+        ui::message("Not installed",
+                    "3dsDL does not install system titles. A broken one can "
+                    "stop the console from starting.",
                     ui::Tone::Error, cia::titleIdText(info.titleId));
-        return stopped("3dsDL 不安装系统软件。");
+        return stopped("3dsDL does not install system titles.");
     }
 
     bool isNew3ds = false;
     APT_CheckNew3DS(&isNew3ds);
     if (cia::isNew3dsOnly(info.titleId) && !isNew3ds) {
         ui::Dialog dialog;
-        dialog.header = "安装";
-        dialog.title = name + " 只能在 New Nintendo 3DS 主机上启动。";
+        dialog.header = "install";
+        dialog.title = name + " only starts on New Nintendo 3DS systems.";
         dialog.tone = ui::Tone::Warning;
         dialog.icon = ui::showIcon(info.smdh.icon);
-        dialog.buttons = {"仍然安装", "取消"};
+        dialog.buttons = {"Install Anyway", "Cancel"};
         dialog.initial = 1;
         dialog.cancelButton = 1;
         if (ui::choose(dialog) != 0) {
-            return stopped("该软件只能在 New Nintendo 3DS 主机上启动，且已在 3DS 上选择取消。");
+            return stopped("It only starts on New Nintendo 3DS systems, and "
+                           "Cancel was chosen on the 3DS.");
         }
     }
 
@@ -1239,19 +1245,19 @@ bool App::installCia(const std::string &path, const cia::Info &info,
             return otherSoftware ? software + ", " + number : number;
         };
         ui::Dialog dialog;
-        dialog.header = "安装";
+        dialog.header = "install";
         dialog.title = title;
         dialog.tone = sameVersion ? ui::Tone::Info : ui::Tone::Warning;
         dialog.icon = ui::showIcon(current.icon);
-        dialog.body.push_back({"已安装：" + named(currentName, installed) +
-                                   "\n此文件：" + named(name, info.version),
+        dialog.body.push_back({"Installed: " + named(currentName, installed) +
+                                   "\nThis file: " + named(name, info.version),
                                ui::color::Text, 0.48f,
                                static_cast<size_t>(otherSoftware ? 4 : 2)});
         if (sameVersion) {
-            dialog.buttons = {"重新安装", "保留已安装版本"};
+            dialog.buttons = {"Reinstall", "Keep Installed"};
             dialog.initial = 0;
         } else {
-            dialog.buttons = {"替换", "取消"};
+            dialog.buttons = {"Replace", "Cancel"};
             dialog.dangerous = 0;
             dialog.initial = 1;
         }
@@ -1267,9 +1273,9 @@ bool App::installCia(const std::string &path, const cia::Info &info,
     const std::string installedText = screens::titleVersion(info.titleId, installed);
     const std::string fileText = screens::titleVersion(info.titleId, info.version);
     if (otherSoftware && !isRunning) {
-        if (!confirmReplace("替换 " + currentName + "?")) {
-            return stopped("将替换 " + currentName +
-                           "，且已在 3DS 上选择取消。");
+        if (!confirmReplace("Replace " + currentName + "?")) {
+            return stopped("It would replace " + currentName +
+                           ", and Cancel was chosen on the 3DS.");
         }
         // AM takes a newer version in its place. The same or an older one
         // has to be removed first.
@@ -1286,21 +1292,21 @@ bool App::installCia(const std::string &path, const cia::Info &info,
             }
             return replaced || kept;
         } else {
-            reinstall = confirmReplace("以下软件的此版本：" + name +
-                                           " 已安装",
+            reinstall = confirmReplace("This version of " + name +
+                                           " is already installed",
                                        true);
         }
         if (!reinstall) {
             // The file stays even after Install and Delete: nothing went in.
             if (!address.empty()) {
-                markInstalled(address, path, "已安装");
+                markInstalled(address, path, "Already installed");
             }
             if (alreadyInstalled != nullptr) {
                 *alreadyInstalled = true;
             }
             if (why != nullptr) {
-                *why = name + " " + installedText + " 已安装" +
-                       (isRunning ? " 且正在运行。" : "，且已保留。");
+                *why = name + " " + installedText + " is already installed" +
+                       (isRunning ? " and running." : ", and it was kept.");
             }
             return true;
         }
@@ -1309,10 +1315,10 @@ bool App::installCia(const std::string &path, const cia::Info &info,
         if (isRunning) {
             return replaceRunning(path, info, installed, deleteAfter, why);
         }
-        if (!confirmReplace("以下软件的较新版本：" + name +
-                            " 已安装")) {
-            return stopped("较新的 " + name + " " + installedText +
-                           " 已安装，且已在 3DS 上选择取消。");
+        if (!confirmReplace("A newer version of " + name +
+                            " is installed")) {
+            return stopped("A newer " + name + " " + installedText +
+                           " is installed, and Cancel was chosen on the 3DS.");
         }
         removeFirst = true;
     }
@@ -1321,16 +1327,16 @@ bool App::installCia(const std::string &path, const cia::Info &info,
         const int64_t needed = installer::requiredSpace(path, info);
         const int64_t free = platform::sdFreeBytes();
         if (needed > 0 && free >= 0 && needed > free) {
-            ui::message("空间不足",
-                        name + " 需要 " +
+            ui::message("Not enough space",
+                        name + " needs " +
                             units::bytes(static_cast<uint64_t>(needed)) +
-                            " 的 SD 卡空间，而目前仅有 " +
+                            " on the SD card and " +
                             units::bytes(static_cast<uint64_t>(free)) +
-                            " 可用。",
+                            " is free.",
                         ui::Tone::Error);
-            return stopped("需要 " + units::bytes(static_cast<uint64_t>(needed)) +
-                           " 的 SD 卡空间，而目前仅有 " +
-                           units::bytes(static_cast<uint64_t>(free)) + " 可用。");
+            return stopped("It needs " + units::bytes(static_cast<uint64_t>(needed)) +
+                           " on the SD card and " +
+                           units::bytes(static_cast<uint64_t>(free)) + " is free.");
         }
     }
 
@@ -1341,17 +1347,17 @@ bool App::installCia(const std::string &path, const cia::Info &info,
         if (removeFirst && !saveKept) {
             if (!saveBeforeRemoving(info, current, currentName, installed,
                                     saveNote)) {
-                return stopped("已安装的 " + currentName +
-                               " 已保留，因为其存档未能备份。");
+                return stopped("The installed " + currentName +
+                               " was kept, as its save data was not backed up.");
             }
             saveKept = true;
         }
         if (removeFirst) {
             std::string error;
             if (!installer::removeTitle(info.titleId, error)) {
-                ui::message("无法替换 " + currentName, error,
+                ui::message("Could not replace " + currentName, error,
                             ui::Tone::Error);
-                return stopped("无法移除已安装的 " + currentName +
+                return stopped("Could not remove the installed " + currentName +
                                ": " + error);
             }
         }
@@ -1360,7 +1366,7 @@ bool App::installCia(const std::string &path, const cia::Info &info,
             result.versionRefused && isInstalled && !removeFirst &&
             !isRunning &&
             ui::keepRunning() &&
-            confirmReplace(currentName + " 已安装")) {
+            confirmReplace(currentName + " is already installed")) {
             removeFirst = true;
             continue;
         }
@@ -1372,15 +1378,15 @@ bool App::installCia(const std::string &path, const cia::Info &info,
 
     if (result.outcome == installer::Outcome::Cancelled) {
         if (ui::keepRunning()) {
-            ui::message("安装已取消", result.message);
+            ui::message("Install cancelled", result.message);
         }
-        return stopped("已在 3DS 上停止安装。");
+        return stopped("The install was stopped on the 3DS.");
     }
     if (result.outcome != installer::Outcome::Installed) {
         if (!address.empty()) {
-            markInstalled(address, path, "安装失败：" + result.message);
+            markInstalled(address, path, "Install failed: " + result.message);
         }
-        ui::message("安装失败", result.message, ui::Tone::Error,
+        ui::message("Install failed", result.message, ui::Tone::Error,
                     name);
         return stopped(result.message);
     }
@@ -1389,7 +1395,7 @@ bool App::installCia(const std::string &path, const cia::Info &info,
     if (info.seed != cia::Seed::NotNeeded) {
         std::string seedMessage;
         bool added = false;
- tasks::busy("正在安装", "正在获取 " + name + " 所需的 seed……",
+        tasks::busy("installing", "Getting the seed " + name + " needs...",
                     [&](tasks::Busy &busy) {
                         added = installer::installSeed(
                             info.titleId, seedMessage, &busy.cancel);
@@ -1407,16 +1413,16 @@ bool App::installCia(const std::string &path, const cia::Info &info,
     if (!saveNote.empty()) {
         notes.push_back({saveNote, ui::color::Muted, 0.42f, 3});
     }
-    std::string where = "CIA 文件仍位于 " + path + ".";
+    std::string where = "The CIA file is still at " + path + ".";
     if (deleteAfter) {
-        where = fs::removeFile(path) ? "CIA 文件已删除。"
-                                     : "无法删除 CIA 文件。";
+        where = fs::removeFile(path) ? "The CIA file was deleted."
+                                     : "The CIA file could not be deleted.";
         sdChanged(path);
     }
     notes.push_back({where, ui::color::Muted, 0.42f, 2});
     if (!address.empty()) {
         markInstalled(address, path,
-                      deleteAfter ? "已安装，文件已删除" : "已安装");
+                      deleteAfter ? "Installed, file deleted" : "Installed");
     }
 
     if (quiet) {
@@ -1433,8 +1439,8 @@ bool App::installCia(const std::string &path, const cia::Info &info,
          installer::installedVersion(launchId, unused));
 
     ui::Dialog dialog;
-    dialog.header = "安装完成";
-    dialog.title = name + " 已安装。";
+    dialog.header = "Installation Complete";
+    dialog.title = name + " has been installed.";
     dialog.tone = ui::Tone::Success;
     dialog.icon = ui::showIcon(info.smdh.icon);
     dialog.body.push_back({name, ui::color::Text, 0.5f, 1});
@@ -1443,22 +1449,22 @@ bool App::installCia(const std::string &path, const cia::Info &info,
              screens::titleVersion(info.titleId, info.version) + ", " +
              units::bytes(result.bytes) +
              (result.seconds > 0.5
-                  ? "，安装耗时 " + units::duration(static_cast<int64_t>(
+                  ? ", installed in " + units::duration(static_cast<int64_t>(
                                             result.seconds + 0.5))
                   : ""),
          ui::color::Muted, 0.46f, 2});
     dialog.body.insert(dialog.body.end(), notes.begin(), notes.end());
     if (canLaunch) {
-        dialog.buttons = {"关闭", "启动"};
+        dialog.buttons = {"Close", "Launch"};
         dialog.initial = 1;
         dialog.cancelButton = 0;
     } else {
-        dialog.buttons = {"关闭"};
+        dialog.buttons = {"Close"};
     }
     if (ui::choose(dialog) == 1 && canLaunch) {
         std::string error;
         if (!installer::launch(launchId, error)) {
-            ui::message("无法启动", error, ui::Tone::Error);
+            ui::message("Could Not Launch", error, ui::Tone::Error);
         }
     }
     return true;
@@ -1469,7 +1475,7 @@ void App::markInstalled(const std::string &address, const std::string &path,
 {
     for (HistoryEntry &entry : history_) {
         if (entry.url == address && entry.path == path) {
-            if (message.compare(0, 9, "已安装") == 0) {
+            if (message.compare(0, 9, "Installed") == 0) {
                 entry.status = HistoryStatus::Installed;
             }
             entry.message = message;
@@ -1496,15 +1502,15 @@ bool App::chooseFolder(std::string &folder)
     while (ui::keepRunning()) {
         std::vector<std::string> paths = {"", ""};
         ui::ListSpec spec;
-        spec.title = "下载文件夹";
+        spec.title = "Download Folder";
         ui::ListItem browse;
-        browse.label = "浏览 SD 卡……";
+        browse.label = "Browse the SD Card...";
         browse.labelColor = ui::color::Accent;
         browse.icon = ui::Icon::Folder;
         browse.iconColor = ui::color::IconOrange;
         spec.items.push_back(browse);
         ui::ListItem type;
-        type.label = "输入文件夹路径……";
+        type.label = "Type a Folder...";
         type.labelColor = ui::color::Accent;
         type.icon = ui::Icon::Text;
         spec.items.push_back(type);
@@ -1515,7 +1521,7 @@ bool App::chooseFolder(std::string &folder)
             item.label = label;
             item.detail = path;
             if (!fs::directoryExists(path)) {
-                item.badge = "新建";
+                item.badge = "New";
                 item.badgeColor = ui::color::Tag;
             }
             spec.items.push_back(item);
@@ -1531,17 +1537,17 @@ bool App::chooseFolder(std::string &folder)
             if (std::find(paths.begin(), paths.end(), entry.folder) ==
                     paths.end() &&
                 fs::directoryExists(entry.folder)) {
-                addFolder("最近使用", entry.folder);
+                addFolder("Recent", entry.folder);
             }
         }
 
         spec.drawTop = [&](int index) {
-            ui::drawTopChrome("下载文件夹", ui::Icon::Folder,
+            ui::drawTopChrome("Download Folder", ui::Icon::Folder,
                               ui::color::IconOrange);
             ui::drawPanel();
-            std::vector<ui::Fact> facts = {{"当前", folder}};
+            std::vector<ui::Fact> facts = {{"Now", folder}};
             if (index >= 2) {
-                facts.push_back({"已选中", paths[index], ui::color::Good});
+                facts.push_back({"Selected", paths[index], ui::color::Good});
             }
             ui::drawFacts(facts);
         };
@@ -1567,7 +1573,7 @@ bool App::chooseFolder(std::string &folder)
         }
         const std::string &path = paths[result.index];
         if (!fs::makeDirectories(path)) {
-            ui::message("文件夹不可用", "无法创建：" + path + ".",
+            ui::message("Folder Unavailable", "Could not create " + path + ".",
                         ui::Tone::Error);
             continue;
         }
@@ -1589,15 +1595,15 @@ bool App::browseFolders(std::string &folder)
         const bool atRoot = naming::parentFolder(current) == current;
 
         ui::ListSpec spec;
-        spec.title = "选择文件夹";
+        spec.title = "Choose a Folder";
         spec.heading = current;
-        spec.back = atRoot ? "取消" : "返回";
-        spec.action = "使用此文件夹";
+        spec.back = atRoot ? "Cancel" : "Back";
+        spec.action = "Use This";
         spec.actionKey = "Y";
         spec.actionKeys = KEY_Y;
         spec.extraKeys = KEY_X;
         ui::ListItem make;
-        make.label = "新建文件夹……";
+        make.label = "New Folder...";
         make.labelColor = ui::color::Accent;
         make.icon = ui::Icon::Folder;
         make.iconColor = ui::color::IconGreen;
@@ -1610,12 +1616,12 @@ bool App::browseFolders(std::string &folder)
             spec.items.push_back(item);
         }
         spec.drawTop = [&](int index) {
-            ui::drawTopChrome("选择文件夹", ui::Icon::Folder,
+            ui::drawTopChrome("Choose a Folder", ui::Icon::Folder,
                               ui::color::IconOrange);
             ui::drawPanel();
-            std::vector<ui::Fact> facts = {{"正在浏览", current}};
+            std::vector<ui::Fact> facts = {{"Browsing", current}};
             if (index >= 1) {
-                facts.push_back({"打开", current + names[index - 1] + "/"});
+                facts.push_back({"Open", current + names[index - 1] + "/"});
             }
             ui::drawFacts(facts);
         };
@@ -1639,14 +1645,14 @@ bool App::browseFolders(std::string &folder)
         if (result.key == KEY_X || (result.key == KEY_A && result.index == 0)) {
             std::string name;
             if (platform::keyboard(platform::KeyboardKind::Name,
-                                   "新文件夹名称", "", name)) {
+                                   "New folder name", "", name)) {
                 const std::string created =
                     current + naming::safeFilename(text::trim(name)) + "/";
                 if (fs::makeDirectories(created)) {
                     current = created;
                     cursor = 0;
                 } else {
-                    ui::message("无法创建文件夹", created,
+                    ui::message("Could Not Create the Folder", created,
                                 ui::Tone::Error);
                 }
             }
@@ -1664,7 +1670,7 @@ bool App::typeFolder(std::string &folder)
 {
     std::string typed;
     if (!platform::keyboard(platform::KeyboardKind::Path,
-                            "文件夹，例如 sdmc:/downloads/", folder,
+                            "Folder, for example sdmc:/downloads/", folder,
                             typed)) {
         return false;
     }
@@ -1672,8 +1678,9 @@ bool App::typeFolder(std::string &folder)
     typed = naming::normaliseFolder(typed);
     if (!naming::isSdPath(typed) || typed.find("/../") != std::string::npos ||
         typed.find("/./") != std::string::npos) {
-        ui::message("不是 SD 卡文件夹",
-                    "文件夹必须以 sdmc:/ 开头，且不能包含 . 或 .. 路径段。",
+        ui::message("Not an SD card folder",
+                    "Folders must start with sdmc:/ and cannot contain . or "
+                    ".. parts.",
                     ui::Tone::Error, typed);
         return false;
     }
@@ -1681,16 +1688,16 @@ bool App::typeFolder(std::string &folder)
 
     if (!fs::directoryExists(typed)) {
         ui::Dialog dialog;
-        dialog.header = "新文件夹";
-        dialog.title = "是否创建此文件夹？";
+        dialog.header = "new folder";
+        dialog.title = "Create this folder?";
         dialog.body.push_back({typed, ui::color::Text, 0.52f, 3});
-        dialog.buttons = {"创建", "取消"};
+        dialog.buttons = {"Create", "Cancel"};
         dialog.cancelButton = 1;
         if (ui::choose(dialog) != 0) {
             return false;
         }
         if (!fs::makeDirectories(typed)) {
-            ui::message("无法创建文件夹", typed,
+            ui::message("Could not create the folder", typed,
                         ui::Tone::Error);
             return false;
         }
@@ -1704,10 +1711,11 @@ bool App::typeFolder(std::string &folder)
 bool App::confirmClearHistory()
 {
     ui::Dialog dialog;
-    dialog.header = "下载记录";
-    dialog.title = "是否清空下载记录并删除未完成的下载？";
+    dialog.header = "history";
+    dialog.title = "Clear the download history and delete partial "
+                   "downloads?";
     dialog.tone = ui::Tone::Warning;
-    dialog.buttons = {"清空", "取消"};
+    dialog.buttons = {"Clear", "Cancel"};
     dialog.dangerous = 0;
     dialog.initial = 1;
     dialog.cancelButton = 1;
@@ -1732,27 +1740,27 @@ void App::historyScreen()
         const bool canResume =
             entry.resumable && net::partialSize(entry.folder, entry.url) > 0;
         if (canResume) {
-            label = "续传";
+            label = "Resume";
             fill = ui::color::Tag;
             return;
         }
         switch (entry.status) {
         case HistoryStatus::Installed:
-            label = "已安装";
+            label = "Installed";
             fill = ui::color::Good;
             return;
         case HistoryStatus::Saved:
-            label = "已保存";
+            label = "Saved";
             fill = ui::color::Neutral;
             return;
         case HistoryStatus::Failed:
-            label = "失败";
+            label = "Failed";
             fill = ui::color::Bad;
             return;
         case HistoryStatus::Cancelled:
             break;
         }
-        label = "已停止";
+        label = "Stopped";
         fill = ui::color::Neutral;
     };
     // The highlighted download in full, on the top screen.
@@ -1772,7 +1780,7 @@ void App::historyScreen()
                                   ui::type::Tiny, ui::color::InkSoft, 330, 2) +
                   4;
         const std::string where =
-            entry.status == HistoryStatus::Saved ? "已保存为 " + entry.path
+            entry.status == HistoryStatus::Saved ? "Saved as " + entry.path
             : entry.status == HistoryStatus::Installed
                 ? entry.message + ": " + entry.path
                 : entry.message;
@@ -1781,23 +1789,23 @@ void App::historyScreen()
         const uint64_t partial =
             entry.resumable ? net::partialSize(entry.folder, entry.url) : 0;
         if (partial > 0 && y < ui::TopPanel.y + ui::TopPanel.h - 24) {
-            ui::drawTagRow(left, y, 86, "可续传",
-                           units::bytes(partial) + "，位于 " + entry.folder,
+            ui::drawTagRow(left, y, 86, "Can resume",
+                           units::bytes(partial) + " in " + entry.folder,
                            ui::color::Good);
         }
     };
 
     while (ui::keepRunning()) {
         ui::ListSpec spec;
-        spec.title = "最近下载";
-        spec.emptyText = "暂无下载记录。";
+        spec.title = "Recent Downloads";
+        spec.emptyText = "No downloads yet.";
         if (!history_.empty()) {
-            spec.action = "清空";
+            spec.action = "Clear";
             spec.actionKey = "X";
             spec.actionKeys = KEY_X;
         }
         spec.hint = history_.empty() ? "" : std::to_string(history_.size()) +
-                                                " 已保存";
+                                                " saved";
         for (const HistoryEntry &entry : history_) {
             ui::ListItem item;
             item.label = entryName(entry);
@@ -1805,10 +1813,10 @@ void App::historyScreen()
             spec.items.push_back(item);
         }
         spec.drawTop = [&](int index) {
-            ui::drawTopChrome("下载记录", ui::Icon::History, ui::color::IconRed);
+            ui::drawTopChrome("History", ui::Icon::History, ui::color::IconRed);
             if (index < 0) {
                 ui::drawPanel();
-                ui::drawFacts({{"保存到", settings_.destination}});
+                ui::drawFacts({{"Saves to", settings_.destination}});
                 return;
             }
             drawEntry(history_[index]);
@@ -1839,15 +1847,15 @@ void App::historyScreen()
         std::vector<ui::MenuItem> items;
         std::vector<Action> actions;
         if (installable) {
-            items.push_back({"安装"});
+            items.push_back({"Install"});
             actions.push_back(Action::Install);
         }
-        items.push_back({canResume ? "继续下载" : "重新下载"});
+        items.push_back({canResume ? "Resume Download" : "Download Again"});
         actions.push_back(Action::Download);
-        items.push_back({"从下载记录中移除", true});
+        items.push_back({"Remove from History", true});
         actions.push_back(Action::Remove);
         const int choice = ui::menu(items, [&](int) {
-            ui::drawTopChrome("下载记录", ui::Icon::History, ui::color::IconRed);
+            ui::drawTopChrome("History", ui::Icon::History, ui::color::IconRed);
             drawEntry(entry);
         });
         if (choice < 0) {
@@ -1858,7 +1866,7 @@ void App::historyScreen()
             if (readCia(entry.path, info, error)) {
                 installCia(entry.path, info, false, entry.url);
             } else if (!error.empty()) {
-                ui::message("无法安装", error, ui::Tone::Error,
+                ui::message("Cannot install", error, ui::Tone::Error,
                             basename(entry.path));
             }
             break;
@@ -1925,8 +1933,9 @@ void App::persistSettings()
     const bool saved = storage::saveSettings(settings_);
     sdChanged(storage::DataFolder);
     if (!saved) {
-        ui::message("设置未保存",
-                    "更改目前已生效，但无法写入 SD 卡。",
+        ui::message("Settings not saved",
+                    "The change works for now, but could not be written to "
+                    "the SD card.",
                     ui::Tone::Warning);
     }
 }
@@ -1969,7 +1978,7 @@ void App::settingsScreen()
         }
     };
     const auto onOffChoice = [&](const std::string &title, bool &value) {
-        const int picked = ui::chooseOption(title, {"开启", "关闭"},
+        const int picked = ui::chooseOption(title, {"On", "Off"},
                                             value ? 0 : 1, ui::Icon::Download,
                                             ui::color::IconGreen);
         if (picked >= 0 && (picked == 0) != value) {
@@ -1980,21 +1989,21 @@ void App::settingsScreen()
 
     const auto downloads = [&]() {
         settingsList(
-            "下载", ui::Icon::Download, ui::color::IconGreen,
+            "Downloads", ui::Icon::Download, ui::color::IconGreen,
             [&]() {
                 return std::vector<Row>{
                     // Short, so the value badge leaves them room.
-                    {"断点续传", onOff(settings_.resumeDownloads)},
-                    {"最大连接数",
+                    {"Resume Downloads", onOff(settings_.resumeDownloads)},
+                    {"Max Connections",
                      std::to_string(settings_.maxConnections)},
                     // It only ever asks, so the name says so.
-                    {"解压前询问", onOff(settings_.offerZipExtraction)},
-                    {"CIA 下载完成后",
+                    {"Ask to Extract", onOff(settings_.offerZipExtraction)},
+                    {"After a CIA Downloads",
                      ciaActionLabel(settings_.afterCiaDownload)}};
             },
             [&](int index) {
                 if (index == 0) {
-                    onOffChoice("断点续传", settings_.resumeDownloads);
+                    onOffChoice("Resume Downloads", settings_.resumeDownloads);
                 } else if (index == 1) {
                     // The engine uses fewer when a file is small or the
                     // server refuses more; this is only the most it opens.
@@ -2004,7 +2013,7 @@ void App::settingsScreen()
                         counts.push_back(std::to_string(count));
                     }
                     const int picked = ui::chooseOption(
-                        "最大连接数", counts,
+                        "Max Connections", counts,
                         settings_.maxConnections - 1, ui::Icon::Download,
                         ui::color::IconGreen);
                     if (picked >= 0 && picked + 1 != settings_.maxConnections) {
@@ -2012,13 +2021,13 @@ void App::settingsScreen()
                         persistSettings();
                     }
                 } else if (index == 2) {
-                    onOffChoice("解压前询问",
+                    onOffChoice("Ask to Extract",
                                 settings_.offerZipExtraction);
                 } else if (index == 3) {
                     const int picked = ui::chooseOption(
-                        "CIA 下载完成后",
-                        {"每次询问", "安装", "安装后删除文件",
-                         "仅保留文件"},
+                        "After a CIA Downloads",
+                        {"Ask Each Time", "Install", "Install and Delete File",
+                         "Only Keep the File"},
                         static_cast<int>(settings_.afterCiaDownload),
                         ui::Icon::Package, ui::color::IconBlue);
                     if (picked >= 0) {
@@ -2031,33 +2040,35 @@ void App::settingsScreen()
     };
     const auto filesAndHistory = [&]() {
         settingsList(
-            "其他设置", ui::Icon::Gear, ui::color::IconGrey,
+            "Other Settings", ui::Icon::Gear, ui::color::IconGrey,
             [&]() {
                 return std::vector<Row>{
-                    {"文件排序", screens::sortDescription(
+                    {"Sort Files", screens::sortDescription(
                                        settings_.fileSort,
                                        settings_.fileSortReverse)},
-                    {"显示隐藏文件", onOff(settings_.showHiddenFiles)},
-                    {"音效", sound::available() ? onOff(settings_.sounds)
-                                                  : "不可用"},
-                    {"清空下载记录",
+                    {"Show Hidden Files", onOff(settings_.showHiddenFiles)},
+                    {"Sounds", sound::available() ? onOff(settings_.sounds)
+                                                  : "Unavailable"},
+                    {"Clear Download History",
                      std::to_string(history_.size())}};
             },
             [&](int index) {
                 if (index == 0) {
                     sortScreen("");
                 } else if (index == 1) {
-                    onOffChoice("显示隐藏文件", settings_.showHiddenFiles);
+                    onOffChoice("Show Hidden Files", settings_.showHiddenFiles);
                 } else if (index == 2) {
                     if (!sound::available()) {
-                        ui::message("音效不可用",
-                                    "音效需要 DSP 固件转储文件 sdmc:/3ds/dspfirm.cdc。请使用 DSP1 自制软件生成该文件，然后重新启动 3dsDL。");
+                        ui::message("Sounds Unavailable",
+                                    "Sounds need the DSP firmware dump, "
+                                    "sdmc:/3ds/dspfirm.cdc. Make it with the "
+                                    "DSP1 homebrew, then start 3dsDL again.");
                     } else {
-                        onOffChoice("音效", settings_.sounds);
+                        onOffChoice("Sounds", settings_.sounds);
                         sound::setEnabled(settings_.sounds);
                     }
                 } else if (history_.empty()) {
-                    ui::message("下载记录为空", "没有可清空的记录。");
+                    ui::message("History Is Empty", "There is nothing to clear.");
                 } else {
                     confirmClearHistory();
                 }
@@ -2067,8 +2078,8 @@ void App::settingsScreen()
     int focus = 2;
     while (ui::keepRunning() && !quit_) {
         ui::ScreenSpec spec;
-        spec.back = "返回";
-        spec.action = "反馈问题";
+        spec.back = "Back";
+        spec.action = "Report Issue";
         spec.actionKey = "X";
         spec.actionKeys = KEY_X;
         const auto add = [&](ui::Rect rect, const char *label, ui::Icon icon,
@@ -2082,64 +2093,64 @@ void App::settingsScreen()
             control.scale = ui::type::Small + 0.06f;
             spec.controls.push_back(control);
         };
-        add({16, 6, 140, 26}, "关于", ui::Icon::AppMark, ui::color::Accent,
+        add({16, 6, 140, 26}, "About", ui::Icon::AppMark, ui::color::Accent,
             false);
-        add({164, 6, 140, 26}, "更新", ui::Icon::Download,
+        add({164, 6, 140, 26}, "Updates", ui::Icon::Download,
             ui::color::IconGreen, false);
-        add({16, 42, 140, 78}, "下载", ui::Icon::Download,
+        add({16, 42, 140, 78}, "Downloads", ui::Icon::Download,
             ui::color::IconGreen, true);
-        add({164, 42, 140, 78}, "下载文件夹", ui::Icon::Folder,
+        add({164, 42, 140, 78}, "Download Folder", ui::Icon::Folder,
             ui::color::IconOrange, true);
-        add({16, 127, 140, 76}, "主机时钟", ui::Icon::Clock,
+        add({16, 127, 140, 76}, "Console Clock", ui::Icon::Clock,
             ui::color::IconBlue, true);
-        add({164, 127, 140, 76}, "其他设置", ui::Icon::Gear,
+        add({164, 127, 140, 76}, "Other Settings", ui::Icon::Gear,
             ui::color::IconGrey, true);
         spec.drawTop = [&]() {
-            ui::drawTopChrome("设置", ui::Icon::Gear, ui::color::IconGrey);
+            ui::drawTopChrome("Settings", ui::Icon::Gear, ui::color::IconGrey);
             ui::drawPanel();
-            spec.controls[1].badge = updateAvailable_ ? "新版本" : "";
+            spec.controls[1].badge = updateAvailable_ ? "New" : "";
             // The highlighted section's current values.
             const int shown = focus >= 0 && focus < 6 ? focus : 2;
             std::vector<ui::Fact> facts;
             if (shown == 1) {
                 const updater::Status update = updater::status();
-                facts = {{"已安装", APP_VERSION}};
+                facts = {{"Installed", APP_VERSION}};
                 if (update.state == updater::State::Available) {
-                    facts.push_back({"新版本", update.release.version,
+                    facts.push_back({"New", update.release.version,
                                      ui::color::Good});
                 } else {
-                    facts.push_back({"启动时", settings_.checkForUpdates
-                                                       ? "检查"
-                                                       : "不检查"});
+                    facts.push_back({"At Startup", settings_.checkForUpdates
+                                                       ? "Check"
+                                                       : "Don't Check"});
                 }
             } else if (shown == 2) {
-                facts = {{"续传", onOff(settings_.resumeDownloads)},
-                         {"最大连接数",
+                facts = {{"Resume", onOff(settings_.resumeDownloads)},
+                         {"Max Connections",
                           std::to_string(settings_.maxConnections)},
-                         {"解压前询问",
+                         {"Ask to Extract",
                           onOff(settings_.offerZipExtraction)},
-                         {"CIA 下载后",
+                         {"After a CIA",
                           ciaActionLabel(settings_.afterCiaDownload)}};
             } else if (shown == 3) {
-                facts = {{"保存到", settings_.destination}};
+                facts = {{"Saves to", settings_.destination}};
             } else if (shown == 4) {
-                facts = {{"主机", units::dateTime(platform::now())}};
+                facts = {{"Console", units::dateTime(platform::now())}};
                 if (settings_.timeZoneSet) {
                     facts.push_back(
-                        {"时区",
+                        {"Time Zone",
                          tz::formatOffset(settings_.timeZoneMinutes)});
                 }
             } else if (shown == 5) {
-                facts = {{"文件排序",
+                facts = {{"Sort Files",
                           screens::sortDescription(settings_.fileSort,
                                                    settings_.fileSortReverse)},
-                         {"隐藏文件", onOff(settings_.showHiddenFiles)},
-                         {"音效", sound::available() ? onOff(settings_.sounds)
-                                                       : "不可用"},
-                         {"下载记录", plural(history_.size(), "次下载")}};
+                         {"Hidden Files", onOff(settings_.showHiddenFiles)},
+                         {"Sounds", sound::available() ? onOff(settings_.sounds)
+                                                       : "Unavailable"},
+                         {"History", plural(history_.size(), "download")}};
             } else {
-                facts = {{"版本", APP_VERSION},
-                         {"设置保存于", storage::DataFolder}};
+                facts = {{"Version", APP_VERSION},
+                         {"Settings in", storage::DataFolder}};
             }
             ui::drawFacts(facts);
         };
@@ -2182,7 +2193,7 @@ bool App::chooseTimeZone(int64_t utcNowSeconds)
 
     const u64 openedAt = osGetTime();
     ui::ListSpec spec;
-    spec.title = "时区";
+    spec.title = "Time Zone";
     for (const tz::Zone &zone : zones) {
         ui::ListItem item;
         item.label = zone.places;
@@ -2196,17 +2207,17 @@ bool App::chooseTimeZone(int64_t utcNowSeconds)
         spec.items.push_back(item);
     }
     spec.drawTop = [&](int index) {
-        ui::drawTopChrome("时区", ui::Icon::Clock, ui::color::IconBlue);
+        ui::drawTopChrome("Time Zone", ui::Icon::Clock, ui::color::IconBlue);
         ui::drawPanel();
         if (index < 0) {
             return;
         }
         const tz::Zone &zone = zones[index];
         std::vector<ui::Fact> facts = {
-            {"时差", tz::formatOffset(zone.offsetMinutes)}};
+            {"Offset", tz::formatOffset(zone.offsetMinutes)}};
         if (utcNowSeconds >= 0) {
             facts.push_back(
-                {"当地时间",
+                {"Time there",
                  units::dateTime(utcNowSeconds + zone.offsetMinutes * 60 +
                                  static_cast<int64_t>(
                                      (osGetTime() - openedAt) / 1000))});
@@ -2228,8 +2239,8 @@ bool App::clockScreen()
 {
     while (ui::keepRunning()) {
         ntp::Result network;
-        if (!tasks::busy("主机时钟",
-                         "正在向时间服务器查询当前时间……",
+        if (!tasks::busy("Console Clock",
+                         "Asking a time server for the current time...",
                          [&](tasks::Busy &busy) {
                              network = ntp::queryAny(ntp::defaultServers(), 123,
                                                      2500, &busy.cancel);
@@ -2244,13 +2255,14 @@ bool App::clockScreen()
 
         if (!network.ok) {
             ui::Dialog dialog;
-            dialog.header = "主机时钟";
-            dialog.title = "无法联网检查时间。";
+            dialog.header = "Console Clock";
+            dialog.title = "The time could not be checked online.";
             dialog.tone = ui::Tone::Error;
             dialog.body.push_back({network.error, ui::color::Text, 0.5f, 3});
-            dialog.body.push_back({"请检查 Wi-Fi。部分网络会屏蔽时间服务器（UDP 端口 123）。",
+            dialog.body.push_back({"Check Wi-Fi. Some networks block time "
+                                   "servers (UDP port 123).",
                                    ui::color::Muted, 0.44f, 3});
-            dialog.buttons = {"重试", "返回"};
+            dialog.buttons = {"Try Again", "Back"};
             dialog.cancelButton = 1;
             if (ui::choose(dialog) != 0) {
                 return false;
@@ -2283,33 +2295,33 @@ bool App::clockScreen()
             const int zone = tz::zoneIndex(offset);
 
             ui::ScreenSpec spec;
-            spec.back = "返回";
+            spec.back = "Back";
             // The two buttons centred above the tabs.
             ui::Control set;
             set.rect = {26, 52, 268, 40};
-            set.label = "设置时钟";
+            set.label = "Set the Clock";
             spec.controls.push_back(set);
             ui::Control change = set;
             change.rect = {26, 106, 268, 40};
-            change.label = "更改时区";
+            change.label = "Change Time Zone";
             spec.controls.push_back(change);
             spec.drawTop = [&]() {
-                ui::drawTopChrome("主机时钟", ui::Icon::Clock,
+                ui::drawTopChrome("Console Clock", ui::Icon::Clock,
                                   ui::color::IconBlue);
                 ui::drawPanel();
                 ui::drawFacts(
-                    {{"此主机", units::dateTime(platform::now())},
-                     {"网络时间",
+                    {{"This console", units::dateTime(platform::now())},
+                     {"Internet time",
                       units::dateTime((utcNowMs() + offset * 60000LL) / 1000),
                       ui::color::Good},
-                     {"时区",
+                     {"Time zone",
                       tz::formatOffset(offset) +
                           (zone >= 0 ? std::string(", ") +
                                            tz::zones()[zone].places
                                      : std::string()),
                       ui::color::Neutral},
-                     {"时钟",
-                      wrong ? tz::describeDrift(console, correct) : "准确",
+                     {"Clock",
+                      wrong ? tz::describeDrift(console, correct) : "Right",
                       wrong ? ui::color::Bad : ui::color::Good}});
             };
             int focus = wrong ? 0 : 1;
@@ -2325,12 +2337,12 @@ bool App::clockScreen()
             std::string error;
             const int64_t targetMs = utcNowMs() + offset * 60000LL;
             if (!platform::setConsoleClock(targetMs, error)) {
-                ui::message("无法设置时钟", error,
+                ui::message("Could not set the clock", error,
                             ui::Tone::Error);
                 continue;
             }
-            ui::message("时钟已设置",
-                        "主机时钟现为 " +
+            ui::message("Clock set",
+                        "The console clock now reads " +
                             units::dateTime(targetMs / 1000) + " (" +
                             tz::formatOffset(offset) + ").",
                         ui::Tone::Success);
@@ -2344,26 +2356,29 @@ void App::aboutScreen()
 {
     // Who and what on the top screen, the credits on the bottom one.
     ui::ScreenSpec spec;
-    spec.back = "返回";
-    spec.action = "反馈问题";
+    spec.back = "Back";
+    spec.action = "Report Issue";
     spec.actionKey = "X";
     spec.actionKeys = KEY_X;
     spec.drawTop = []() {
-        ui::drawTopChrome("关于 3dsDL", ui::Icon::AppMark, ui::color::Accent);
+        ui::drawTopChrome("About 3dsDL", ui::Icon::AppMark, ui::color::Accent);
         ui::drawPanel();
         const float left = ui::TopPanel.x + 18;
         // The icon and name over one tag row, centred in the panel.
         const float top = ui::TopPanel.y + (ui::TopPanel.h - 84) / 2;
         ui::drawIcon(ui::Icon::AppMark, left, top, 48, ui::color::Accent);
         ui::drawText("3dsDL", left + 60, top + 2, 0.62f, ui::color::InkStrong);
-        ui::drawText("版本 " APP_VERSION, left + 60, top + 30,
+        ui::drawText("Version " APP_VERSION, left + 60, top + 30,
                      ui::type::Small, ui::color::InkSoft);
-        ui::drawTagRow(left, top + 64, 96, "设置保存于", storage::DataFolder);
+        ui::drawTagRow(left, top + 64, 96, "Settings in", storage::DataFolder);
     };
     spec.drawBottom = []() {
         const ui::Rect panel = {13, 12, 294, 186};
         ui::drawPanel(panel);
-        ui::drawPanelText("本软件遵循 GPLv3，是自由软件。基于 libcurl、Mbed TLS、quirc 和 Citro2D 开发，源于 hax0kartik 的 Multidownload。CIA 安装流程参考了 Steveice10 的 FBI（MIT 许可证）。",
+        ui::drawPanelText("Free software under the GPLv3. Built on libcurl, "
+                          "Mbed TLS, quirc and Citro2D, and grew out of "
+                          "Multidownload by hax0kartik. CIA installing "
+                          "follows FBI by Steveice10 (MIT).",
                           panel, ui::type::Small, ui::color::Ink, 7);
     };
     int focus = 0; // nothing to focus: B and X do it all
