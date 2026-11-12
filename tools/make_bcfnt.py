@@ -65,8 +65,10 @@ def main():
     if len(chars) + 1 > COLS * ROWS:
         sys.exit(f"{len(chars)} glyphs do not fit in {COLS}x{ROWS} cells")
 
-    # A8: the glyph's coverage as the texel. Index 0 stays blank, which is what
-    # the character map points at for anything the font does not carry.
+    # Coverage as a mask, in the grey+alpha layout the app's own icon atlas
+    # uploads through, so the tiling below matches what the GPU has already
+    # been shown to accept. Index 0 stays blank, which is what the character
+    # map points at for anything the font does not carry.
     row_texels = [[0] * SHEET for _ in range(SHEET)]
 
     canvas = Image.new("L", (CELL, CELL), 0)
@@ -90,14 +92,19 @@ def main():
         widths.append((0, glyph_width, advance))
         entries.append((ord(char), index, advance))
 
-    # Tiled copy of the A8 sheet.
-    sheet = bytearray(SHEET * SHEET)
+    # Tiled copy of the sheet: two bytes a texel, white with the coverage in
+    # the alpha byte.
+    sheet = bytearray(SHEET * SHEET * 2)
     for y in range(SHEET):
         row = row_texels[y]
         for x in range(SHEET):
             value = row[x]
             if value:
-                sheet[tiled(x, y, SHEET)] = value
+                # A texel is 0xFF00 | coverage as the GPU reads it, which on
+                # this console lands as the coverage byte first.
+                at = tiled(x, y, SHEET) * 2
+                sheet[at] = value
+                sheet[at + 1] = 0xFF
 
     # One character map over every range the glyphs use, so a lookup is a
     # subtraction rather than a scan of 730 entries per character drawn.
@@ -148,9 +155,9 @@ def main():
     out[tglp_off + 0x09] = CELL            # cell height
     out[tglp_off + 0x0A] = BASELINE        # baseline position
     out[tglp_off + 0x0B] = CELL            # max character width
-    struct.pack_into("<I", out, tglp_off + 0x0C, SHEET * SHEET)  # sheet size
+    struct.pack_into("<I", out, tglp_off + 0x0C, SHEET * SHEET * 2)  # sheet bytes
     struct.pack_into("<H", out, tglp_off + 0x10, 1)              # sheets
-    struct.pack_into("<H", out, tglp_off + 0x12, 8)              # A8
+    struct.pack_into("<H", out, tglp_off + 0x12, 5)              # LA8
     struct.pack_into("<H", out, tglp_off + 0x14, COLS)           # glyphs a row
     struct.pack_into("<H", out, tglp_off + 0x16, ROWS)           # glyph rows
     struct.pack_into("<H", out, tglp_off + 0x18, SHEET)
