@@ -83,3 +83,8 @@ CI 的 `zh.yml` 会自动做这一步。
 
 `.github/zh-release-notes.md` 是每个版本共用的正文模板，**发版前必须改写**成这一版
 的改动，否则 Release 会挂着上一版的说明。
+
+## 一个发布，两个包
+
+打标签时工作流会构建两次：先带 `romfs/hanfont.bcfnt` 出 `-cn-font`（CIA 号高一步），
+再删掉字库出 `-cn`（用主机字库）。两个包进同一个 Release，按后缀区分。
