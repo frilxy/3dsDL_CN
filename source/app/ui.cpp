@@ -1520,7 +1520,7 @@ void drawFromAtlas(const std::string &value, float x, float y, float scale,
         }
         const hanfont::Glyph *glyph = hanfont::find(codePoint);
         if (glyph != nullptr) {
-            drawGlyph(*glyph, pen, top, size, textColor);
+            drawGlyph(*glyph, pen, top, size, 0xff0000ff);
             pen += glyph->advance * k;
         }
         index += length;
