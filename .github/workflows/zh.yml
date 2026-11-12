@@ -94,12 +94,12 @@ jobs:
           cd dist
           for kind in cia 3dsx smdh; do
             mv "3dsDL.${kind}" "3dsDL-${base}.${kind}"
-            mv "3dsDL-font.${kind}" "3dsDL-${base}-font.${kind}"
+            mv "3dsDL-font.${kind}" "3dsDL-${base}withfont.${kind}"
           done
           sha256sum "3dsDL-${base}.cia" "3dsDL-${base}.3dsx" \
             > "3dsDL-${base}.sha256"
-          sha256sum "3dsDL-${base}-font.cia" "3dsDL-${base}-font.3dsx" \
-            > "3dsDL-${base}-font.sha256"
+          sha256sum "3dsDL-${base}withfont.cia" "3dsDL-${base}withfont.3dsx" \
+            > "3dsDL-${base}withfont.sha256"
 
       - name: Make the QR codes FBI scans
         # Each CIA's own download link, so the console installs it straight
@@ -113,7 +113,7 @@ jobs:
           base = sys.argv[1]
           tag = os.environ["GITHUB_REF_NAME"]
           repo = os.environ["GITHUB_REPOSITORY"]
-          names = [(f"3dsDL-{base}-font", "带字库版"),
+          names = [(f"3dsDL-{base}withfont", "带字库版"),
                    (f"3dsDL-{base}", "不带字库版")]
           header = []
           for name, label in names:
