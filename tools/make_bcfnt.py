@@ -128,7 +128,9 @@ def main():
     finf_size = 0x20
     tglp_size = 0x20
     tglp_off = header + finf_size
-    sheet_off = tglp_off + tglp_size
+    # The GPU samples the sheet straight out of this buffer, so it has to start
+    # on a wide boundary: a misaligned sheet shows up as a dithered glyph.
+    sheet_off = (tglp_off + tglp_size + 127) & ~127
     cwdh_off = sheet_off + len(sheet)
     cmap_off = cwdh_off + cwdh_size
     total = cmap_off + sum(0x14 + len(data) for _, _, data in cmap_blocks)
