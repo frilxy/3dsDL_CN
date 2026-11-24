@@ -82,7 +82,7 @@ namespace type {
 constexpr float Hero = 0.74f;   // cap 21
 constexpr float Title = 0.67f;  // cap 19
 constexpr float Button = 0.53f; // cap 15
-constexpr float Tab = 0.48f;    // cap 13.5
+constexpr float Tab = 0.52f;    // cap 14
 constexpr float Body = 0.49f;   // cap 14
 constexpr float Small = 0.46f;  // cap 13
 constexpr float Row = 0.46f;    // cap 13
