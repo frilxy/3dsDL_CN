@@ -1853,18 +1853,27 @@ void drawStatusBar()
                  ? color::rgb(0x28B6F2)
                  : color::rgb(0xC9C2A0));
     }
+    // Everything along the bar is one size and one line, so the pill's words,
+    // the clock and the card's free space share a baseline: mixing sizes left
+    // the clock sitting a couple of pixels above the rest.
+    constexpr float BarScale = 0.38f;
+    const Rect barLine = {0, 1, TopWidth, 17};
+    const float barY = barLine.y + (barLine.h - lineHeight(BarScale)) / 2 + 1;
     const Rect pill = {27, 2, 106, 15};
+    const Rect pillLine = {pill.x, barLine.y, pill.w, barLine.h};
     if (status.connected) {
         fillRound(pill, 5, color::rgb(0x31AAE0));
         fillRound(pill.inset(1), 4,
                   {{0, color::rgb(0xA8DEF7)}, {0.5f, color::rgb(0x63C4F1)},
                    {1, color::rgb(0x2DA8DE)}});
-        drawCentered("Connected", pill, 0.32f, color::rgb(0xFFFFFF));
+        drawCentered("Connected", pillLine, BarScale,
+                     color::rgb(0xFFFFFF));
     } else {
         fillRound(pill, 5, color::rgb(0xC8C8C8));
         fillRound(pill.inset(1), 4,
                   {{0, color::rgb(0xEFEFEF)}, {1, color::rgb(0xD6D6D6)}});
-        drawCentered("Not Connected", pill, 0.3f, color::rgb(0x8B8B8B));
+        drawCentered("Not Connected", pillLine, BarScale,
+                     color::rgb(0x8B8B8B));
     }
 
     const time_t seconds = static_cast<time_t>(platform::now());
@@ -1876,20 +1885,20 @@ void drawStatusBar()
     std::snprintf(clock, sizeof(clock), "%d/%d (%s)  %d:%02d",
                   parts.tm_mon + 1, parts.tm_mday, Days[parts.tm_wday % 7],
                   parts.tm_hour, parts.tm_min);
-    drawText(clock, 364, 1, 0.4f, color::rgb(0x323232), C2D_AlignRight);
+    const float clockWidth = textWidth(clock, BarScale);
+    drawCentered(clock, {364 - clockWidth, barLine.y, clockWidth, barLine.h},
+                 BarScale, color::rgb(0x323232));
 
     // The SD card's free space, on every screen. It sits by the connection
     // pill, softer than the clock, so the two never read as one line.
     if (status.sdFree >= 0) {
-        // A touch smaller than the clock and centred on its line: on the
-        // console's font "SD 76.8 GiB" at the clock's size is wider than
-        // the gap. shortBytes keeps it to that width on any card.
-        constexpr float Scale = 0.37f;
+        // On the bar's own line and size: shortBytes keeps "SD 76.8 GiB" to
+        // the gap the clock leaves on any card.
         const float left = pill.x + pill.w + 6;
-        const float clockLeft = 364 - textWidth(clock, 0.4f);
+        const float clockLeft = 364 - clockWidth;
         drawFitted("SD " +
                        units::shortBytes(static_cast<uint64_t>(status.sdFree)),
-                   left, 1 + (lineHeight(0.4f) - lineHeight(Scale)) / 2, Scale,
+                   left, barY, BarScale,
                    status.sdFree < LowSdSpace ? color::Caution : color::InkSoft,
                    clockLeft - 8 - left);
     }
