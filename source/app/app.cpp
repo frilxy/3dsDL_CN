@@ -1690,7 +1690,7 @@ bool App::typeFolder(std::string &folder)
         ui::Dialog dialog;
         dialog.header = "new folder";
         dialog.title = "Create this folder?";
-        dialog.body.push_back({typed, ui::color::Text, 0.52f, 3});
+        dialog.body.push_back({typed, ui::color::Text, ui::type::Row, 3});
         dialog.buttons = {"Create", "Cancel"};
         dialog.cancelButton = 1;
         if (ui::choose(dialog) != 0) {
