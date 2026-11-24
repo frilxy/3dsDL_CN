@@ -90,3 +90,10 @@ CI 的 `zh.yml` 会自动做这一步。
 `0004009B/00014002` 取出，LZ11 解压后作为 `romfs/hanfont.bcfnt`），所以不再
 分“带字库 / 不带字库”两个版本：`zh/VERSION_SUFFIX` 恒为 `cn`，CI 只构建一次，
 发布一个 CIA。
+
+## 上游更新后
+
+1. 把上游 `main` 合进来（历史合并，不要 rebase，`zh/zh.tsv` 的块才能按文本对上）
+2. `python3 scripts/zh/apply.py --check` —— 没对上的块会逐条列出，只改这些
+3. 把 `VERSION` 改成上游的新版本号（只写 `1.2.3`，后缀由 CI 加）
+4. 打 `v<版本>-cn` 标签发正式版；需要试水时用 `v<版本>-cn-rc.N`，发布标成 prerelease
