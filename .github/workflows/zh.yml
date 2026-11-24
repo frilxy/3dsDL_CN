@@ -29,13 +29,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The Chinese version is the upstream one with a suffix; a preview of
+      # it is that suffix plus "-rc.N". Its two packages then number N and
+      # N + 1, so the one with the font installs over the other and both
+      # stay below the release they preview.
+      - name: Work out the version suffix
+        run: |
+          set -eu
+          case "${GITHUB_REF_NAME}" in
+            *-rc.*)
+              n="${GITHUB_REF_NAME##*-rc.}"
+              printf 'cn-rc.%s\n' "${n}" > /tmp/plain-suffix
+              printf 'cnwithfont-rc.%s\n' "$((n + 1))" > /tmp/font-suffix
+              ;;
+            *)
+              printf 'cn\n' > /tmp/plain-suffix
+              printf 'cnwithfont\n' > /tmp/font-suffix
+              ;;
+          esac
+
       # Two builds of one version: one carrying the font, one using the
       # console's own. The font one has the higher CIA number, so installing
       # it over the other works; see .github/zh-release-notes.md.
       - name: Build with the bundled font
         run: |
           set -eu
-          printf 'cnwithfont\n' > zh/VERSION_SUFFIX
+          cat /tmp/font-suffix > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
@@ -51,7 +70,7 @@ jobs:
           set -eu
           git checkout -- .
           rm -f romfs/hanfont.bcfnt
-          printf 'cn\n' > zh/VERSION_SUFFIX
+          cat /tmp/plain-suffix > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
@@ -88,33 +107,55 @@ jobs:
         run: |
           set -eu
           # The release is named after the version alone; the suffix only
-          # tells the two packages apart.
-          version="${GITHUB_REF_NAME#v}"
-          base="${version}"
+          # tells the two packages apart. A preview carries its own "-rc.N",
+          # so its files read the same version the app reports.
+          base="$(tr -d '[:space:]' < VERSION)"
+          case "${GITHUB_REF_NAME}" in
+            *-rc.*)
+              n="${GITHUB_REF_NAME##*-rc.}"
+              plain="${base}-cn-rc.${n}"
+              font="${base}-cnwithfont-rc.$((n + 1))"
+              ;;
+            *)
+              plain="${base}-cn"
+              font="${base}-cnwithfont"
+              ;;
+          esac
           cd dist
           for kind in cia 3dsx smdh; do
-            mv "3dsDL.${kind}" "3dsDL-${base}.${kind}"
-            mv "3dsDL-font.${kind}" "3dsDL-${base}withfont.${kind}"
+            mv "3dsDL.${kind}" "3dsDL-${plain}.${kind}"
+            mv "3dsDL-font.${kind}" "3dsDL-${font}.${kind}"
           done
-          sha256sum "3dsDL-${base}.cia" "3dsDL-${base}.3dsx" \
-            > "3dsDL-${base}.sha256"
-          sha256sum "3dsDL-${base}withfont.cia" "3dsDL-${base}withfont.3dsx" \
-            > "3dsDL-${base}withfont.sha256"
+          sha256sum "3dsDL-${plain}.cia" "3dsDL-${plain}.3dsx" \
+            > "3dsDL-${plain}.sha256"
+          sha256sum "3dsDL-${font}.cia" "3dsDL-${font}.3dsx" \
+            > "3dsDL-${font}.sha256"
 
       - name: Make the QR codes FBI scans
         # Each CIA's own download link, so the console installs it straight
         # from the release without a card reader.
         run: |
           set -eu
-          version="${GITHUB_REF_NAME#v}"
-          python3 -m pip install --quiet --disable-pip-version-check segno
-          python3 - "${version}" <<'PY'
-          import os, sys, segno
-          base = sys.argv[1]
-          tag = os.environ["GITHUB_REF_NAME"]
+          base="$(tr -d '[:space:]' < VERSION)"
+          case "${GITHUB_REF_NAME}" in
+            *-rc.*)
+              n="${GITHUB_REF_NAME##*-rc.}"
+              plain="${base}-cn-rc.${n}"
+              font="${base}-cnwithfont-rc.$((n + 1))"
+              body=.github/zh-rc-notes.md
+              ;;
+            *)
+              plain="${base}-cn"
+              font="${base}-cnwithfont"
+              body=.github/zh-release-notes.md
+              ;;
+          esac
+          PLAIN="${plain}" FONT="${font}" BODY="${body}" python3 - <<'PY'
+          import os, segno
           repo = os.environ["GITHUB_REPOSITORY"]
-          names = [(f"3dsDL-{base}withfont", "带字库版"),
-                   (f"3dsDL-{base}", "不带字库版")]
+          tag = os.environ["GITHUB_REF_NAME"]
+          names = [(os.environ["FONT"], "带字库版"),
+                   (os.environ["PLAIN"], "不带字库版")]
           header = []
           for name, label in names:
               url = (f"https://github.com/{repo}/releases/download/{tag}/"
@@ -127,16 +168,22 @@ jobs:
           with open("release-notes.md", "w", encoding="utf-8") as notes:
               notes.write("\n".join(header) + "\n\n"
                           "FBI → Remote Install → Scan QR Code 即可安装。\n\n")
-              notes.write(open(".github/zh-release-notes.md",
-                               encoding="utf-8").read())
+              notes.write(open(os.environ["BODY"], encoding="utf-8").read())
           PY
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          set -eu
+          # A preview stays a pre-release, so an installed copy's update
+          # check does not offer it as the next version.
+          preview=()
+          case "${GITHUB_REF_NAME}" in
+            *-rc.*) preview+=(--prerelease) ;;
+          esac
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
             --title "${GITHUB_REF_NAME}" \
-            --notes-file release-notes.md
+            --notes-file release-notes.md \
+            "${preview[@]}"
