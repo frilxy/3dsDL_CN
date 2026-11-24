@@ -50,12 +50,14 @@ constexpr const char *Ellipsis = "...";
 // the system applets (a tab label 9 px tall instead of 14). Every size is
 // scaled by this one factor, so measuring and drawing always agree.
 //
-// 1.4 matched the applets' measurements on paper, but on hardware it draws
-// a quarter above them: a bottom-screen tile label comes out 17-18 px tall
-// where the system's own tiles measure 14, so the app read larger than the
-// system screens it imitates. 1.15 is 1.4 over that quarter, which puts the
-// cap heights back on the system's own.
-constexpr float TextBoost = 1.15f;
+// The 1.4 was measured against the shared font as citro2d normalises it,
+// 30 / cellHeight, but the applets draw their own text at the font's own
+// size. On a console whose font is a 15x16 cell (an English or Japanese one,
+// and the Chinese system patch's) the two disagree by the normalisation:
+// 30 / 16 = 1.875, so a tile label set at 0.5 came out 0.5 * 1.4 * 1.875 =
+// 1.31 times the system's own, 18 px of ink where the system's tiles measure
+// 14. 1.4 * 14 / 18 = 1.09 puts them back on the system's own sizes.
+constexpr float TextBoost = 1.09f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
