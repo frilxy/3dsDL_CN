@@ -540,7 +540,7 @@ App::Confirm App::confirmDownload(const std::string &address,
                          left, ui::TopPanel.y + 14, 30, ui::color::Accent);
             ui::drawMarquee(name == naming::DefaultFilename ? url::host(address)
                                                             : name,
-                            left + 40, ui::TopPanel.y + 10, 0.62f,
+                            left + 40, ui::TopPanel.y + 10, ui::type::Body,
                             ui::color::InkStrong, 300);
             ui::drawText("from " + url::host(address), left + 40,
                          ui::TopPanel.y + 36, ui::type::Small,
@@ -711,7 +711,7 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
     dialog.header = "extract";
     dialog.title = title;
     dialog.tone = ui::Tone::Success;
-    dialog.body.push_back({summary, ui::color::Muted, 0.44f, 3});
+    dialog.body.push_back({summary, ui::color::Muted, ui::type::Tiny, 3});
     dialog.body.push_back({holds + "\n" + places, ui::color::Text, 0.46f, 5});
     if (single || sent != nullptr) {
         dialog.buttons = {"Extract", "Not Now"};
@@ -947,7 +947,7 @@ void App::offerExtraction(const std::string &path, const std::string &folder,
     done.title = "The archive has been extracted.";
     done.tone = ui::Tone::Success;
     done.body.push_back({extracted, ui::color::Text, 0.5f, 3});
-    done.body.push_back({notes, ui::color::Muted, 0.44f, 4});
+    done.body.push_back({notes, ui::color::Muted, ui::type::Tiny, 4});
     done.buttons = {"Done", "Delete Archive"};
     if (offerReplace) {
         done.buttons.insert(done.buttons.begin() + 1, "Replace Them");
@@ -1406,7 +1406,7 @@ bool App::installCia(const std::string &path, const cia::Info &info,
         if (added || info.seed == cia::Seed::Needed) {
             notes.push_back({seedMessage,
                              added ? ui::color::Muted : ui::color::Warning,
-                             0.44f, 3});
+                             ui::type::Tiny, 3});
         }
     }
 
@@ -1774,7 +1774,7 @@ void App::historyScreen()
         ui::drawBadge(left + width, ui::TopPanel.y + 14, badge, fill);
         ui::drawText(units::dateTime(entry.time), left + width + 10,
                      ui::TopPanel.y + 13, ui::type::Small, ui::color::InkSoft);
-        ui::drawMarquee(entryName(entry), left, ui::TopPanel.y + 36, 0.62f,
+        ui::drawMarquee(entryName(entry), left, ui::TopPanel.y + 36, ui::type::Body,
                         ui::color::InkStrong, 330);
         float y = ui::drawWrapped(entry.url, left, ui::TopPanel.y + 62,
                                   ui::type::Tiny, ui::color::InkSoft, 330, 2) +
@@ -2261,7 +2261,7 @@ bool App::clockScreen()
             dialog.body.push_back({network.error, ui::color::Text, 0.5f, 3});
             dialog.body.push_back({"Check Wi-Fi. Some networks block time "
                                    "servers (UDP port 123).",
-                                   ui::color::Muted, 0.44f, 3});
+                                   ui::color::Muted, ui::type::Tiny, 3});
             dialog.buttons = {"Try Again", "Back"};
             dialog.cancelButton = 1;
             if (ui::choose(dialog) != 0) {
@@ -2367,7 +2367,7 @@ void App::aboutScreen()
         // The icon and name over one tag row, centred in the panel.
         const float top = ui::TopPanel.y + (ui::TopPanel.h - 84) / 2;
         ui::drawIcon(ui::Icon::AppMark, left, top, 48, ui::color::Accent);
-        ui::drawText("3dsDL", left + 60, top + 2, 0.62f, ui::color::InkStrong);
+        ui::drawText("3dsDL", left + 60, top + 2, ui::type::Body, ui::color::InkStrong);
         ui::drawText("Version " APP_VERSION, left + 60, top + 30,
                      ui::type::Small, ui::color::InkSoft);
         ui::drawTagRow(left, top + 64, 96, "Settings in", storage::DataFolder);

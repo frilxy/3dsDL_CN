@@ -3683,7 +3683,7 @@ void drawProgressPanel(const ProgressView &view)
         nameX += 40;
     }
     const float nameWidth = TopPanel.x + TopPanel.w - 18 - nameX;
-    drawMarquee(view.name, nameX, TopPanel.y + 13, 0.62f, color::InkStrong,
+    drawMarquee(view.name, nameX, TopPanel.y + 13, ui::type::Body, color::InkStrong,
                 nameWidth);
     if (!view.note.empty()) {
         drawMarquee(view.note, nameX, TopPanel.y + 41, type::Small, color::Good,
@@ -3884,9 +3884,9 @@ void drawScanner(const C2D_Image *preview, const std::string &statusText,
 
     beginBottom();
     const std::string title = "Scan QR Code";
-    const float width = 26 + textWidth(title, 0.72f);
+    const float width = 26 + textWidth(title, ui::type::Title);
     drawIcon(Icon::Scan, 160 - width / 2, 9, 20, color::Accent);
-    drawText(title, 160 - width / 2 + 26, 19 - lineHeight(0.72f) / 2 + 1, 0.72f,
+    drawText(title, 160 - width / 2 + 26, 19 - lineHeight(ui::type::Title) / 2 + 1, ui::type::Title,
              color::Accent);
     drawButton(ScannerTypeButton, "Type a URL Instead", Style::Normal,
                type::Body + 0.06f);

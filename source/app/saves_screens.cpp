@@ -236,7 +236,7 @@ void App::saveTitlesScreen()
             const float top = ui::TopPanel.y + 12;
             ui::drawTitleIcon(title.icon, left, top, ui::Icon::Chip);
             ui::drawMarquee(titles::displayName(title, index), left + 60, top + 2,
-                            0.62f, ui::color::InkStrong, 280);
+                            ui::type::Body, ui::color::InkStrong, 280);
             ui::drawMarquee(title.publisher, left + 60, top + 30, ui::type::Small,
                             ui::color::InkSoft, 280);
             const float y = ui::drawTagRow(left, top + 60, 96, "Title ID",
@@ -293,7 +293,7 @@ void App::saveDataScreen(const savedata::Target &target,
             ui::drawTitleIcon(icon, left, top, kindIcon(target.kind));
             ui::drawMarquee(target.name.empty() ? kindTitle(target.kind)
                                                 : target.name,
-                            left + 60, top + 2, 0.62f, ui::color::InkStrong, 280);
+                            left + 60, top + 2, ui::type::Body, ui::color::InkStrong, 280);
             ui::drawText(plural(names.size(), "backup"), left + 60, top + 30,
                          ui::type::Small, ui::color::InkSoft);
             ui::drawTagRow(left, top + 60, 76, "Folder", target.folder);
@@ -478,7 +478,7 @@ void App::dataBrowser(const savedata::Target &target)
             ui::drawPanel();
             const float left = ui::TopPanel.x + 18;
             float y = ui::TopPanel.y + 12;
-            ui::drawMarquee(target.name, left, y, 0.62f, ui::color::InkStrong,
+            ui::drawMarquee(target.name, left, y, ui::type::Body, ui::color::InkStrong,
                             ui::TopPanel.w - 36);
             y += 32;
             y = ui::drawTagRow(left, y, 76, "Folder", folder.substr(root.size() - 1));
