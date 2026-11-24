@@ -150,6 +150,7 @@ jobs:
               body=.github/zh-release-notes.md
               ;;
           esac
+          python3 -m pip install --quiet --disable-pip-version-check segno
           PLAIN="${plain}" FONT="${font}" BODY="${body}" python3 - <<'PY'
           import os, segno
           repo = os.environ["GITHUB_REPOSITORY"]
