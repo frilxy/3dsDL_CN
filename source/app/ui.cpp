@@ -49,7 +49,13 @@ constexpr const char *Ellipsis = "...";
 // font came out about 1.4 times smaller than the cap heights measured from
 // the system applets (a tab label 9 px tall instead of 14). Every size is
 // scaled by this one factor, so measuring and drawing always agree.
-constexpr float TextBoost = 1.4f;
+//
+// 1.4 matched the applets' measurements on paper, but on hardware it draws
+// a quarter above them: a bottom-screen tile label comes out 17-18 px tall
+// where the system's own tiles measure 14, so the app read larger than the
+// system screens it imitates. 1.15 is 1.4 over that quarter, which puts the
+// cap heights back on the system's own.
+constexpr float TextBoost = 1.15f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
