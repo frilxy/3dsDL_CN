@@ -161,7 +161,7 @@ jobs:
           for name, label in names:
               url = (f"https://github.com/{repo}/releases/download/{tag}/"
                      f"{name}.cia")
-              qr = f"{name}-cia-qr.png"
+              qr = f"3dsDL-{name}-cia-qr.png"
               segno.make(url, error="m").save(f"dist/{qr}", scale=10, border=4)
               header.append(f"![{label}扫码安装]"
                             f"(https://github.com/{repo}/releases/download/"
