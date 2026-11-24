@@ -57,7 +57,18 @@ constexpr const char *Ellipsis = "...";
 // 30 / 16 = 1.875, so a tile label set at 0.5 came out 0.5 * 1.4 * 1.875 =
 // 1.31 times the system's own, 18 px of ink where the system's tiles measure
 // 14. 1.4 * 14 / 18 = 1.09 puts them back on the system's own sizes.
-constexpr float TextBoost = 1.09f;
+//
+// That 1.09 is for the console's own font. A font from romfs has its own
+// ink-to-cell ratio, and cellHeight cancels in citro2d's normalisation, so
+// the same 1.09 would draw it at a different size: fitFontToSharedFont()
+// moves it back onto the shared font's (see loadFontMetrics).
+constexpr float SharedFontBoost = 1.09f;
+float TextBoost = SharedFontBoost;
+
+// Ink a reference glyph takes at scale 1 in the console's own shared font,
+// 30 / cellHeight normalised: 14 px of ink in a 15x16 cell. The type scales
+// in ui.hpp are all set against that font.
+constexpr float SharedFontInk = 26.25f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
@@ -132,6 +143,36 @@ bool frameShown = false;
 
 void prepareAscii();
 
+// A font from romfs stands in for the shared one, so it is drawn at the
+// size the shared one would be: the ink of a reference glyph, 30 /
+// cellHeight normalised, tells how far off the sheet's own ratio leaves it.
+void fitFontToSharedFont()
+{
+    // Hanzi a sheet that draws this app's interface always carries. A sheet
+    // without one answers with a blank or the alteration character, a
+    // fraction of a cell tall, so anything near a full cell is taken.
+    static const u32 references[] = {0x8BBE /*设*/, 0x7F6E /*置*/,
+                                     0x4E0B /*下*/, 0x6587 /*文*/,
+                                     0x5173 /*关*/, 0x8BB0 /*记*/};
+    float ink = 0;
+    for (const u32 reference : references) {
+        fontGlyphPos_s glyph;
+        C2D_FontCalcGlyphPos(appFont, &glyph,
+                             C2D_FontGlyphIndexFromCodePoint(appFont, reference),
+                             0, 1.0f, 1.0f);
+        ink = std::max(ink, glyph.height * fontScale);
+    }
+    // A full cell is fontScale * cellHeight = 30 px, so a face that answers
+    // with none of them has no Chinese to size and is left as it is.
+    if (ink < 15.0f) {
+        return;
+    }
+    // Clamped, so an odd sheet cannot push the sizes past what a screen
+    // holds.
+    TextBoost = std::max(0.85f, std::min(1.35f,
+                         SharedFontBoost * SharedFontInk / ink));
+}
+
 void loadFontMetrics()
 {
     if (appFont != nullptr) {
@@ -140,6 +181,7 @@ void loadFontMetrics()
         FINF_s *info = C2D_FontGetInfo(appFont);
         fontScale = 30.0f / info->tglp->cellHeight;
         fontLineFeed = info->lineFeed;
+        fitFontToSharedFont();
         return;
     }
     CFNT_s *font = fontGetSystemFont();
