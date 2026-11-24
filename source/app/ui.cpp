@@ -62,9 +62,9 @@ constexpr const char *Ellipsis = "...";
 // and "Close" bar 16.4 px where the system's bar measures 13-14. This is what
 // the first needed; the second is ui.hpp's type::Tab.
 // The bundled font is the console's own shared font (Noto Sans CN, cell
-// 21x24), so 1.0 draws what the system draws: the type scales in ui.hpp were
-// set against that font's cap heights.
-constexpr float TextBoost = 1.0f;
+// 21x24). Measured in Azahar against the system's own screens, 1.0 draws a
+// tile label 11-12 px tall where the system's is 14, so 1.18 lands on it.
+constexpr float TextBoost = 1.18f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
 // few pixels or losing its end. The console's font runs a little wider
