@@ -29,51 +29,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The Chinese version is the upstream one with a suffix; a preview of
-      # it is that suffix plus "-rc.N". Its two packages then number N and
-      # N + 1, so the one with the font installs over the other and both
-      # stay below the release they preview.
-      - name: Work out the version suffix
+      # One package: the font ships inside it. Noto Sans CN is the console's
+      # own shared font and is OFL, so there is no reason for a second build
+      # that leans on whatever font the console happens to have.
+      - name: Build
         run: |
           set -eu
-          case "${GITHUB_REF_NAME}" in
-            *-rc.*)
-              n="${GITHUB_REF_NAME##*-rc.}"
-              printf 'cn-rc.%s\n' "${n}" > /tmp/plain-suffix
-              printf 'cnwithfont-rc.%s\n' "$((n + 1))" > /tmp/font-suffix
-              ;;
-            *)
-              printf 'cn\n' > /tmp/plain-suffix
-              printf 'cnwithfont\n' > /tmp/font-suffix
-              ;;
-          esac
-
-      # Two builds of one version: one carrying the font, one using the
-      # console's own. The font one has the higher CIA number, so installing
-      # it over the other works; see .github/zh-release-notes.md.
-      - name: Build with the bundled font
-        run: |
-          set -eu
-          cat /tmp/font-suffix > zh/VERSION_SUFFIX
+          printf 'cn\n' > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
           mkdir -p out
-          cp dist/3dsDL.cia out/3dsDL-font.cia
-          cp dist/3dsDL.3dsx out/3dsDL-font.3dsx
-          cp dist/3dsDL.smdh out/3dsDL-font.smdh
-        env:
-          THREEDSDL_BUILD_JOBS: 4
-
-      - name: Build without it
-        run: |
-          set -eu
-          git checkout -- .
-          rm -f romfs/hanfont.bcfnt
-          cat /tmp/plain-suffix > zh/VERSION_SUFFIX
-          python3 scripts/zh/apply.py
-          ./scripts/make-editor.sh
-          ./scripts/build.sh
           cp dist/3dsDL.cia out/3dsDL.cia
           cp dist/3dsDL.3dsx out/3dsDL.3dsx
           cp dist/3dsDL.smdh out/3dsDL.smdh
@@ -106,70 +72,35 @@ jobs:
       - name: Name the files after the version
         run: |
           set -eu
-          # The release is named after the version alone; the suffix only
-          # tells the two packages apart. A preview carries its own "-rc.N",
-          # so its files read the same version the app reports.
-          base="$(tr -d '[:space:]' < VERSION)"
-          case "${GITHUB_REF_NAME}" in
-            *-rc.*)
-              n="${GITHUB_REF_NAME##*-rc.}"
-              plain="${base}-cn-rc.${n}"
-              font="${base}-cnwithfont-rc.$((n + 1))"
-              ;;
-            *)
-              plain="${base}-cn"
-              font="${base}-cnwithfont"
-              ;;
-          esac
+          version="$(tr -d '[:space:]' < VERSION)-cn"
           cd dist
           for kind in cia 3dsx smdh; do
-            mv "3dsDL.${kind}" "3dsDL-${plain}.${kind}"
-            mv "3dsDL-font.${kind}" "3dsDL-${font}.${kind}"
+            mv "3dsDL.${kind}" "3dsDL-${version}.${kind}"
           done
-          sha256sum "3dsDL-${plain}.cia" "3dsDL-${plain}.3dsx" \
-            > "3dsDL-${plain}.sha256"
-          sha256sum "3dsDL-${font}.cia" "3dsDL-${font}.3dsx" \
-            > "3dsDL-${font}.sha256"
+          sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
+            > "3dsDL-${version}.sha256"
 
-      - name: Make the QR codes FBI scans
-        # Each CIA's own download link, so the console installs it straight
+      - name: Make the QR code FBI scans
+        # The CIA's own download link, so the console installs it straight
         # from the release without a card reader.
         run: |
           set -eu
-          base="$(tr -d '[:space:]' < VERSION)"
-          case "${GITHUB_REF_NAME}" in
-            *-rc.*)
-              n="${GITHUB_REF_NAME##*-rc.}"
-              plain="${base}-cn-rc.${n}"
-              font="${base}-cnwithfont-rc.$((n + 1))"
-              body=.github/zh-rc-notes.md
-              ;;
-            *)
-              plain="${base}-cn"
-              font="${base}-cnwithfont"
-              body=.github/zh-release-notes.md
-              ;;
-          esac
+          version="$(tr -d '[:space:]' < VERSION)-cn"
           python3 -m pip install --quiet --disable-pip-version-check segno
-          PLAIN="${plain}" FONT="${font}" BODY="${body}" python3 - <<'PY'
+          VERSION="${version}" python3 - <<'PY'
           import os, segno
           repo = os.environ["GITHUB_REPOSITORY"]
           tag = os.environ["GITHUB_REF_NAME"]
-          names = [(os.environ["FONT"], "带字库版"),
-                   (os.environ["PLAIN"], "不带字库版")]
-          header = []
-          for name, label in names:
-              url = (f"https://github.com/{repo}/releases/download/{tag}/"
-                     f"{name}.cia")
-              qr = f"3dsDL-{name}-cia-qr.png"
-              segno.make(url, error="m").save(f"dist/{qr}", scale=10, border=4)
-              header.append(f"![{label}扫码安装]"
-                            f"(https://github.com/{repo}/releases/download/"
-                            f"{tag}/{qr})")
+          name = f"3dsDL-{os.environ['VERSION']}"
+          url = f"https://github.com/{repo}/releases/download/{tag}/{name}.cia"
+          qr = f"{name}-cia-qr.png"
+          segno.make(url, error="m").save(f"dist/{qr}", scale=10, border=4)
+          body = ".github/zh-rc-notes.md" if "-rc." in tag else ".github/zh-release-notes.md"
           with open("release-notes.md", "w", encoding="utf-8") as notes:
-              notes.write("\n".join(header) + "\n\n"
+              notes.write(f"![扫码安装](https://github.com/{repo}/releases/download/"
+                          f"{tag}/{qr})\n\n"
                           "FBI → Remote Install → Scan QR Code 即可安装。\n\n")
-              notes.write(open(os.environ["BODY"], encoding="utf-8").read())
+              notes.write(open(body, encoding="utf-8").read())
           PY
 
       - name: Create the release
