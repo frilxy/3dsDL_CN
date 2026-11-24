@@ -57,6 +57,10 @@ constexpr const char *Ellipsis = "...";
 // 30 / 16 = 1.875, so a tile label set at 0.5 came out 0.5 * 1.4 * 1.875 =
 // 1.31 times the system's own, 18 px of ink where the system's tiles measure
 // 14. 1.4 * 14 / 18 = 1.09 puts them back on the system's own sizes.
+// Measured in Azahar against the console's own screens: a bottom-screen tile
+// label comes out 14.2 px where the system's tiles measure 14, and the tab
+// and "Close" bar 16.4 px where the system's bar measures 13-14. This is what
+// the first needed; the second is ui.hpp's type::Tab.
 constexpr float TextBoost = 1.09f;
 
 // Text up to this much too wide is drawn narrower instead of scrolling a
