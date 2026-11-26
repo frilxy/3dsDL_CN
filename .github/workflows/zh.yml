@@ -35,7 +35,7 @@ jobs:
       - name: Build
         run: |
           set -eu
-          printf 'cn\n' > zh/VERSION_SUFFIX
+          printf 'cn-fix\n' > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
@@ -72,9 +72,8 @@ jobs:
       - name: Name the files after the version
         run: |
           set -eu
-          # "-fix": this fork's own build on top of the upstream version, so
-          # the file name says where it came from.
-          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
+          # VERSION already carries the fork's suffix ("0.9.0-cn-fix").
+          version="$(tr -d '[:space:]' < VERSION)"
           cd dist
           for kind in cia 3dsx smdh; do
             mv "3dsDL.${kind}" "3dsDL-${version}.${kind}"
@@ -87,7 +86,7 @@ jobs:
         # from the release without a card reader.
         run: |
           set -eu
-          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
+          version="$(tr -d '[:space:]' < VERSION)"
           python3 -m pip install --quiet --disable-pip-version-check segno
           VERSION="${version}" python3 - <<'PY'
           import os, segno
