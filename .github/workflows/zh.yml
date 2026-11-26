@@ -29,32 +29,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Two builds of one version: one carrying the font, one using the
-      # console's own. The font one has the higher CIA number, so installing
-      # it over the other works; see .github/zh-release-notes.md.
-      - name: Build with the bundled font
+      # One package: the font ships inside it. Noto Sans CN is the console's
+      # own shared font and is OFL, so there is no reason for a second build
+      # that leans on whatever font the console happens to have.
+      - name: Build
         run: |
           set -eu
-          printf 'cnwithfont\n' > zh/VERSION_SUFFIX
-          python3 scripts/zh/apply.py
-          ./scripts/make-editor.sh
-          ./scripts/build.sh
-          mkdir -p out
-          cp dist/3dsDL.cia out/3dsDL-font.cia
-          cp dist/3dsDL.3dsx out/3dsDL-font.3dsx
-          cp dist/3dsDL.smdh out/3dsDL-font.smdh
-        env:
-          THREEDSDL_BUILD_JOBS: 4
-
-      - name: Build without it
-        run: |
-          set -eu
-          git checkout -- .
-          rm -f romfs/hanfont.bcfnt
           printf 'cn\n' > zh/VERSION_SUFFIX
           python3 scripts/zh/apply.py
           ./scripts/make-editor.sh
           ./scripts/build.sh
+          mkdir -p out
           cp dist/3dsDL.cia out/3dsDL.cia
           cp dist/3dsDL.3dsx out/3dsDL.3dsx
           cp dist/3dsDL.smdh out/3dsDL.smdh
@@ -87,56 +72,52 @@ jobs:
       - name: Name the files after the version
         run: |
           set -eu
-          # The release is named after the version alone; the suffix only
-          # tells the two packages apart.
-          version="${GITHUB_REF_NAME#v}"
-          base="${version}"
+          # "-fix": this fork's own build on top of the upstream version, so
+          # the file name says where it came from.
+          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
           cd dist
           for kind in cia 3dsx smdh; do
-            mv "3dsDL.${kind}" "3dsDL-${base}.${kind}"
-            mv "3dsDL-font.${kind}" "3dsDL-${base}withfont.${kind}"
+            mv "3dsDL.${kind}" "3dsDL-${version}.${kind}"
           done
-          sha256sum "3dsDL-${base}.cia" "3dsDL-${base}.3dsx" \
-            > "3dsDL-${base}.sha256"
-          sha256sum "3dsDL-${base}withfont.cia" "3dsDL-${base}withfont.3dsx" \
-            > "3dsDL-${base}withfont.sha256"
+          sha256sum "3dsDL-${version}.cia" "3dsDL-${version}.3dsx" \
+            > "3dsDL-${version}.sha256"
 
-      - name: Make the QR codes FBI scans
-        # Each CIA's own download link, so the console installs it straight
+      - name: Make the QR code FBI scans
+        # The CIA's own download link, so the console installs it straight
         # from the release without a card reader.
         run: |
           set -eu
-          version="${GITHUB_REF_NAME#v}"
+          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
           python3 -m pip install --quiet --disable-pip-version-check segno
-          python3 - "${version}" <<'PY'
-          import os, sys, segno
-          base = sys.argv[1]
-          tag = os.environ["GITHUB_REF_NAME"]
+          VERSION="${version}" python3 - <<'PY'
+          import os, segno
           repo = os.environ["GITHUB_REPOSITORY"]
-          names = [(f"3dsDL-{base}withfont", "带字库版"),
-                   (f"3dsDL-{base}", "不带字库版")]
-          header = []
-          for name, label in names:
-              url = (f"https://github.com/{repo}/releases/download/{tag}/"
-                     f"{name}.cia")
-              qr = f"{name}-cia-qr.png"
-              segno.make(url, error="m").save(f"dist/{qr}", scale=10, border=4)
-              header.append(f"![{label}扫码安装]"
-                            f"(https://github.com/{repo}/releases/download/"
-                            f"{tag}/{qr})")
+          tag = os.environ["GITHUB_REF_NAME"]
+          name = f"3dsDL-{os.environ['VERSION']}"
+          url = f"https://github.com/{repo}/releases/download/{tag}/{name}.cia"
+          qr = f"{name}-cia-qr.png"
+          segno.make(url, error="m").save(f"dist/{qr}", scale=10, border=4)
+          body = ".github/zh-rc-notes.md" if "-rc." in tag else ".github/zh-release-notes.md"
           with open("release-notes.md", "w", encoding="utf-8") as notes:
-              notes.write("\n".join(header) + "\n\n"
+              notes.write(f"![扫码安装](https://github.com/{repo}/releases/download/"
+                          f"{tag}/{qr})\n\n"
                           "FBI → Remote Install → Scan QR Code 即可安装。\n\n")
-              notes.write(open(".github/zh-release-notes.md",
-                               encoding="utf-8").read())
+              notes.write(open(body, encoding="utf-8").read())
           PY
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          set -eu
+          # A preview stays a pre-release, so an installed copy's update
+          # check does not offer it as the next version.
+          preview=()
+          case "${GITHUB_REF_NAME}" in
+            *-rc.*) preview+=(--prerelease) ;;
+          esac
           gh release create "${GITHUB_REF_NAME}" \
             dist/3dsDL-* \
             --title "${GITHUB_REF_NAME}" \
-            --notes-file release-notes.md
+            --notes-file release-notes.md \
+            "${preview[@]}"

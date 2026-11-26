@@ -84,7 +84,16 @@ CI 的 `zh.yml` 会自动做这一步。
 `.github/zh-release-notes.md` 是每个版本共用的正文模板，**发版前必须改写**成这一版
 的改动，否则 Release 会挂着上一版的说明。
 
-## 一个发布，两个包
+## 只有一个包
 
-打标签时工作流会构建两次：先带 `romfs/hanfont.bcfnt` 出 `-cnwithfont`（CIA 号高一步），
-再删掉字库出 `-cn`（用主机字库）。两个包进同一个 Release，按后缀区分。
+内置字库是主机自带的 **Noto Sans CN**（OFL 开源字体，从共享字库标题
+`0004009B/00014002` 取出，LZ11 解压后作为 `romfs/hanfont.bcfnt`），所以不再
+分“带字库 / 不带字库”两个版本：`zh/VERSION_SUFFIX` 恒为 `cn`，CI 只构建一次，
+发布一个 CIA。
+
+## 上游更新后
+
+1. 把上游 `main` 合进来（历史合并，不要 rebase，`zh/zh.tsv` 的块才能按文本对上）
+2. `python3 scripts/zh/apply.py --check` —— 没对上的块会逐条列出，只改这些
+3. 把 `VERSION` 改成上游的新版本号（只写 `1.2.3`，后缀由 CI 加）
+4. 打 `v<版本>-cn` 标签发正式版；需要试水时用 `v<版本>-cn-rc.N`，发布标成 prerelease

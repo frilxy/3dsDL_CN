@@ -1024,7 +1024,7 @@ void App::queueScreen()
             ui::drawIcon(ui::Icon::Download, left, top, 30,
                          ui::color::IconGreen);
             ui::drawMarquee(nameOf(item.url), left + 40,
-                            top + (30 - ui::lineHeight(0.62f)) / 2, 0.62f,
+                            top + (30 - ui::lineHeight(ui::type::Body)) / 2, ui::type::Body,
                             ui::color::InkStrong, 300);
             ui::drawFacts(facts, {ui::TopPanel.x, top + Header,
                                   ui::TopPanel.w, Rows});
@@ -1940,8 +1940,8 @@ void App::receivedOptions(net::ReceiveLog::Row row, const std::string &address)
         const float left = ui::TopPanel.x + 18;
         const screens::KindLook look = lookOf(row);
         ui::drawIcon(look.icon, left, top, 30, look.color);
-        ui::drawMarquee(row.name, left + 40, top + (30 - ui::lineHeight(0.62f)) / 2,
-                        0.62f, ui::color::InkStrong, 300);
+        ui::drawMarquee(row.name, left + 40, top + (30 - ui::lineHeight(ui::type::Body)) / 2,
+                        ui::type::Body, ui::color::InkStrong, 300);
         ui::drawFacts(facts, {ui::TopPanel.x, top + Header, ui::TopPanel.w, rows});
     });
     if (choice < 0) {
@@ -2080,7 +2080,7 @@ HistoryStatus App::installDirectly(const std::string &address, bool quiet,
                                units::bytes(installed.bytes),
                            ui::color::Muted, 0.46f, 3});
     if (!seedNote.empty()) {
-        dialog.body.push_back({seedNote, ui::color::Muted, 0.44f, 2});
+        dialog.body.push_back({seedNote, ui::color::Muted, ui::type::Tiny, 2});
     }
     dialog.buttons = canLaunch ? std::vector<std::string>{"Close", "Launch"}
                                : std::vector<std::string>{"Close"};

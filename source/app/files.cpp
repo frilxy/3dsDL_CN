@@ -264,7 +264,7 @@ void drawEntryPanel(const std::vector<uint16_t> &titleIcon, Kind kind,
                       {{0, ui::color::rgb(0xFEFCF5)}, {1, ui::color::rgb(0xE6E2D0)}});
         ui::drawIcon(look.icon, left + 9, top + 9, 30, look.color);
     }
-    ui::drawMarquee(name, left + 60, top + 2, 0.62f, ui::color::InkStrong, 290);
+    ui::drawMarquee(name, left + 60, top + 2, ui::type::Body, ui::color::InkStrong, 290);
     ui::drawMarquee(second, left + 60, top + 28, ui::type::Tiny,
                     ui::color::InkSoft, 290);
     float y = top + 58;
@@ -324,7 +324,7 @@ void drawPicturePanel(const fs::Entry &entry, const Details &details,
 
     const float x = left + PreviewWidth + 14;
     const float textWidth = ui::TopPanel.x + ui::TopPanel.w - 12 - x;
-    ui::drawMarquee(entry.name, x, top + 2, 0.62f, ui::color::InkStrong,
+    ui::drawMarquee(entry.name, x, top + 2, ui::type::Body, ui::color::InkStrong,
                     textWidth);
     ui::drawMarquee(details.width > 0
                         ? std::to_string(details.width) + " x " +
@@ -1754,7 +1754,7 @@ void App::showChecksum(const std::string &path)
     if (!verdict.empty()) {
         dialog.body.push_back({verdict,
                                matches ? ui::color::Good : ui::color::Bad,
-                               0.44f, 3});
+                               ui::type::Tiny, 3});
     }
     dialog.buttons = {"Close"};
     ui::choose(dialog);

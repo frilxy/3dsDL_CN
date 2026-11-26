@@ -78,7 +78,7 @@ void drawTitleTop(const std::string &header, ui::Icon headerIcon,
     }
     ui::drawTitleIcon(game->icon, left, top, iconFor(title.id));
     ui::drawMarquee(titles::displayName(title, index), left + 60, top + 2,
-                    0.62f, ui::color::InkStrong, 280);
+                    ui::type::Body, ui::color::InkStrong, 280);
     std::string second = game->publisher.empty()
                              ? cia::kindName(cia::kind(title.id))
                              : game->publisher;
@@ -700,7 +700,7 @@ void App::extraDataScreen()
                                   ? extData.icon
                                   : owner->icon,
                               left, top, ui::Icon::Folder);
-            ui::drawMarquee(nameOf(extData), left + 60, top + 2, 0.62f,
+            ui::drawMarquee(nameOf(extData), left + 60, top + 2, ui::type::Body,
                             ui::color::InkStrong, 280);
             ui::drawMarquee(extData.publisher, left + 60, top + 30,
                             ui::type::Small, ui::color::InkSoft, 280);
@@ -983,7 +983,7 @@ void App::ticketsScreen()
             // The name alone, level with the icon's middle; the list says
             // the kind.
             ui::drawMarquee(nameFor(ticket), left + 60,
-                            top + (48 - ui::lineHeight(0.62f)) / 2, 0.62f,
+                            top + (48 - ui::lineHeight(ui::type::Body)) / 2, ui::type::Body,
                             ui::color::InkStrong, 280);
             const float y = ui::drawTagRow(left, top + 60, 96, "Title ID",
                                            cia::titleIdText(ticket));

@@ -72,17 +72,21 @@ constexpr u32 Warning = Caution;
 constexpr u32 Danger = Bad;
 } // namespace color
 
-// Text sizes as citro2d scales of the system font, matching the cap
-// heights measured from the system applets.
+// Text sizes as citro2d scales of the system font. Each one is set so that
+// what lands on screen is the cap height the console's own screens use:
+// 14 px for a bottom-screen tile label, 13 for the bar under it, 19 for the
+// title in a top screen's panel. Measured on hardware and checked against
+// Azahar: a scale of 1 draws 26 px of Chinese ink, so a step worth 19 px is
+// 19 / 26 / TextBoost.
 namespace type {
-constexpr float Hero = 0.95f;   // cap 19
-constexpr float Title = 0.78f;  // cap 16
-constexpr float Button = 0.72f; // cap 15
-constexpr float Tab = 0.6f;     // cap 14
-constexpr float Body = 0.62f;   // cap 13
-constexpr float Small = 0.54f;
-constexpr float Row = 0.52f;    // cap 10
-constexpr float Tiny = 0.44f;
+constexpr float Hero = 0.74f;   // cap 21
+constexpr float Title = 0.67f;  // cap 19
+constexpr float Button = 0.53f; // cap 15
+constexpr float Tab = 0.52f;    // cap 14
+constexpr float Body = 0.49f;   // cap 14
+constexpr float Small = 0.46f;  // cap 13
+constexpr float Row = 0.46f;    // cap 13
+constexpr float Tiny = 0.41f;   // cap 11.5
 } // namespace type
 
 struct Rect {

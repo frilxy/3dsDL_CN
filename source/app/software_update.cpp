@@ -90,8 +90,8 @@ void drawUpdateTop(const updater::Status &status)
 
     drawBadgeIcon(left, top, icon, fill);
     // Level with the badge's middle, to the panel's inner edge.
-    ui::drawMarquee(headline, left + 60, top + (48 - ui::lineHeight(0.62f)) / 2,
-                    0.62f, ui::color::InkStrong, ui::TopPanel.w - 36 - 60);
+    ui::drawMarquee(headline, left + 60, top + (48 - ui::lineHeight(ui::type::Body)) / 2,
+                    ui::type::Body, ui::color::InkStrong, ui::TopPanel.w - 36 - 60);
     const float below = top + 52;
     ui::drawFacts(facts, {ui::TopPanel.x, below, ui::TopPanel.w,
                           ui::TopPanel.y + ui::TopPanel.h - below});

@@ -127,9 +127,9 @@ void drawLabelledPanel(float y, float height, const std::string &label,
                        const std::string &value, u32 valueColor)
 {
     ui::drawPanel({18, y, 364, height});
-    ui::drawText(label, 34, y + 9, 0.44f, ui::color::Muted);
-    ui::drawWrapped(value, 34, y + 27, 0.52f, valueColor, 330,
-                    static_cast<size_t>((height - 30) / ui::lineHeight(0.52f)));
+    ui::drawText(label, 34, y + 9, ui::type::Tiny, ui::color::Muted);
+    ui::drawWrapped(value, 34, y + 27, ui::type::Row, valueColor, 330,
+                    static_cast<size_t>((height - 30) / ui::lineHeight(ui::type::Row)));
 }
 
 std::string ciaName(const cia::Info &info)
@@ -156,7 +156,7 @@ void addCiaParagraphs(ui::Dialog &dialog, const cia::Info &info)
                                    titleVersion(info.titleId, installed),
                                installed > info.version ? ui::color::Warning
                                                         : ui::color::Muted,
-                               0.44f, 1});
+                               ui::type::Tiny, 1});
     }
 }
 
@@ -168,7 +168,7 @@ void drawCiaTop(const cia::Info &info, const std::string &title,
     const float left = ui::TopPanel.x + 18;
     const float top = ui::TopPanel.y + 12;
     ui::drawTitleIcon(info.smdh.icon, left, top);
-    ui::drawMarquee(ciaName(info), left + 60, top + 2, 0.62f,
+    ui::drawMarquee(ciaName(info), left + 60, top + 2, ui::type::Body,
                     ui::color::InkStrong, 280);
     ui::drawMarquee(info.smdh.publisher.empty()
                         ? cia::kindName(cia::kind(info.titleId))
