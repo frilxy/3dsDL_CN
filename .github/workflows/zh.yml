@@ -72,7 +72,9 @@ jobs:
       - name: Name the files after the version
         run: |
           set -eu
-          version="$(tr -d '[:space:]' < VERSION)-cn"
+          # "-fix": this fork's own build on top of the upstream version, so
+          # the file name says where it came from.
+          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
           cd dist
           for kind in cia 3dsx smdh; do
             mv "3dsDL.${kind}" "3dsDL-${version}.${kind}"
@@ -85,7 +87,7 @@ jobs:
         # from the release without a card reader.
         run: |
           set -eu
-          version="$(tr -d '[:space:]' < VERSION)-cn"
+          version="$(tr -d '[:space:]' < VERSION)-cn-fix"
           python3 -m pip install --quiet --disable-pip-version-check segno
           VERSION="${version}" python3 - <<'PY'
           import os, segno
